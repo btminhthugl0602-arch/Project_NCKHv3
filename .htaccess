@@ -1,0 +1,23 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Redirect /views/ sang URL đẹp (301 permanent redirect)
+    RewriteCond %{THE_REQUEST} \s/views/(.+?)\.php\s [NC]
+    RewriteRule ^views/(.+?)\.php$ /$1 [R=301,L]
+
+    # Cho phép truy cập các thư mục tĩnh
+    RewriteRule ^(assets|soft-ui|api)/ - [L]
+
+    # Rewrite URL đẹp thành views/*.php (internal, không hiển thị trên URL)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{DOCUMENT_ROOT}/views/%{REQUEST_URI}.php -f
+    RewriteRule ^(.+)$ views/$1.php [L]
+
+    # Nếu đã có .php extension
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{DOCUMENT_ROOT}/views/%{REQUEST_URI} -f
+    RewriteRule ^(.+\.php)$ views/$1 [L]
+</IfModule>
