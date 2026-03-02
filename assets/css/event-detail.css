@@ -51,3 +51,47 @@
 .swal2-container .swal2-popup .swal2-actions .swal-round-cancel:hover {
     background: #f8fafc !important;
 }
+
+.criteria-workspace #criteriaTableBody tr:nth-child(odd) {
+    background: #fcfcff;
+}
+
+.criteria-workspace #criteriaTableBody tr:hover {
+    background: #f8faff;
+}
+
+.criteria-workspace #criteriaTableBody td {
+    vertical-align: middle;
+}
+
+.criteria-workspace #criteriaSetList > div {
+    transition: all 0.16s ease;
+}
+
+.criteria-workspace #criteriaSetList > div:hover {
+    border-color: #d8b4fe;
+    box-shadow: 0 4px 14px rgba(148, 85, 255, 0.12);
+}
+
+.criteria-workspace #criteriaSaveBtn,
+.criteria-workspace #criteriaCloneSetBtn {
+    min-width: 140px;
+}
+
+.criteria-workspace #criteriaTenBo,
+.criteria-workspace #criteriaMoTa,
+.criteria-workspace #criteriaVongThi,
+.criteria-workspace #criteriaReuseSetDropdown,
+.criteria-workspace #criteriaTableBody input {
+    border-color: #d0d7e2;
+}
+
+.criteria-workspace #criteriaTableBody input:focus,
+.criteria-workspace #criteriaTenBo:focus,
+.criteria-workspace #criteriaMoTa:focus,
+.criteria-workspace #criteriaVongThi:focus,
+.criteria-workspace #criteriaReuseSetDropdown:focus {
+    outline: none;
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.12);
+}

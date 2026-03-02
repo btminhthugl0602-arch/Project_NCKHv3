@@ -44,3 +44,73 @@
 - Sửa hiển thị nút `Thêm vòng thi` (kích thước, màu sắc, icon, chống co nút) và làm lại popup thêm vòng thi theo layout gọn đẹp, dễ thao tác.
 - Tách style nút popup thêm vòng thi sang CSS riêng `assets/css/event-detail.css` để hiển thị ổn định và thẩm mỹ hơn (nút xác nhận/hủy rõ ràng, cân kích thước).
 - Tăng specificity CSS cho nút popup `Thêm vòng thi` để tránh bị style global đè (sửa triệt để lỗi nút nhỏ/xấu, chữ lệch và nền không đúng).
+- Hoàn thiện luồng `Cấu hình quy chế` theo AST end-to-end tại trang chi tiết sự kiện (`config-rules`): tạo điều kiện đơn A/B/C, ghép token logic, parse cây AST, lưu và xem lại cây điều kiện.
+- Bổ sung backend API quy chế để hỗ trợ đầy đủ CRUD theo JSON chuẩn:
+  - `GET /api/su_kien/quy_che_metadata.php`
+  - `GET /api/su_kien/danh_sach_quy_che.php`
+  - `POST /api/su_kien/luu_quy_che.php`
+  - `GET /api/su_kien/chi_tiet_quy_che.php`
+  - `POST /api/su_kien/xoa_quy_che.php`
+- Siết chặt ràng buộc dữ liệu quy chế:
+  - Lọc metadata và danh sách quy chế theo `loai_quy_che`.
+  - Khóa xem/xóa quy chế theo `id_sk` hiện tại để tránh truy cập chéo sự kiện.
+  - Validate AST node đầu vào khi lưu (hỗ trợ cả `operator` và `logic`), kiểm tra thuộc tính đúng `loaiApDung`, toán tử đúng nhóm `compare/logic`.
+  - Tự dọn dữ liệu quy chế mới tạo nếu lưu cây điều kiện thất bại giữa chừng.
+- Sửa lỗi không nạp được thuộc tính/toán tử ở tab quy chế trên một số DB thực tế:
+  - Hỗ trợ alias loại cũ `THAMGIA` → `THAMGIA_SV` tại API metadata/list/save.
+  - Metadata fallback khi dữ liệu lọc theo loại bị rỗng.
+  - Tương thích cột mô tả toán tử giữa các biến thể schema (`tenToanTu`/`moTa`).
+  - Bổ sung nhận tham số query `loai` (ngoài `rule_type`) ở frontend để tự đồng bộ loại quy chế.
+- Bổ sung “dịch ngôn ngữ tự nhiên” cho biểu thức quy chế:
+  - Hiển thị realtime câu diễn giải sau khi ghép token và parse AST tại tab `config-rules`.
+  - Hiển thị thêm dòng diễn giải trong popup xem chi tiết quy chế để BTC kiểm tra nhanh logic đã cấu hình.
+- Cập nhật trải nghiệm nhập điều kiện quy chế theo yêu cầu mới:
+  - Dropdown thuộc tính hiển thị toàn bộ thuộc tính kiểm tra (không phân loại theo loại quy chế).
+  - Thêm API `GET /api/su_kien/goi_y_gia_tri_thuoc_tinh.php?id_thuoc_tinh=...` để gợi ý giá trị theo thuộc tính được chọn.
+  - Ô nhập giá trị hỗ trợ datalist gợi ý động theo dữ liệu thực tế trong CSDL của thuộc tính tương ứng.
+  - Bỏ ràng buộc lưu quy chế theo `loaiApDung` của thuộc tính, chỉ kiểm tra thuộc tính có tồn tại.
+- Siết chặt quy tắc ghép token ở tab cấu hình quy chế trước khi tạo AST:
+  - Không cho phép biểu thức bắt đầu/kết thúc sai chuẩn.
+  - Kiểm tra ngoặc cân bằng, không cho ngoặc rỗng hoặc toán tử sai vị trí.
+  - Bắt lỗi thiếu toán tử giữa 2 điều kiện hoặc thiếu toán hạng cho toán tử logic.
+  - Cảnh báo khi trong cùng một cặp ngoặc xuất hiện đồng thời `AND` và `OR`.
+  - Hiển thị lỗi theo danh sách để người dùng sửa đúng theo chuẩn cây nhị phân.
+- Bổ sung ràng buộc mới cho biểu thức quy chế: mỗi thuộc tính kiểm tra chỉ được xuất hiện đúng 1 lần trong toàn bộ biểu thức (frontend + backend).
+- Refactor module [api/su_kien/quan_ly_bo_tieu_chi.php](api/su_kien/quan_ly_bo_tieu_chi.php) theo chuẩn dự án:
+  - Chuẩn hóa PDO + helper hiện tại, bỏ toàn bộ `mysqli_*`.
+  - Sửa kiểm tra quyền theo `maQuyen_code` mới (`admin_criteria`, `admin_events`, `tao_su_kien`, quyền sự kiện `cauhinh_sukien`/`cauhinh_vongthi`).
+  - Sửa đúng schema `tieuchi` (không có cột `diemToiDa`), đồng thời hỗ trợ `diemToiDa` ở bảng liên kết `botieuchi_tieuchi`.
+  - Hoàn thiện validate dữ liệu và ràng buộc quan hệ khi gán bộ tiêu chí vào vòng thi theo đúng `idSK`.
+- Nâng cấp sâu nghiệp vụ bộ tiêu chí theo luồng clone/create/update cho từng sự kiện:
+  - Bổ sung hàm `tim_hoac_tao_tieu_chi_theo_noi_dung()` để tái sử dụng ngân hàng `tieuchi` (find-or-create theo text).
+  - Bổ sung hàm `lay_chi_tiet_day_du_bo_tieu_chi()` phục vụ AJAX `get_full_set` (master + details + vòng áp dụng trong sự kiện).
+  - Bổ sung hàm `lay_ban_do_su_dung_bo_tieu_chi()` để dựng usage map “đang áp dụng tại…” (vòng thi và tiểu ban nếu schema có cột).
+  - Bổ sung hàm `luu_bo_tieu_chi_theo_su_kien()` xử lý transaction cho flow `save_criteria`:
+    - `edit_id = 0`: tạo bộ mới.
+    - `edit_id > 0`: update và flush/replace cấu hình cũ trong sự kiện.
+    - Upsert gán vòng bằng `ON DUPLICATE KEY UPDATE` theo khóa `(idSK, idVongThi)`.
+    - Lưu thang điểm theo sự kiện tại `botieuchi_tieuchi.diemToiDa`, không lưu ở `tieuchi`.
+- Triển khai giao diện thật cho tab `config-criteria` tại trang chi tiết sự kiện:
+  - Form tạo/sửa bộ tiêu chí, bảng tiêu chí con (nội dung/điểm tối đa/tỷ trọng), nút thêm/xóa dòng.
+  - Khối nhân bản nhanh từ bộ tiêu chí có sẵn và danh sách ngân hàng bộ tiêu chí kèm badge usage.
+  - Hỗ trợ clone vào form và sửa trực tiếp từ danh sách bộ tiêu chí.
+- Bổ sung API phục vụ tab `config-criteria`:
+  - `GET /api/su_kien/du_lieu_bo_tieu_chi.php?id_sk=...` (vòng thi + ngân hàng tiêu chí + bộ tiêu chí + usage map)
+  - `GET /api/su_kien/chi_tiet_bo_tieu_chi.php?id_sk=...&id_bo=...` (master/details để clone/edit)
+  - `POST /api/su_kien/luu_bo_tieu_chi.php` (lưu flow create/update theo payload JSON)
+- Sửa lỗi dropdown tab `config-criteria` không lấy được dữ liệu từ CSDL:
+  - Điều chỉnh hàm `lay_ngan_hang_tieu_chi()` và `lay_danh_sach_bo_tieu_chi()` nhận ngữ cảnh `id_su_kien` để kiểm tra quyền đúng phạm vi sự kiện.
+  - Cập nhật endpoint `du_lieu_bo_tieu_chi.php` truyền `id_sk` vào các hàm lấy dropdown data.
+- Tinh chỉnh giao diện form bộ tiêu chí:
+  - Bổ sung style riêng cho khu vực `criteria-workspace` (focus state, hover card, bảng dễ đọc hơn, nút thao tác cân đối hơn).
+- Bổ sung migration `database/migrations/2026_03_02_fix_criteria_setup.sql` để ổn định chức năng `config-criteria` trên dữ liệu thực tế:
+  - Tự thêm cột `tieuban.idBoTieuChi` (kèm index + FK) nếu thiếu.
+  - Tự cấp role BTC (`idVaiTroGoc=1` + `idVaiTroSK` đúng theo sự kiện) cho người tạo sự kiện nếu chưa có trong `taikhoan_vaitro_sukien`.
+  - Tạo vòng thi mặc định cho các sự kiện chưa có vòng để dropdown vòng thi không rỗng.
+  - Seed tối thiểu `tieuchi`/`botieuchi` và auto-map bộ mặc định vào vòng đầu tiên mỗi sự kiện nếu chưa cấu hình.
+- Cải tiến endpoint `GET /api/su_kien/du_lieu_bo_tieu_chi.php` theo hướng “partial success”:
+  - Không fail toàn bộ khi một nhánh dữ liệu lỗi quyền hoặc rỗng.
+  - Trả dữ liệu khả dụng cho từng dropdown và bổ sung `data.warnings` để frontend/debug biết nhánh nào đang lỗi.
+- Đồng bộ lại logic phân quyền theo đúng cấu trúc `nckh.sql`:
+  - `kiem_tra_quyen_su_kien()` dùng `taikhoan_vaitro_sukien.idVaiTroGoc` + `idVaiTroSK` (kết hợp `vaitro_quyen` và `vaitro_quyen_sk`) thay cho cột cũ `idVaiTro`.
+  - Luồng gán BTC trong `quan_ly_su_kien.php` và `quan_ly_to_chuc.php` dùng `idVaiTroSK` mặc định của sự kiện từ `vaitro_sukien`.

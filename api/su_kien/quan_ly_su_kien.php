@@ -97,12 +97,18 @@ function btc_tao_su_kien(
         }
 
         $id_sk = (int) $conn->lastInsertId();
+        $id_vai_tro_sk_btc = lay_id_vai_tro_su_kien_mac_dinh($conn, $id_sk, 1);
+
+        if ($id_vai_tro_sk_btc <= 0) {
+            $conn->rollBack();
+            return ['status' => false, 'message' => 'Không tìm thấy vai trò BTC mặc định của sự kiện'];
+        }
 
         $existsBtcRole = _select_info($conn, 'taikhoan_vaitro_sukien', ['id'], [
             'WHERE' => [
                 'idTK', '=', $id_nguoi_tao, 'AND',
                 'idSK', '=', $id_sk, 'AND',
-                'idVaiTro', '=', 1, 'AND',
+                'idVaiTroSK', '=', $id_vai_tro_sk_btc, 'AND',
                 'isActive', '=', 1, '',
             ],
             'LIMIT' => [1],
@@ -112,8 +118,8 @@ function btc_tao_su_kien(
             $assigned = _insert_info(
                 $conn,
                 'taikhoan_vaitro_sukien',
-                ['idTK', 'idSK', 'idVaiTro', 'nguonTao', 'idNguoiCap', 'isActive'],
-                [$id_nguoi_tao, $id_sk, 1, 'BTC_THEM', $id_nguoi_tao, 1]
+                ['idTK', 'idSK', 'idVaiTroSK', 'idVaiTroGoc', 'nguonTao', 'idNguoiCap', 'isActive'],
+                [$id_nguoi_tao, $id_sk, $id_vai_tro_sk_btc, 1, 'BTC_THEM', $id_nguoi_tao, 1]
             );
 
             if (!$assigned) {

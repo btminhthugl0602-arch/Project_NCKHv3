@@ -383,7 +383,8 @@ function kiem_tra_quyen_he_thong($conn, $id_tai_khoan, $ma_quyen_code)
 /**
  * Kiểm tra quyền THEO SỰ KIỆN (SU_KIEN) dựa trên CSDL mới.
  * - Role của user trong sự kiện: taikhoan_vaitro_sukien (isActive=1)
- * - Quyền role lấy từ bảng vaitro_quyen theo idVaiTro
+ * - Role hệ thống trong sự kiện: vaitro_quyen theo tvs.idVaiTroGoc
+ * - Role custom trong sự kiện: vaitro_quyen_sk theo tvs.idVaiTroSK
  * - Quyền match theo quyen.maQuyen_code (phamVi='SU_KIEN')
  */
 function kiem_tra_quyen_su_kien($conn, int $idTK, int $idSK, string $maQuyenCode): bool
@@ -408,18 +409,27 @@ function kiem_tra_quyen_su_kien($conn, int $idTK, int $idSK, string $maQuyenCode
             return false;
         }
 
-        $sql = "
-            SELECT 1
-            FROM taikhoan_vaitro_sukien tvs
-            JOIN vaitro_quyen vq ON vq.idVaiTro = tvs.idVaiTro
-            JOIN quyen q ON q.idQuyen = vq.idQuyen
-            WHERE tvs.idTK = :idTK
-              AND tvs.idSK = :idSK
-              AND tvs.isActive = 1
-              AND q.phamVi = 'SU_KIEN'
-              AND q.maQuyen_code = :code
-            LIMIT 1
-        ";
+                $sql = "
+                        SELECT 1
+                        FROM taikhoan_vaitro_sukien tvs
+                        JOIN quyen q
+                            ON q.phamVi = 'SU_KIEN'
+                         AND q.maQuyen_code = :code
+                        LEFT JOIN vaitro_quyen vq
+                            ON tvs.idVaiTroGoc IS NOT NULL
+                         AND tvs.idVaiTroGoc > 0
+                         AND vq.idVaiTro = tvs.idVaiTroGoc
+                         AND vq.idQuyen = q.idQuyen
+                        LEFT JOIN vaitro_quyen_sk vqsk
+                            ON tvs.idVaiTroSK IS NOT NULL
+                         AND vqsk.idVaiTroSK = tvs.idVaiTroSK
+                         AND vqsk.idQuyen = q.idQuyen
+                        WHERE tvs.idTK = :idTK
+                            AND tvs.idSK = :idSK
+                            AND tvs.isActive = 1
+                            AND (vq.idQuyen IS NOT NULL OR vqsk.idQuyen IS NOT NULL)
+                        LIMIT 1
+                ";
 
         $stmt = $conn->prepare($sql);
         $stmt->execute([
@@ -491,4 +501,33 @@ function filter()
         }
     }
     return $filterArr;
+}
+
+function lay_id_vai_tro_su_kien_mac_dinh($conn, int $idSK, int $idVaiTroGoc): int
+{
+    try {
+        if (!$conn instanceof PDO || $idSK <= 0 || $idVaiTroGoc <= 0) {
+            return 0;
+        }
+
+        $stmt = $conn->prepare(
+            'SELECT idVaiTroSK
+             FROM vaitro_sukien
+             WHERE idSK = :idSK
+               AND idVaiTroGoc = :idVaiTroGoc
+               AND isSystem = 1
+               AND isActive = 1
+             ORDER BY idVaiTroSK ASC
+             LIMIT 1'
+        );
+        $stmt->execute([
+            ':idSK' => $idSK,
+            ':idVaiTroGoc' => $idVaiTroGoc,
+        ]);
+
+        return (int) ($stmt->fetchColumn() ?: 0);
+    } catch (Throwable $exception) {
+        error_log('SQL Error in lay_id_vai_tro_su_kien_mac_dinh: ' . $exception->getMessage());
+        return 0;
+    }
 }
