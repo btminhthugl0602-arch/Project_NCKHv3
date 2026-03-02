@@ -1,7 +1,7 @@
 -- ============================================================
 -- CSDL HOÀN CHỈNH: nckh
--- Đã tích hợp Migration Luồng 2 — QUA_NHOM
--- Phiên bản: 25/02/2026
+-- Sửa lỗi mất bảng toanTu
+-- Phiên bản: 03/02/2026
 -- Chỉ cần import thẳng vào phpMyAdmin
 -- ============================================================
 
@@ -777,6 +777,13 @@ INSERT INTO `diemdanh` VALUES
 (1, NULL, 6, '2026-02-22 13:22:32', 1, 'Tự điểm danh', 1, 'GPS', 21.0377847, 105.8518394, '::1'),
 (2, NULL, 1, '2026-02-22 14:02:16', 1, 'Tự điểm danh', 2, 'GPS', 21.0377867, 105.8518433, '::1');
 
+-- ============================================================
+-- BẢNG: toantu
+-- ============================================================
+CREATE TABLE `toantu` (
+  `idToanTu` int NOT NULL AUTO_INCREMENT,
+  `kyHieu` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tenToanTu` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `loaiToanTu` enum('logic','compare') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`idToanTu`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=8;
