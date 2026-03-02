@@ -44,49 +44,34 @@ if ($idUser <= 0) {
 }
 
 try {
-    $warnings = [];
-
     $rounds = lay_danh_sach_vong_thi_theo_su_kien($conn, $idUser, $idSk);
     if (empty($rounds['status'])) {
-        $warnings['vong_thi'] = $rounds['message'] ?? 'Không thể lấy danh sách vòng thi';
+        throw new RuntimeException($rounds['message'] ?? 'Không thể lấy danh sách vòng thi');
     }
 
     $criteriaBank = lay_ngan_hang_tieu_chi($conn, $idUser, $idSk);
     if (empty($criteriaBank['status'])) {
-        $warnings['ngan_hang_tieu_chi'] = $criteriaBank['message'] ?? 'Không thể lấy ngân hàng tiêu chí';
+        throw new RuntimeException($criteriaBank['message'] ?? 'Không thể lấy ngân hàng tiêu chí');
     }
 
     $sets = lay_danh_sach_bo_tieu_chi($conn, $idUser, $idSk);
     if (empty($sets['status'])) {
-        $warnings['bo_tieu_chi'] = $sets['message'] ?? 'Không thể lấy danh sách bộ tiêu chí';
+        throw new RuntimeException($sets['message'] ?? 'Không thể lấy danh sách bộ tiêu chí');
     }
 
     $usageMap = lay_ban_do_su_dung_bo_tieu_chi($conn, $idUser, $idSk);
     if (empty($usageMap['status'])) {
-        $warnings['usage_map'] = $usageMap['message'] ?? 'Không thể lấy bản đồ sử dụng';
+        throw new RuntimeException($usageMap['message'] ?? 'Không thể lấy bản đồ sử dụng');
     }
 
-    $hasAnyData =
-        !empty($rounds['data']) ||
-        !empty($criteriaBank['data']) ||
-        !empty($sets['data']) ||
-        !empty($usageMap['data']);
-
-    $message = empty($warnings)
-        ? 'Lấy dữ liệu bộ tiêu chí thành công'
-        : ($hasAnyData
-            ? 'Lấy dữ liệu bộ tiêu chí thành công (một phần)'
-            : 'Không thể lấy dữ liệu bộ tiêu chí');
-
     echo json_encode([
-        'status' => ($hasAnyData || empty($warnings)) ? 'success' : 'error',
-        'message' => $message,
+        'status' => 'success',
+        'message' => 'Lấy dữ liệu bộ tiêu chí thành công',
         'data' => [
-            'vong_thi' => !empty($rounds['status']) ? ($rounds['data'] ?? []) : [],
-            'ngan_hang_tieu_chi' => !empty($criteriaBank['status']) ? ($criteriaBank['data'] ?? []) : [],
-            'bo_tieu_chi' => !empty($sets['status']) ? ($sets['data'] ?? []) : [],
-            'usage_map' => !empty($usageMap['status']) ? ($usageMap['data'] ?? []) : [],
-            'warnings' => $warnings,
+            'vong_thi' => $rounds['data'] ?? [],
+            'ngan_hang_tieu_chi' => $criteriaBank['data'] ?? [],
+            'bo_tieu_chi' => $sets['data'] ?? [],
+            'usage_map' => $usageMap['data'] ?? [],
         ],
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $exception) {

@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // Get base path for API calls
+    const BASE_PATH = window.APP_BASE_PATH || '';
+    
     const idSk = Number(window.EVENT_DETAIL_ID || 0);
     const currentTab = String(window.EVENT_DETAIL_TAB || 'overview');
 
@@ -123,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function layChiTietSuKien(id) {
-        const response = await fetch(`/api/su_kien/chi_tiet_su_kien.php?id_sk=${encodeURIComponent(id)}`, {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/chi_tiet_su_kien.php?id_sk=${encodeURIComponent(id)}`, {
             method: 'GET',
             credentials: 'same-origin',
         });
@@ -137,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function layDanhSachCapToChuc() {
-        const response = await fetch('/api/su_kien/danh_sach_cap_to_chuc.php', {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/danh_sach_cap_to_chuc.php`, {
             method: 'GET',
             credentials: 'same-origin',
         });
@@ -149,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function capNhatSuKien(payload) {
-        const response = await fetch('/api/su_kien/cap_nhat_su_kien.php', {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/cap_nhat_su_kien.php`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
@@ -165,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function layDanhSachVongThi(id) {
-        const response = await fetch(`/api/su_kien/danh_sach_vong_thi.php?id_sk=${encodeURIComponent(id)}`, {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/danh_sach_vong_thi.php?id_sk=${encodeURIComponent(id)}`, {
             method: 'GET',
             credentials: 'same-origin',
         });
@@ -177,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function taoVongThi(payload) {
-        const response = await fetch('/api/su_kien/tao_vong_thi.php', {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/tao_vong_thi.php`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
@@ -191,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function layMetadataQuyChe(loaiQuyChe) {
-        const response = await fetch(`/api/su_kien/quy_che_metadata.php?loai_quy_che=${encodeURIComponent(loaiQuyChe)}`, {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/quy_che_metadata.php?loai_quy_che=${encodeURIComponent(loaiQuyChe)}`, {
             method: 'GET',
             credentials: 'same-origin',
         });
@@ -203,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function layGoiYGiaTriTheoThuocTinh(idThuocTinh) {
-        const response = await fetch(`/api/su_kien/goi_y_gia_tri_thuoc_tinh.php?id_thuoc_tinh=${encodeURIComponent(idThuocTinh)}`, {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/goi_y_gia_tri_thuoc_tinh.php?id_thuoc_tinh=${encodeURIComponent(idThuocTinh)}`, {
             method: 'GET',
             credentials: 'same-origin',
         });
@@ -215,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function luuQuyChe(payload) {
-        const response = await fetch('/api/su_kien/luu_quy_che.php', {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/luu_quy_che.php`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
@@ -229,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function layDanhSachQuyChe(id, loaiQuyChe) {
-        const response = await fetch(`/api/su_kien/danh_sach_quy_che.php?id_sk=${encodeURIComponent(id)}&loai_quy_che=${encodeURIComponent(loaiQuyChe)}`, {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/danh_sach_quy_che.php?id_sk=${encodeURIComponent(id)}&loai_quy_che=${encodeURIComponent(loaiQuyChe)}`, {
             method: 'GET',
             credentials: 'same-origin',
         });
@@ -241,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function layChiTietQuyChe(idQuyChe) {
-        const response = await fetch(`/api/su_kien/chi_tiet_quy_che.php?id_quy_che=${encodeURIComponent(idQuyChe)}&id_sk=${encodeURIComponent(idSk)}`, {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/chi_tiet_quy_che.php?id_quy_che=${encodeURIComponent(idQuyChe)}&id_sk=${encodeURIComponent(idSk)}`, {
             method: 'GET',
             credentials: 'same-origin',
         });
@@ -253,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function xoaQuyChe(idQuyChe) {
-        const response = await fetch('/api/su_kien/xoa_quy_che.php', {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/xoa_quy_che.php`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
@@ -267,7 +270,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function layDuLieuBoTieuChi() {
-        const response = await fetch(`/api/su_kien/du_lieu_bo_tieu_chi.php?id_sk=${encodeURIComponent(idSk)}`, {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/du_lieu_bo_tieu_chi.php?id_sk=${encodeURIComponent(idSk)}`, {
             method: 'GET',
             credentials: 'same-origin',
         });
@@ -279,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function layChiTietBoTieuChi(idBo) {
-        const response = await fetch(`/api/su_kien/chi_tiet_bo_tieu_chi.php?id_sk=${encodeURIComponent(idSk)}&id_bo=${encodeURIComponent(idBo)}`, {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/chi_tiet_bo_tieu_chi.php?id_sk=${encodeURIComponent(idSk)}&id_bo=${encodeURIComponent(idBo)}`, {
             method: 'GET',
             credentials: 'same-origin',
         });
@@ -291,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function luuBoTieuChi(payload) {
-        const response = await fetch('/api/su_kien/luu_bo_tieu_chi.php', {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/luu_bo_tieu_chi.php`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
@@ -304,19 +307,116 @@ document.addEventListener('DOMContentLoaded', function () {
         return data.data || {};
     }
 
+    async function xoaBoTieuChi(idBo) {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/xoa_bo_tieu_chi.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ id_sk: idSk, id_bo: idBo }),
+        });
+        const data = await response.json();
+        if (data.status !== 'success') {
+            const error = new Error(data.message || 'Không thể xóa bộ tiêu chí');
+            error.hasRelatedData = data.hasRelatedData || false;
+            error.relatedData = data.relatedData || [];
+            throw error;
+        }
+        return data.data || {};
+    }
+
     function addCriteriaRow(noiDung = '', diemToiDa = '', tyTrong = '1') {
         if (!criteriaTableBody) {
             return;
         }
 
         const tr = document.createElement('tr');
+        tr.className = 'criteria-row border-b border-slate-100 hover:bg-slate-50/50';
         tr.innerHTML = `
-            <td class="px-3 py-2"><input type="text" data-field="noi_dung" list="criteriaBankList" class="w-full px-2 py-1.5 text-sm border rounded border-slate-300" value="${String(noiDung).replace(/"/g, '&quot;')}" /></td>
-            <td class="px-3 py-2"><input type="number" data-field="diem_toi_da" step="0.5" class="w-full px-2 py-1.5 text-sm border rounded border-slate-300" value="${diemToiDa === null ? '' : String(diemToiDa)}" /></td>
-            <td class="px-3 py-2"><input type="number" data-field="ty_trong" step="0.1" class="w-full px-2 py-1.5 text-sm border rounded border-slate-300" value="${String(tyTrong)}" /></td>
-            <td class="px-3 py-2 text-center"><button type="button" class="criteria-row-remove px-2 py-1 text-xs font-bold rounded border border-rose-300 text-rose-600">X</button></td>
+            <td class="px-2 py-2 text-center">
+                <span class="criteria-stt text-xs font-semibold text-slate-400"></span>
+            </td>
+            <td class="px-3 py-2">
+                <input type="text" data-field="noi_dung" list="criteriaBankList" class="w-full px-2 py-1.5 text-sm border rounded border-slate-300 focus:border-purple-400 focus:ring-1 focus:ring-purple-200" placeholder="Nhập nội dung tiêu chí..." value="${String(noiDung).replace(/"/g, '&quot;')}" />
+            </td>
+            <td class="px-3 py-2">
+                <input type="number" data-field="diem_toi_da" step="0.5" min="0" class="w-full px-2 py-1.5 text-sm text-center border rounded border-slate-300 focus:border-purple-400 focus:ring-1 focus:ring-purple-200" placeholder="10" value="${diemToiDa === null ? '' : String(diemToiDa)}" />
+            </td>
+            <td class="px-3 py-2">
+                <input type="number" data-field="ty_trong" step="0.1" min="0" class="w-full px-2 py-1.5 text-sm text-center border rounded border-slate-300 focus:border-purple-400 focus:ring-1 focus:ring-purple-200" placeholder="1" value="${String(tyTrong)}" />
+            </td>
+            <td class="px-2 py-2 text-center">
+                <div class="flex items-center justify-center gap-1">
+                    <button type="button" class="criteria-row-up p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30" title="Di chuyển lên">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                    </button>
+                    <button type="button" class="criteria-row-down p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30" title="Di chuyển xuống">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <button type="button" class="criteria-row-remove p-1 text-rose-400 hover:text-rose-600" title="Xóa tiêu chí">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </td>
         `;
         criteriaTableBody.appendChild(tr);
+        updateCriteriaSTT();
+        updateCriteriaTotals();
+    }
+
+    function updateCriteriaSTT() {
+        if (!criteriaTableBody) return;
+        const rows = criteriaTableBody.querySelectorAll('.criteria-row');
+        rows.forEach((row, index) => {
+            const stt = row.querySelector('.criteria-stt');
+            if (stt) stt.textContent = String(index + 1);
+            
+            // Disable nút lên cho dòng đầu, nút xuống cho dòng cuối
+            const upBtn = row.querySelector('.criteria-row-up');
+            const downBtn = row.querySelector('.criteria-row-down');
+            if (upBtn) upBtn.disabled = index === 0;
+            if (downBtn) downBtn.disabled = index === rows.length - 1;
+        });
+    }
+
+    function updateCriteriaTotals() {
+        const totalDiemEl = document.getElementById('criteriaTotalDiem');
+        const totalTyTrongEl = document.getElementById('criteriaTotalTyTrong');
+        if (!criteriaTableBody || !totalDiemEl || !totalTyTrongEl) return;
+
+        let totalDiem = 0;
+        let totalTyTrong = 0;
+
+        criteriaTableBody.querySelectorAll('.criteria-row').forEach((row) => {
+            const diemInput = row.querySelector('[data-field="diem_toi_da"]');
+            const tyTrongInput = row.querySelector('[data-field="ty_trong"]');
+            
+            const diem = parseFloat(diemInput?.value || 0);
+            const tyTrong = parseFloat(tyTrongInput?.value || 0);
+            
+            if (!isNaN(diem)) totalDiem += diem;
+            if (!isNaN(tyTrong)) totalTyTrong += tyTrong;
+        });
+
+        totalDiemEl.textContent = totalDiem.toFixed(1).replace(/\.0$/, '');
+        totalTyTrongEl.textContent = totalTyTrong.toFixed(1).replace(/\.0$/, '');
+    }
+
+    function moveCriteriaRow(row, direction) {
+        if (!criteriaTableBody || !row) return;
+        
+        if (direction === 'up') {
+            const prev = row.previousElementSibling;
+            if (prev) {
+                criteriaTableBody.insertBefore(row, prev);
+            }
+        } else {
+            const next = row.nextElementSibling;
+            if (next) {
+                criteriaTableBody.insertBefore(next, row);
+            }
+        }
+        
+        updateCriteriaSTT();
     }
 
     function resetCriteriaForm() {
@@ -334,24 +434,74 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (!Array.isArray(sets) || sets.length === 0) {
-            criteriaSetList.innerHTML = '<div class="px-3 py-2 border rounded-lg border-slate-200 bg-slate-50 text-slate-500">Chưa có bộ tiêu chí.</div>';
+            criteriaSetList.innerHTML = '<div class="px-3 py-2 border rounded-lg border-slate-200 bg-slate-50 text-slate-500">Chưa có bộ tiêu chí nào. Tạo mới ở form bên trái.</div>';
             return;
         }
 
         criteriaSetList.innerHTML = sets.map((set) => {
             const idBo = Number(set.idBoTieuChi || 0);
             const usage = Array.isArray(criteriaUsageMap[idBo]) ? criteriaUsageMap[idBo] : [];
-            const usageHtml = usage.length > 0
-                ? usage.map((item) => `<span class="inline-flex px-2 py-0.5 mr-1 mt-1 text-xs rounded ${item.loai === 'tieuban' ? 'bg-cyan-100 text-cyan-700' : 'bg-emerald-100 text-emerald-700'}">${item.text || ''}</span>`).join('')
-                : '<span class="inline-flex px-2 py-0.5 text-xs rounded bg-slate-100 text-slate-500">Chưa gán trong sự kiện này</span>';
+            
+            // Phân loại usage theo loại
+            const vongThiUsage = usage.filter((item) => item.loai === 'vong');
+            const tieubanUsage = usage.filter((item) => item.loai === 'tieuban');
+            
+            let usageHtml = '';
+            if (vongThiUsage.length > 0 || tieubanUsage.length > 0) {
+                // Có đang sử dụng
+                usageHtml = '<div class="flex flex-wrap gap-1">';
+                vongThiUsage.forEach((item) => {
+                    usageHtml += `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        ${item.text || ''}
+                    </span>`;
+                });
+                tieubanUsage.forEach((item) => {
+                    usageHtml += `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-cyan-100 text-cyan-700">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        ${item.text || ''}
+                    </span>`;
+                });
+                usageHtml += '</div>';
+            } else {
+                // Chưa sử dụng
+                usageHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-500">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Chưa gán trong sự kiện này
+                </span>`;
+            }
 
-            return `<div class="p-3 border rounded-lg border-slate-200 bg-slate-50">
-                        <p class="mb-0 text-sm font-semibold text-slate-700">${set.tenBoTieuChi || '--'}</p>
-                        <p class="mb-2 text-xs text-slate-500">${set.moTa || 'Không có mô tả'}</p>
+            const canDelete = usage.length === 0;
+
+            return `<div class="p-3 border rounded-lg border-slate-200 bg-slate-50 hover:border-slate-300 transition-colors">
+                        <div class="flex items-start justify-between gap-2 mb-2">
+                            <div class="flex-1 min-w-0">
+                                <p class="mb-0 text-sm font-semibold text-slate-700 truncate">${set.tenBoTieuChi || '--'}</p>
+                                <p class="mb-0 text-xs text-slate-500 line-clamp-2">${set.moTa || 'Không có mô tả'}</p>
+                            </div>
+                            <span class="px-1.5 py-0.5 text-xs font-mono rounded bg-white border border-slate-200 text-slate-400 shrink-0">#${idBo}</span>
+                        </div>
                         <div class="mb-2">${usageHtml}</div>
-                        <div class="flex flex-wrap gap-2">
-                            <button type="button" data-criteria-clone="${idBo}" class="criteria-clone-btn px-2.5 py-1 text-xs font-bold rounded border border-slate-300 bg-white">Nhân bản</button>
-                            <button type="button" data-criteria-edit="${idBo}" class="criteria-edit-btn px-2.5 py-1 text-xs font-bold rounded border border-slate-300 bg-white">Sửa</button>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" data-criteria-clone="${idBo}" class="criteria-clone-btn inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                Nhân bản
+                            </button>
+                            <button type="button" data-criteria-edit="${idBo}" class="criteria-edit-btn inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded border border-blue-300 bg-white text-blue-600 hover:bg-blue-50">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                Sửa
+                            </button>
+                            ${canDelete ? `
+                            <button type="button" data-criteria-delete="${idBo}" class="criteria-delete-btn inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded border border-rose-300 bg-white text-rose-600 hover:bg-rose-50">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                Xóa
+                            </button>
+                            ` : `
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed" title="Không thể xóa vì đang được sử dụng">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                Đang dùng
+                            </span>
+                            `}
                         </div>
                     </div>`;
         }).join('');
@@ -362,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return [];
         }
 
-        const rows = [...criteriaTableBody.querySelectorAll('tr')];
+        const rows = [...criteriaTableBody.querySelectorAll('.criteria-row')];
         return rows
             .map((row) => {
                 const noiDung = (row.querySelector('[data-field="noi_dung"]')?.value || '').trim();
@@ -405,24 +555,36 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        // Hiển thị loading state
+        if (criteriaSetList) {
+            criteriaSetList.innerHTML = '<div class="px-3 py-2 border rounded-lg border-slate-200 bg-slate-50 text-slate-500">Đang tải dữ liệu bộ tiêu chí...</div>';
+        }
+
         try {
             const data = await layDuLieuBoTieuChi();
+            console.log('Dữ liệu bộ tiêu chí:', data);
 
+            // Populate dropdown vòng thi
             const rounds = Array.isArray(data.vong_thi) ? data.vong_thi : [];
+            console.log('Danh sách vòng thi:', rounds);
             if (criteriaVongThi) {
                 criteriaVongThi.innerHTML = '<option value="0">-- Chưa gán vòng thi --</option>' + rounds
                     .map((round) => `<option value="${round.idVongThi}">${round.tenVongThi} (Vòng ${round.thuTu || '--'})</option>`)
                     .join('');
             }
 
+            // Populate datalist ngân hàng tiêu chí
             const bank = Array.isArray(data.ngan_hang_tieu_chi) ? data.ngan_hang_tieu_chi : [];
+            console.log('Ngân hàng tiêu chí:', bank);
             if (criteriaBankList) {
                 criteriaBankList.innerHTML = bank
                     .map((item) => `<option value="${String(item.noiDungTieuChi || '').replace(/"/g, '&quot;')}"></option>`)
                     .join('');
             }
 
+            // Populate dropdown bộ tiêu chí có sẵn
             const sets = Array.isArray(data.bo_tieu_chi) ? data.bo_tieu_chi : [];
+            console.log('Danh sách bộ tiêu chí:', sets);
             if (criteriaReuseSetDropdown) {
                 criteriaReuseSetDropdown.innerHTML = '<option value="">-- Chọn bộ tiêu chí để nhân bản --</option>' + sets
                     .map((item) => `<option value="${item.idBoTieuChi}">${item.tenBoTieuChi}</option>`)
@@ -433,8 +595,13 @@ document.addEventListener('DOMContentLoaded', function () {
             renderCriteriaSetList(sets);
             resetCriteriaForm();
         } catch (error) {
+            console.error('Lỗi khi tải dữ liệu bộ tiêu chí:', error);
             if (criteriaSetList) {
-                criteriaSetList.innerHTML = `<div class="px-3 py-2 border rounded-lg border-rose-200 bg-rose-50 text-rose-600">${error.message || 'Không tải được dữ liệu bộ tiêu chí'}</div>`;
+                criteriaSetList.innerHTML = `<div class="px-3 py-2 border rounded-lg border-rose-200 bg-rose-50 text-rose-600">
+                    <p class="font-semibold mb-1">Không tải được dữ liệu bộ tiêu chí</p>
+                    <p class="text-xs">${error.message || 'Vui lòng kiểm tra đăng nhập và quyền truy cập.'}</p>
+                    <button type="button" onclick="location.reload()" class="mt-2 px-3 py-1 text-xs font-semibold rounded border border-rose-300 bg-white text-rose-600 hover:bg-rose-50">Tải lại trang</button>
+                </div>`;
             }
         }
     }
@@ -928,6 +1095,222 @@ document.addEventListener('DOMContentLoaded', function () {
         await renderRuleList();
     }
 
+    // Function to load data for review-assign tab
+    async function khoiTaoTabReviewAssign() {
+        if (currentTab !== 'review-assign') {
+            return;
+        }
+
+        // Get review-assign container elements
+        const reviewAssignContainer = document.querySelector('#reviewAssignContainer') || 
+                                    document.querySelector('[data-tab="review-assign"]') ||
+                                    document.querySelector('.review-assign-content');
+
+        if (!reviewAssignContainer) {
+            console.warn('Review assign container not found');
+            return;
+        }
+
+        try {
+            // Show loading state
+            reviewAssignContainer.innerHTML = `
+                <div class="p-4 text-center">
+                    <i class="fas fa-spinner fa-spin text-2xl mb-2 text-slate-400"></i>
+                    <p class="text-sm text-slate-500">Đang tải dữ liệu phân công phản biện...</p>
+                </div>
+            `;
+
+            // Load necessary data
+            const promises = [
+                fetch(`${BASE_PATH}/api/cham_diem/phan_cong_giam_khao.php?action=list_giang_vien`, {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                }).then(r => r.json()),
+                
+                fetch(`${BASE_PATH}/api/su_kien/danh_sach_vong_thi.php?id_sk=${encodeURIComponent(idSk)}`, {
+                    method: 'GET', 
+                    credentials: 'same-origin'
+                }).then(r => r.json())
+            ];
+
+            const [giangVienResponse, vongThiResponse] = await Promise.all(promises);
+
+            if (giangVienResponse.status !== 'success') {
+                throw new Error(giangVienResponse.message || 'Không thể lấy danh sách giảng viên');
+            }
+
+            if (vongThiResponse.status !== 'success') {
+                throw new Error(vongThiResponse.message || 'Không thể lấy danh sách vòng thi');
+            }
+
+            const giangVien = giangVienResponse.data || [];
+            const vongThi = vongThiResponse.data || [];
+
+            // Render interface
+            renderReviewAssignInterface(giangVien, vongThi);
+
+        } catch (error) {
+            if (reviewAssignContainer) {
+                reviewAssignContainer.innerHTML = `
+                    <div class="p-4 border rounded-lg border-rose-200 bg-rose-50 text-rose-600">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Lỗi: ${error.message || 'Không thể tải dữ liệu phân công phản biện'}
+                    </div>
+                `;
+            }
+        }
+    }
+
+    function renderReviewAssignInterface(giangVien, vongThi) {
+        const reviewAssignContainer = document.querySelector('#reviewAssignContainer') || 
+                                    document.querySelector('[data-tab="review-assign"]') ||
+                                    document.querySelector('.review-assign-content');
+
+        if (!reviewAssignContainer) return;
+
+        reviewAssignContainer.innerHTML = `
+            <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <!-- Left panel: Assignment interface -->
+                <div class="p-4 border rounded-xl border-slate-200 bg-white">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                        <div>
+                            <p class="mb-0 text-sm font-bold text-slate-700">
+                                <i class="fas fa-user-plus mr-2 text-slate-400"></i>Phân công phản biện
+                            </p>
+                            <p class="mb-0 text-xs text-slate-500">
+                                Gán giảng viên phản biện cho bài nộp trong sự kiện
+                            </p>
+                        </div>
+                        <select id="reviewVongThiSelect" class="px-3 py-2 text-sm border rounded-lg border-slate-300">
+                            <option value="">-- Chọn vòng thi --</option>
+                            ${vongThi.map(v => `<option value="${v.idVongThi}">${v.tenVongThi}</option>`).join('')}
+                        </select>
+                    </div>
+                    
+                    <div id="reviewAssignmentList" class="space-y-2 max-h-[400px] overflow-y-auto">
+                        <div class="px-4 py-8 text-center text-slate-400">
+                            <i class="fas fa-hand-pointer text-2xl mb-2"></i>
+                            <p class="text-sm">Chọn vòng thi để xem danh sách bài nộp</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right panel: Reviewer list -->
+                <div class="p-4 border rounded-xl border-slate-200 bg-white">
+                    <p class="mb-3 text-sm font-bold text-slate-700">
+                        <i class="fas fa-users mr-2 text-slate-400"></i>Danh sách giảng viên phản biện (${giangVien.length})
+                    </p>
+                    
+                    <div class="space-y-2 max-h-[400px] overflow-y-auto">
+                        ${giangVien.map(gv => `
+                            <div class="p-3 border rounded-lg border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors">
+                                <p class="mb-1 text-sm font-semibold text-slate-700">${gv.tenGV || gv.tenTK || 'N/A'}</p>
+                                <p class="mb-1 text-xs text-slate-500">
+                                    ${gv.tenKhoa ? `Khoa: ${gv.tenKhoa}` : `Tài khoản: ${gv.tenTK || 'N/A'}`}
+                                </p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs text-slate-400">
+                                        Đã chấm: ${gv.soBaiDangCham || 0} bài
+                                    </span>
+                                    <button type="button" data-reviewer-id="${gv.idGV}" 
+                                            class="reviewer-select-btn px-2 py-1 text-xs font-semibold text-purple-600 bg-purple-100 rounded hover:bg-purple-200 transition-colors">
+                                        Chọn
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics panel -->
+            <div class="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+                <div class="p-4 border rounded-xl border-slate-200 bg-gradient-to-br from-blue-50 to-cyan-50">
+                    <p class="text-xs font-bold uppercase text-blue-600">Tổng bài nộp</p>
+                    <p id="statTongBaiNop" class="mb-0 text-2xl font-bold text-blue-700">--</p>
+                </div>
+                <div class="p-4 border rounded-xl border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50">
+                    <p class="text-xs font-bold uppercase text-amber-600">Đã phân công</p>
+                    <p id="statDaPhanCongReview" class="mb-0 text-2xl font-bold text-amber-700">--</p>
+                </div>
+                <div class="p-4 border rounded-xl border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50">
+                    <p class="text-xs font-bold uppercase text-emerald-600">Đã review</p>
+                    <p id="statDaReview" class="mb-0 text-2xl font-bold text-emerald-700">--</p>
+                </div>
+                <div class="p-4 border rounded-xl border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+                    <p class="text-xs font-bold uppercase text-purple-600">Giảng viên tham gia</p>
+                    <p class="mb-0 text-2xl font-bold text-purple-700">${giangVien.length}</p>
+                </div>
+            </div>
+        `;
+
+        // Add event listeners
+        const vongThiSelect = document.getElementById('reviewVongThiSelect');
+        if (vongThiSelect) {
+            vongThiSelect.addEventListener('change', loadSubmissionsForReview);
+        }
+
+        // Add reviewer selection event listeners
+        reviewAssignContainer.addEventListener('click', function(event) {
+            if (event.target.matches('.reviewer-select-btn')) {
+                const reviewerId = event.target.getAttribute('data-reviewer-id');
+                // Handle reviewer selection logic here
+                console.log('Selected reviewer:', reviewerId);
+            }
+        });
+    }
+
+    async function loadSubmissionsForReview() {
+        const vongThiSelect = document.getElementById('reviewVongThiSelect');
+        const listContainer = document.getElementById('reviewAssignmentList');
+        
+        if (!vongThiSelect || !listContainer) return;
+        
+        const selectedVongThi = vongThiSelect.value;
+        
+        if (!selectedVongThi) {
+            listContainer.innerHTML = `
+                <div class="px-4 py-8 text-center text-slate-400">
+                    <i class="fas fa-hand-pointer text-2xl mb-2"></i>
+                    <p class="text-sm">Chọn vòng thi để xem danh sách bài nộp</p>
+                </div>
+            `;
+            return;
+        }
+
+        try {
+            listContainer.innerHTML = `
+                <div class="px-4 py-8 text-center text-slate-400">
+                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                    <p class="text-sm">Đang tải danh sách bài nộp...</p>
+                </div>
+            `;
+
+            // This is a placeholder - you'll need to create appropriate API endpoints
+            // For now, showing a message that the feature needs API implementation
+            listContainer.innerHTML = `
+                <div class="p-4 border rounded-lg border-yellow-200 bg-yellow-50 text-yellow-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Đã chọn vòng thi ${selectedVongThi}</strong>
+                    <p class="mt-2 text-sm">
+                        API endpoint để lấy danh sách bài nộp theo vòng thi cần được tạo. 
+                        Vui lòng tham khảo API có sẵn trong thư mục <code>/api/</code> để tạo endpoint phù hợp.
+                    </p>
+                    <p class="mt-1 text-xs text-yellow-600">
+                        Gợi ý: <code>GET /api/su_kien/danh_sach_bai_nop.php?id_sk=${idSk}&id_vong_thi=${selectedVongThi}</code>
+                    </p>
+                </div>
+            `;
+        } catch (error) {
+            listContainer.innerHTML = `
+                <div class="p-4 border rounded-lg border-rose-200 bg-rose-50 text-rose-600">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    ${error.message || 'Không thể tải danh sách bài nộp'}
+                </div>
+            `;
+        }
+    }
+
     async function reloadRuleTypeContext(nextType) {
         if (!allowedRuleTypes.includes(nextType)) {
             return;
@@ -987,25 +1370,84 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        const totalRounds = rounds.length;
+
         basicRoundList.innerHTML = rounds
-            .map((round) => {
+            .map((round, index) => {
+                const idVongThi = Number(round.idVongThi || 0);
                 const tenVong = String(round.tenVongThi || '--');
                 const thuTu = Number(round.thuTu || 0);
                 const ngayBatDau = formatDateTime(round.ngayBatDau);
                 const ngayKetThuc = formatDateTime(round.ngayKetThuc);
                 const moTa = String(round.moTa || '').trim();
+                const trangThai = round.trangThai || 'dang_dien_ra';
+                // Kiểm tra đã đóng nộp thủ công chưa
+                const daDongNop = Boolean(round.daDongNop) || Number(round.dongNopThuCong) === 1;
 
-                return `<div class="p-3 border rounded-lg border-slate-200 bg-slate-50">
-                            <div class="flex items-center justify-between gap-2 mb-1">
-                                <p class="mb-0 text-sm font-semibold text-slate-700">${tenVong}</p>
-                                <span class="px-2 py-1 text-xs font-bold rounded-md bg-white border border-slate-200 text-slate-600">Vòng ${thuTu}</span>
+                // Badge trạng thái
+                let statusBadge = '';
+                if (trangThai === 'chua_bat_dau') {
+                    statusBadge = '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">Chưa bắt đầu</span>';
+                } else if (trangThai === 'da_ket_thuc') {
+                    statusBadge = '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-500">Đã kết thúc</span>';
+                } else {
+                    statusBadge = '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700">Đang diễn ra</span>';
+                }
+
+                // Badge đóng nộp
+                const dongNopBadge = daDongNop 
+                    ? '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-rose-100 text-rose-600">Đã đóng nộp</span>' 
+                    : '';
+
+                // Nút di chuyển lên/xuống
+                const canMoveUp = index > 0;
+                const canMoveDown = index < totalRounds - 1;
+
+                return `<div class="p-3 border rounded-lg border-slate-200 bg-slate-50" data-round-id="${idVongThi}" data-round-order="${thuTu}">
+                            <div class="flex items-start justify-between gap-2 mb-2">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                        <p class="mb-0 text-sm font-semibold text-slate-700 truncate">${tenVong}</p>
+                                        <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-white border border-slate-200 text-slate-600 shrink-0">Vòng ${thuTu}</span>
+                                        ${statusBadge}
+                                        ${dongNopBadge}
+                                    </div>
+                                    <p class="mb-1 text-xs text-slate-500">${ngayBatDau} → ${ngayKetThuc}</p>
+                                    <p class="mb-0 text-xs text-slate-500 line-clamp-2">${moTa || 'Không có mô tả.'}</p>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <!-- Nút di chuyển -->
+                                    <button type="button" class="btn-move-round-up p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed" ${!canMoveUp ? 'disabled' : ''} data-round-id="${idVongThi}" title="Di chuyển lên">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                    </button>
+                                    <button type="button" class="btn-move-round-down p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed" ${!canMoveDown ? 'disabled' : ''} data-round-id="${idVongThi}" title="Di chuyển xuống">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <!-- Nút hành động -->
+                                    <button type="button" class="btn-edit-round p-1 text-blue-400 hover:text-blue-600" data-round-id="${idVongThi}" title="Sửa vòng thi">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    </button>
+                                    <button type="button" class="btn-toggle-round p-1 ${daDongNop ? 'text-emerald-400 hover:text-emerald-600' : 'text-amber-400 hover:text-amber-600'}" data-round-id="${idVongThi}" title="${daDongNop ? 'Mở lại nộp bài' : 'Đóng nộp bài'}">
+                                        ${daDongNop 
+                                            ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>'
+                                            : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>'
+                                        }
+                                    </button>
+                                    <button type="button" class="btn-delete-round p-1 text-rose-400 hover:text-rose-600" data-round-id="${idVongThi}" title="Xóa vòng thi">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
                             </div>
-                            <p class="mb-1 text-xs text-slate-500">${ngayBatDau} → ${ngayKetThuc}</p>
-                            <p class="mb-0 text-xs text-slate-500">${moTa || 'Không có mô tả.'}</p>
                         </div>`;
             })
             .join('');
+
+        // Gắn event listeners cho các nút
+        attachRoundActionListeners();
     }
+
+    // Lưu trữ dữ liệu vòng thi hiện tại
+    let currentRoundsData = [];
 
     async function napDanhSachVongThi() {
         if (!basicRoundList || idSk <= 0) {
@@ -1016,9 +1458,267 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             const rounds = await layDanhSachVongThi(idSk);
+            currentRoundsData = rounds;
             renderRoundList(rounds);
         } catch (error) {
             basicRoundList.innerHTML = `<div class="px-3 py-3 text-sm border rounded-lg border-rose-200 bg-rose-50 text-rose-600">${error.message || 'Không tải được danh sách vòng thi'}</div>`;
+        }
+    }
+
+    // Hàm gắn event listeners cho các nút action của vòng thi
+    function attachRoundActionListeners() {
+        // Nút sửa
+        document.querySelectorAll('.btn-edit-round').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const roundId = Number(this.dataset.roundId);
+                handleEditRound(roundId);
+            });
+        });
+
+        // Nút xóa
+        document.querySelectorAll('.btn-delete-round').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const roundId = Number(this.dataset.roundId);
+                handleDeleteRound(roundId);
+            });
+        });
+
+        // Nút toggle
+        document.querySelectorAll('.btn-toggle-round').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const roundId = Number(this.dataset.roundId);
+                handleToggleRound(roundId);
+            });
+        });
+
+        // Nút di chuyển lên
+        document.querySelectorAll('.btn-move-round-up').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const roundId = Number(this.dataset.roundId);
+                handleMoveRound(roundId, 'up');
+            });
+        });
+
+        // Nút di chuyển xuống
+        document.querySelectorAll('.btn-move-round-down').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const roundId = Number(this.dataset.roundId);
+                handleMoveRound(roundId, 'down');
+            });
+        });
+    }
+
+    // Xử lý sửa vòng thi
+    async function handleEditRound(roundId) {
+        const round = currentRoundsData.find(r => Number(r.idVongThi) === roundId);
+        if (!round) {
+            Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không tìm thấy thông tin vòng thi' });
+            return;
+        }
+
+        const { value: formValues } = await Swal.fire({
+            title: 'Sửa vòng thi',
+            html:
+                '<div class="text-left swal-round-form">' +
+                '<div class="space-y-3">' +
+                '<div>' +
+                '<label class="block mb-1 text-xs font-semibold text-slate-700">Tên vòng thi <span class="text-rose-500">*</span></label>' +
+                `<input id="swal-edit-tenVongThi" type="text" class="swal2-input !w-full !m-0" value="${round.tenVongThi || ''}" />` +
+                '</div>' +
+                '<div>' +
+                '<label class="block mb-1 text-xs font-semibold text-slate-700">Mô tả</label>' +
+                `<textarea id="swal-edit-moTaVongThi" rows="2" class="swal2-textarea !w-full !m-0">${round.moTa || ''}</textarea>` +
+                '</div>' +
+                '<div>' +
+                '<label class="block mb-1 text-xs font-semibold text-slate-700">Thứ tự</label>' +
+                `<input id="swal-edit-thuTuVongThi" type="number" min="1" class="swal2-input !w-full !m-0" value="${round.thuTu || 1}" />` +
+                '</div>' +
+                '<div class="grid grid-cols-2 gap-3">' +
+                '<div>' +
+                '<label class="block mb-1 text-xs font-semibold text-slate-700">Ngày bắt đầu</label>' +
+                `<input id="swal-edit-ngayBDVongThi" type="datetime-local" class="swal2-input !w-full !m-0" value="${toDatetimeLocal(round.ngayBatDau)}" />` +
+                '</div>' +
+                '<div>' +
+                '<label class="block mb-1 text-xs font-semibold text-slate-700">Ngày kết thúc</label>' +
+                `<input id="swal-edit-ngayKTVongThi" type="datetime-local" class="swal2-input !w-full !m-0" value="${toDatetimeLocal(round.ngayKetThuc)}" />` +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>',
+            showCancelButton: true,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal-round-popup',
+                confirmButton: 'swal-round-confirm',
+                cancelButton: 'swal-round-cancel',
+                actions: 'swal-round-actions',
+            },
+            confirmButtonText: 'Lưu thay đổi',
+            cancelButtonText: 'Huỷ',
+            preConfirm: () => {
+                const tenVong = document.getElementById('swal-edit-tenVongThi').value.trim();
+                if (!tenVong) {
+                    Swal.showValidationMessage('Tên vòng thi không được để trống');
+                    return false;
+                }
+
+                return {
+                    id_vong_thi: roundId,
+                    ten_vong: tenVong,
+                    mo_ta: document.getElementById('swal-edit-moTaVongThi').value.trim(),
+                    thu_tu: Number(document.getElementById('swal-edit-thuTuVongThi').value || 1),
+                    ngay_bat_dau: toDatabaseDateTime(document.getElementById('swal-edit-ngayBDVongThi').value),
+                    ngay_ket_thuc: toDatabaseDateTime(document.getElementById('swal-edit-ngayKTVongThi').value),
+                };
+            },
+        });
+
+        if (!formValues) return;
+
+        try {
+            const response = await fetch(`${BASE_PATH}/api/su_kien/cap_nhat_vong_thi.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formValues),
+            });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                await napDanhSachVongThi();
+                Swal.fire({ icon: 'success', title: 'Thành công', text: result.message });
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            Swal.fire({ icon: 'error', title: 'Lỗi', text: error.message || 'Không thể cập nhật vòng thi' });
+        }
+    }
+
+    // Xử lý xóa vòng thi
+    async function handleDeleteRound(roundId) {
+        const round = currentRoundsData.find(r => Number(r.idVongThi) === roundId);
+        if (!round) return;
+
+        const confirm = await Swal.fire({
+            title: 'Xác nhận xóa',
+            html: `Bạn có chắc muốn xóa vòng thi "<strong>${round.tenVongThi}</strong>"?<br><small class="text-slate-500">Thao tác này không thể hoàn tác.</small>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Xóa',
+            cancelButtonText: 'Huỷ',
+            confirmButtonColor: '#ef4444',
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            const response = await fetch(`${BASE_PATH}/api/su_kien/xoa_vong_thi.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_vong_thi: roundId }),
+            });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                await napDanhSachVongThi();
+                Swal.fire({ icon: 'success', title: 'Thành công', text: result.message });
+            } else if (result.hasRelatedData) {
+                // Hiển thị thông báo có dữ liệu liên quan - không thể xóa
+                Swal.fire({
+                    title: 'Không thể xóa',
+                    html: `Vòng thi này có <strong>${result.relatedData.join(', ')}</strong> liên quan.<br>Bạn cần xóa dữ liệu liên quan trước khi xóa vòng thi.`,
+                    icon: 'error',
+                    confirmButtonText: 'Đã hiểu',
+                    confirmButtonColor: '#64748b',
+                });
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            Swal.fire({ icon: 'error', title: 'Lỗi', text: error.message || 'Không thể xóa vòng thi' });
+        }
+    }
+
+    // Xử lý toggle trạng thái đóng/mở nộp bài vòng thi
+    async function handleToggleRound(roundId) {
+        const round = currentRoundsData.find(r => Number(r.idVongThi) === roundId);
+        if (!round) return;
+
+        // Kiểm tra đã đóng nộp thủ công chưa
+        const daDongNop = Boolean(round.daDongNop) || Number(round.dongNopThuCong) === 1;
+        const action = daDongNop ? 'mở lại nộp bài' : 'đóng nộp bài';
+
+        const confirm = await Swal.fire({
+            title: `Xác nhận ${action}`,
+            text: daDongNop 
+                ? `Bạn có muốn mở lại cho sinh viên nộp bài vào vòng "${round.tenVongThi}"?`
+                : `Bạn có muốn đóng nộp bài cho vòng "${round.tenVongThi}"? Sinh viên sẽ không thể nộp bài mới.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: daDongNop ? 'Mở lại nộp bài' : 'Đóng nộp bài',
+            cancelButtonText: 'Huỷ',
+            confirmButtonColor: daDongNop ? '#10b981' : '#f59e0b',
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            const response = await fetch(`${BASE_PATH}/api/su_kien/toggle_vong_thi.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_vong_thi: roundId }),
+            });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                await napDanhSachVongThi();
+                Swal.fire({ icon: 'success', title: 'Thành công', text: result.message, timer: 1500, showConfirmButton: false });
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            Swal.fire({ icon: 'error', title: 'Lỗi', text: error.message || 'Không thể thay đổi trạng thái nộp bài' });
+        }
+    }
+
+    // Xử lý di chuyển vòng thi lên/xuống
+    async function handleMoveRound(roundId, direction) {
+        const currentIndex = currentRoundsData.findIndex(r => Number(r.idVongThi) === roundId);
+        if (currentIndex === -1) return;
+
+        const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+        if (swapIndex < 0 || swapIndex >= currentRoundsData.length) return;
+
+        // Tạo mảng thứ tự mới
+        const thuTuMoi = {};
+        currentRoundsData.forEach((round, idx) => {
+            let newOrder = idx + 1;
+            if (idx === currentIndex) {
+                newOrder = swapIndex + 1;
+            } else if (idx === swapIndex) {
+                newOrder = currentIndex + 1;
+            }
+            thuTuMoi[round.idVongThi] = newOrder;
+        });
+
+        try {
+            const response = await fetch(`${BASE_PATH}/api/su_kien/sap_xep_vong_thi.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_su_kien: idSk,
+                    thu_tu_moi: thuTuMoi,
+                }),
+            });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                await napDanhSachVongThi();
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            Swal.fire({ icon: 'error', title: 'Lỗi', text: error.message || 'Không thể sắp xếp vòng thi' });
         }
     }
 
@@ -1120,6 +1820,7 @@ document.addEventListener('DOMContentLoaded', function () {
     khoiTaoTrangChiTiet();
     khoiTaoTabConfigRules();
     khoiTaoTabConfigCriteria();
+    khoiTaoTabReviewAssign();
 
     if (btnSaveBasicConfig) {
         btnSaveBasicConfig.addEventListener('click', async function () {
@@ -1526,14 +2227,42 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (criteriaTableBody) {
+        // Xử lý click các nút hành động
         criteriaTableBody.addEventListener('click', function (event) {
             const removeBtn = event.target.closest('.criteria-row-remove');
-            if (!removeBtn) {
+            const upBtn = event.target.closest('.criteria-row-up');
+            const downBtn = event.target.closest('.criteria-row-down');
+            
+            if (removeBtn) {
+                const row = removeBtn.closest('.criteria-row');
+                if (row) {
+                    row.remove();
+                    updateCriteriaSTT();
+                    updateCriteriaTotals();
+                }
+                if (criteriaTableBody.querySelectorAll('.criteria-row').length === 0) {
+                    addCriteriaRow();
+                }
                 return;
             }
-            removeBtn.closest('tr')?.remove();
-            if (criteriaTableBody.querySelectorAll('tr').length === 0) {
-                addCriteriaRow();
+            
+            if (upBtn) {
+                const row = upBtn.closest('.criteria-row');
+                moveCriteriaRow(row, 'up');
+                return;
+            }
+            
+            if (downBtn) {
+                const row = downBtn.closest('.criteria-row');
+                moveCriteriaRow(row, 'down');
+            }
+        });
+        
+        // Cập nhật tổng khi input thay đổi
+        criteriaTableBody.addEventListener('input', function (event) {
+            const target = event.target;
+            if (target.matches('[data-field="diem_toi_da"], [data-field="ty_trong"]')) {
+                updateCriteriaTotals();
             }
         });
     }
@@ -1558,6 +2287,7 @@ document.addEventListener('DOMContentLoaded', function () {
         criteriaSetList.addEventListener('click', async function (event) {
             const cloneBtn = event.target.closest('.criteria-clone-btn');
             const editBtn = event.target.closest('.criteria-edit-btn');
+            const deleteBtn = event.target.closest('.criteria-delete-btn');
 
             if (cloneBtn) {
                 const idBo = Number(cloneBtn.dataset.criteriaClone || 0);
@@ -1578,6 +2308,40 @@ document.addEventListener('DOMContentLoaded', function () {
                         await doDuLieuBoTieuChiVaoForm(idBo, 'edit');
                     } catch (error) {
                         Swal.fire({ icon: 'error', title: 'Không thể nạp dữ liệu sửa', text: error.message || 'Vui lòng thử lại.' });
+                    }
+                }
+                return;
+            }
+
+            if (deleteBtn) {
+                const idBo = Number(deleteBtn.dataset.criteriaDelete || 0);
+                if (idBo <= 0) return;
+
+                const confirm = await Swal.fire({
+                    title: 'Xác nhận xóa',
+                    html: `Bạn có chắc muốn xóa bộ tiêu chí <strong>#${idBo}</strong>?<br><small class="text-slate-500">Thao tác này không thể hoàn tác.</small>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Xóa',
+                    cancelButtonText: 'Huỷ',
+                    confirmButtonColor: '#ef4444',
+                });
+
+                if (!confirm.isConfirmed) return;
+
+                try {
+                    await xoaBoTieuChi(idBo);
+                    await khoiTaoTabConfigCriteria();
+                    Swal.fire({ icon: 'success', title: 'Đã xóa', text: 'Bộ tiêu chí đã được xóa thành công.', timer: 1500, showConfirmButton: false });
+                } catch (error) {
+                    if (error.hasRelatedData && Array.isArray(error.relatedData)) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Không thể xóa',
+                            html: `Bộ tiêu chí đang được sử dụng tại:<br><ul class="text-left mt-2">${error.relatedData.map((r) => `<li>• ${r}</li>`).join('')}</ul>`,
+                        });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Không thể xóa', text: error.message || 'Vui lòng thử lại.' });
                     }
                 }
             }

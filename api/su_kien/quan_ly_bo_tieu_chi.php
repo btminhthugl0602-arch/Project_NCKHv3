@@ -638,3 +638,108 @@ function luu_bo_tieu_chi_theo_su_kien($conn, int $id_nguoi_thuc_hien, int $id_su
         ];
     }
 }
+
+/**
+ * Xóa bộ tiêu chí
+ * - Kiểm tra quyền
+ * - Kiểm tra bộ tiêu chí có đang được sử dụng không (trong cauhinh_tieuchi_sk hoặc tieuban)
+ * - Nếu đang sử dụng, không cho xóa
+ * - Nếu không, xóa bản ghi trong botieuchi_tieuchi trước, rồi xóa bộ tiêu chí
+ */
+function xoa_bo_tieu_chi($conn, int $id_nguoi_thuc_hien, int $id_su_kien, int $id_bo): array
+{
+    if (!xac_thuc_quyen_bo_tieu_chi($conn, $id_nguoi_thuc_hien, $id_su_kien)) {
+        return ['status' => false, 'message' => 'Không có quyền xóa bộ tiêu chí'];
+    }
+
+    if ($id_bo <= 0 || !_is_exist($conn, 'botieuchi', 'idBoTieuChi', $id_bo)) {
+        return ['status' => false, 'message' => 'Bộ tiêu chí không tồn tại'];
+    }
+
+    // Kiểm tra bộ tiêu chí có đang được sử dụng trong cauhinh_tieuchi_sk không
+    $stmtCauHinh = $conn->prepare(
+        'SELECT c.idVongThi, v.tenVongThi 
+         FROM cauhinh_tieuchi_sk c
+         LEFT JOIN vongthi v ON c.idVongThi = v.idVongThi
+         WHERE c.idBoTieuChi = :idBo'
+    );
+    $stmtCauHinh->execute([':idBo' => $id_bo]);
+    $vongThiSuDung = $stmtCauHinh->fetchAll(PDO::FETCH_ASSOC);
+
+    // Kiểm tra bộ tiêu chí có đang được sử dụng trong tieuban không
+    $tieubanSuDung = [];
+    if (_criteria_table_has_column($conn, 'tieuban', 'idBoTieuChi')) {
+        $stmtTieuBan = $conn->prepare(
+            'SELECT idTieuBan, tenTieuBan 
+             FROM tieuban 
+             WHERE idBoTieuChi = :idBo'
+        );
+        $stmtTieuBan->execute([':idBo' => $id_bo]);
+        $tieubanSuDung = $stmtTieuBan->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Kiểm tra có bản ghi chấm điểm nào đang sử dụng tiêu chí trong bộ này không
+    $stmtChamDiem = $conn->prepare(
+        'SELECT COUNT(*) FROM chamtieuchi ct
+         JOIN botieuchi_tieuchi bt ON ct.idTieuChi = bt.idTieuChi
+         WHERE bt.idBoTieuChi = :idBo'
+    );
+    $stmtChamDiem->execute([':idBo' => $id_bo]);
+    $soChamDiem = (int) $stmtChamDiem->fetchColumn();
+
+    // Nếu đang được sử dụng, trả về danh sách và không cho xóa
+    $dangSuDung = [];
+    if (!empty($vongThiSuDung)) {
+        foreach ($vongThiSuDung as $v) {
+            $dangSuDung[] = 'Vòng thi: ' . ($v['tenVongThi'] ?? 'ID ' . $v['idVongThi']);
+        }
+    }
+    if (!empty($tieubanSuDung)) {
+        foreach ($tieubanSuDung as $tb) {
+            $dangSuDung[] = 'Tiểu ban: ' . ($tb['tenTieuBan'] ?? 'ID ' . $tb['idTieuBan']);
+        }
+    }
+    if ($soChamDiem > 0) {
+        $dangSuDung[] = "{$soChamDiem} lượt chấm điểm";
+    }
+
+    if (!empty($dangSuDung)) {
+        return [
+            'status' => false,
+            'message' => 'Không thể xóa bộ tiêu chí đang được sử dụng',
+            'hasRelatedData' => true,
+            'relatedData' => $dangSuDung,
+        ];
+    }
+
+    // Tiến hành xóa
+    try {
+        $conn->beginTransaction();
+
+        // Xóa mapping tiêu chí con
+        _delete_info($conn, 'botieuchi_tieuchi', ['idBoTieuChi' => ['=', $id_bo, '']]);
+
+        // Xóa bộ tiêu chí
+        $ok = _delete_info($conn, 'botieuchi', ['idBoTieuChi' => ['=', $id_bo, '']]);
+
+        if (!$ok) {
+            throw new RuntimeException('Không thể xóa bộ tiêu chí');
+        }
+
+        $conn->commit();
+
+        return [
+            'status' => true,
+            'message' => 'Đã xóa bộ tiêu chí thành công',
+        ];
+    } catch (Throwable $exception) {
+        if ($conn instanceof PDO && $conn->inTransaction()) {
+            $conn->rollBack();
+        }
+
+        return [
+            'status' => false,
+            'message' => $exception->getMessage() ?: 'Lỗi hệ thống khi xóa bộ tiêu chí',
+        ];
+    }
+}
