@@ -383,9 +383,7 @@ function kiem_tra_quyen_he_thong($conn, $id_tai_khoan, $ma_quyen_code)
 /**
  * Kiểm tra quyền THEO SỰ KIỆN (SU_KIEN) dựa trên CSDL mới.
  * - Role của user trong sự kiện: taikhoan_vaitro_sukien (isActive=1)
- * - Role metadata: vaitro_sukien (isActive=1)
- *   + isSystem=1 => quyền lấy từ vaitro_quyen theo idVaiTroGoc
- *   + isSystem=0 => quyền lấy từ vaitro_quyen_sk theo idVaiTroSK
+ * - Quyền role lấy từ bảng vaitro_quyen theo idVaiTro
  * - Quyền match theo quyen.maQuyen_code (phamVi='SU_KIEN')
  */
 function kiem_tra_quyen_su_kien($conn, int $idTK, int $idSK, string $maQuyenCode): bool
