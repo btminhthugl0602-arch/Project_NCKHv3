@@ -1,0 +1,13 @@
+.event-title-link {
+    color: #7e22ce;
+    text-decoration: none;
+    transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.event-title-link:hover,
+.event-title-link:focus {
+    color: #5b21b6;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 2px;
+}

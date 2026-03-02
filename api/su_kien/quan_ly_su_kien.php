@@ -262,9 +262,11 @@ function btc_lay_chi_tiet_su_kien($conn, $id_su_kien)
     }
 
     $cap = !empty($su_kien['idCap']) ? truy_van_mot_ban_ghi($conn, 'cap_tochuc', 'idCap', (int) $su_kien['idCap']) : null;
+    $loai_cap = (!empty($cap) && !empty($cap['idLoaiCap'])) ? truy_van_mot_ban_ghi($conn, 'loaicap', 'idLoaiCap', (int) $cap['idLoaiCap']) : null;
     $nguoi_tao = !empty($su_kien['nguoiTao']) ? truy_van_mot_ban_ghi($conn, 'taikhoan', 'idTK', (int) $su_kien['nguoiTao']) : null;
 
     $su_kien['tenCap'] = $cap['tenCap'] ?? null;
+    $su_kien['tenLoaiCap'] = $loai_cap['tenLoaiCap'] ?? null;
     $su_kien['nguoiTaoTen'] = $nguoi_tao['tenTK'] ?? null;
 
     return $su_kien;

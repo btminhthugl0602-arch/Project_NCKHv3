@@ -12,6 +12,101 @@
 
     <div class="items-center block w-auto max-h-screen overflow-auto h-sidenav grow basis-full">
         <ul class="flex flex-col pl-0 mb-0">
+            <?php
+                $useEventSidebar = isset($useEventSidebar) && $useEventSidebar === true;
+                $eventSidebarEventId = isset($eventSidebarEventId) ? (int) $eventSidebarEventId : 0;
+                $eventSidebarSection = isset($eventSidebarSection) ? (string) $eventSidebarSection : 'overview';
+            ?>
+
+            <?php if ($useEventSidebar): ?>
+            <li class="px-4 py-3 mx-4 mb-3 text-white bg-gradient-to-tl from-purple-700 to-pink-500 rounded-xl shadow-soft-xl">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0">
+                        <p class="mb-0 text-xs text-white opacity-80">Sự kiện hiện tại</p>
+                        <p id="sidebarEventName" class="mb-0 text-xl font-bold leading-tight truncate">Đang tải...</p>
+                    </div>
+                    <a href="/events" class="flex items-center justify-center w-9 h-9 text-white rounded-xl bg-white/20 hover:bg-white/30 transition-colors" title="Quay lại danh sách sự kiện">
+                        <i class="fas fa-exchange-alt"></i>
+                    </a>
+                </div>
+            </li>
+
+            <li class="mt-0.5 w-full">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'overview' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=overview">
+                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
+                        <i class="fas fa-home text-slate-700 text-sm"></i>
+                    </div>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Tổng quan</span>
+                </a>
+            </li>
+
+            <li class="w-full mt-4">
+                <h6 class="pl-6 ml-2 text-xs font-bold leading-tight uppercase opacity-60">Cấu hình</h6>
+            </li>
+
+            <li class="mt-0.5 w-full">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'config' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=config">
+                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
+                        <i class="fas fa-cog text-slate-700 text-sm"></i>
+                    </div>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Cấu hình sự kiện</span>
+                </a>
+            </li>
+
+            <li class="w-full mt-4">
+                <h6 class="pl-6 ml-2 text-xs font-bold leading-tight uppercase opacity-60">Quản lý bài nộp</h6>
+            </li>
+
+            <li class="mt-0.5 w-full">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'submissions' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=submissions">
+                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
+                        <i class="fas fa-file-alt text-slate-700 text-sm"></i>
+                    </div>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Tất cả bài nộp</span>
+                </a>
+            </li>
+
+            <li class="mt-0.5 w-full">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'review-assign' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=review-assign">
+                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
+                        <i class="fas fa-user-check text-slate-700 text-sm"></i>
+                    </div>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Phân công phản biện</span>
+                </a>
+            </li>
+
+            <li class="mt-0.5 w-full">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'review-results' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=review-results">
+                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
+                        <i class="fas fa-chart-bar text-slate-700 text-sm"></i>
+                    </div>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Kết quả Review</span>
+                </a>
+            </li>
+
+            <li class="w-full mt-4">
+                <h6 class="pl-6 ml-2 text-xs font-bold leading-tight uppercase opacity-60">Tiểu ban &amp; giải thưởng</h6>
+            </li>
+
+            <li class="mt-0.5 w-full">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'committees' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=committees">
+                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
+                        <i class="fas fa-users text-slate-700 text-sm"></i>
+                    </div>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Quản lý tiểu ban</span>
+                </a>
+            </li>
+
+            <li class="mt-0.5 w-full">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'judges' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=judges">
+                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
+                        <i class="fas fa-gavel text-slate-700 text-sm"></i>
+                    </div>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Phân công BGK</span>
+                </a>
+            </li>
+
+            <?php else: ?>
             <!-- Dashboard -->
             <li class="mt-0.5 w-full">
                 <a class="py-2.7 <?php echo isset($currentPage) && $currentPage == 'dashboard' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/dashboard">
@@ -103,6 +198,7 @@
                     <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Đăng xuất</span>
                 </a>
             </li>
+            <?php endif; ?>
         </ul>
     </div>
 </aside>
