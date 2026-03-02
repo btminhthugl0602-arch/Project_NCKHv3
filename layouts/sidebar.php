@@ -41,15 +41,33 @@
             </li>
 
             <li class="w-full mt-4">
-                <h6 class="pl-6 ml-2 text-xs font-bold leading-tight uppercase opacity-60">Cấu hình</h6>
+                <h6 class="pl-6 ml-2 text-xs font-bold leading-tight uppercase opacity-60">Cấu hình sự kiện</h6>
             </li>
 
             <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo $eventSidebarSection === 'config' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=config">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'config-basic' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=config-basic">
                     <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
                         <i class="fas fa-cog text-slate-700 text-sm"></i>
                     </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Cấu hình sự kiện</span>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Cấu hình cơ bản</span>
+                </a>
+            </li>
+
+            <li class="mt-0.5 w-full">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'config-rules' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=config-rules">
+                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
+                        <i class="fas fa-balance-scale text-slate-700 text-sm"></i>
+                    </div>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Cấu hình quy chế</span>
+                </a>
+            </li>
+
+            <li class="mt-0.5 w-full">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'config-criteria' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=config-criteria">
+                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
+                        <i class="fas fa-tasks text-slate-700 text-sm"></i>
+                    </div>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Thiết lập bộ tiêu chí</span>
                 </a>
             </li>
 
