@@ -85,6 +85,34 @@
             </li>
 
             <li class="w-full mt-4">
+                <h6 class="pl-6 ml-2 text-xs font-bold leading-tight uppercase opacity-60">Nhóm thi</h6>
+            </li>
+
+            <li class="mt-0.5 w-full">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'nhom-thi' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/nhom/tat-ca-nhom?id_sk=<?php echo $eventSidebarEventId; ?>">
+                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
+                        <i class="fas fa-layer-group text-slate-700 text-sm"></i>
+                    </div>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Tất cả nhóm</span>
+                </a>
+            </li>
+            <li class="mt-0.5 w-full">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'nhom-thi' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/nhom/tat-ca-nhom?id_sk=<?php echo $eventSidebarEventId; ?>">
+                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
+                        <i class="fas fa-layer-group text-slate-700 text-sm"></i>
+                    </div>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Nhóm của tôi</span>
+                </a>
+            </li>
+            <li class="mt-0.5 w-full">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'nhom-thi' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/nhom/tat-ca-nhom?id_sk=<?php echo $eventSidebarEventId; ?>">
+                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
+                        <i class="fas fa-layer-group text-slate-700 text-sm"></i>
+                    </div>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">lời mời nhóm</span>
+                </a>
+            </li>
+            <li class="w-full mt-4">
                 <h6 class="pl-6 ml-2 text-xs font-bold leading-tight uppercase opacity-60">Tiểu ban &amp; giải thưởng</h6>
             </li>
 
@@ -150,7 +178,6 @@
                     <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Quản lý Sự kiện</span>
                 </a>
             </li>
-
             <!-- Quản lý nhóm (Sinh viên) -->
             <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'student'): ?>
             <li class="mt-0.5 w-full">
