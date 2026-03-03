@@ -1,17 +1,45 @@
 <?php
+/**
+ * Quản lý sự kiện - Service Layer
+ * 
+ * File này chứa các hàm nghiệp vụ để quản lý sự kiện NCKH.
+ * Bao gồm: tạo, cập nhật, lấy chi tiết, thống kê sự kiện.
+ */
 
 require_once __DIR__ . '/../core/base.php';
 
+// ==========================================
+// CONSTANTS
+// ==========================================
+define('SU_KIEN_TEN_MIN_LENGTH', 5);
+define('SU_KIEN_TEN_MAX_LENGTH', 300);
+define('SU_KIEN_MO_TA_MAX_LENGTH', 5000);
+
+// ==========================================
+// PERMISSION FUNCTIONS
+// ==========================================
+
+/**
+ * Kiểm tra quyền quản lý sự kiện
+ * 
+ * @param PDO $conn Kết nối database
+ * @param int $id_tk ID tài khoản
+ * @param int $id_sk ID sự kiện (0 = kiểm tra quyền tạo mới)
+ * @return bool
+ */
 function co_quyen_quan_ly_su_kien($conn, int $id_tk, int $id_sk = 0): bool
 {
+    // Admin hệ thống có toàn quyền
     if (kiem_tra_quyen_he_thong($conn, $id_tk, 'admin_events')) {
         return true;
     }
 
+    // Người có quyền tạo sự kiện
     if (kiem_tra_quyen_he_thong($conn, $id_tk, 'tao_su_kien')) {
         return true;
     }
 
+    // Kiểm tra quyền cấu hình sự kiện cụ thể
     if ($id_sk > 0) {
         return kiem_tra_quyen_su_kien($conn, $id_tk, $id_sk, 'cauhinh_sukien');
     }
@@ -19,6 +47,141 @@ function co_quyen_quan_ly_su_kien($conn, int $id_tk, int $id_sk = 0): bool
     return false;
 }
 
+/**
+ * Kiểm tra người dùng có phải BTC của sự kiện không
+ */
+function la_btc_su_kien($conn, int $id_tk, int $id_sk): bool
+{
+    if ($id_tk <= 0 || $id_sk <= 0) {
+        return false;
+    }
+
+    $result = _select_info($conn, 'taikhoan_vaitro_sukien', ['id'], [
+        'WHERE' => [
+            'idTK', '=', $id_tk, 'AND',
+            'idSK', '=', $id_sk, 'AND',
+            'idVaiTro', '=', 1, 'AND',
+            'isActive', '=', 1, '',
+        ],
+        'LIMIT' => [1],
+    ]);
+
+    return !empty($result);
+}
+
+// ==========================================
+// VALIDATION FUNCTIONS
+// ==========================================
+
+/**
+ * Validate dữ liệu đầu vào của sự kiện
+ * 
+ * @return array ['valid' => bool, 'errors' => array]
+ */
+function validate_du_lieu_su_kien(
+    $ten_su_kien,
+    $mo_ta,
+    $ngay_mo_dk,
+    $ngay_dong_dk,
+    $ngay_bat_dau,
+    $ngay_ket_thuc
+): array {
+    $errors = [];
+
+    // Validate tên sự kiện
+    $ten_su_kien = trim((string) $ten_su_kien);
+    if ($ten_su_kien === '') {
+        $errors[] = 'Tên sự kiện không được để trống';
+    } elseif (mb_strlen($ten_su_kien) < SU_KIEN_TEN_MIN_LENGTH) {
+        $errors[] = 'Tên sự kiện phải có ít nhất ' . SU_KIEN_TEN_MIN_LENGTH . ' ký tự';
+    } elseif (mb_strlen($ten_su_kien) > SU_KIEN_TEN_MAX_LENGTH) {
+        $errors[] = 'Tên sự kiện không được vượt quá ' . SU_KIEN_TEN_MAX_LENGTH . ' ký tự';
+    }
+
+    // Validate mô tả
+    $mo_ta = trim((string) $mo_ta);
+    if (mb_strlen($mo_ta) > SU_KIEN_MO_TA_MAX_LENGTH) {
+        $errors[] = 'Mô tả không được vượt quá ' . SU_KIEN_MO_TA_MAX_LENGTH . ' ký tự';
+    }
+
+    // Validate ngày tháng
+    $ngay_mo_dk = !empty($ngay_mo_dk) ? $ngay_mo_dk : null;
+    $ngay_dong_dk = !empty($ngay_dong_dk) ? $ngay_dong_dk : null;
+    $ngay_bat_dau = !empty($ngay_bat_dau) ? $ngay_bat_dau : null;
+    $ngay_ket_thuc = !empty($ngay_ket_thuc) ? $ngay_ket_thuc : null;
+
+    if ($ngay_mo_dk !== null && $ngay_dong_dk !== null) {
+        $ts_mo = strtotime((string) $ngay_mo_dk);
+        $ts_dong = strtotime((string) $ngay_dong_dk);
+        if ($ts_mo === false || $ts_dong === false) {
+            $errors[] = 'Định dạng ngày mở/đóng đăng ký không hợp lệ';
+        } elseif ($ts_mo > $ts_dong) {
+            $errors[] = 'Ngày mở đăng ký phải trước ngày đóng đăng ký';
+        }
+    }
+
+    if ($ngay_bat_dau !== null && $ngay_ket_thuc !== null) {
+        $ts_bd = strtotime((string) $ngay_bat_dau);
+        $ts_kt = strtotime((string) $ngay_ket_thuc);
+        if ($ts_bd === false || $ts_kt === false) {
+            $errors[] = 'Định dạng ngày bắt đầu/kết thúc không hợp lệ';
+        } elseif ($ts_bd > $ts_kt) {
+            $errors[] = 'Ngày bắt đầu phải trước ngày kết thúc';
+        }
+    }
+
+    return [
+        'valid' => empty($errors),
+        'errors' => $errors,
+    ];
+}
+
+/**
+ * Kiểm tra tên sự kiện có trùng trong cùng cấp tổ chức không
+ */
+function kiem_tra_trung_ten_su_kien($conn, string $ten_su_kien, ?int $id_cap, int $exclude_id = 0): bool
+{
+    if (!$conn instanceof PDO) {
+        return false;
+    }
+
+    $sql = 'SELECT COUNT(*) FROM sukien WHERE tenSK = :tenSK AND isActive = 1';
+    $params = [':tenSK' => trim($ten_su_kien)];
+
+    if ($id_cap !== null) {
+        $sql .= ' AND idCap = :idCap';
+        $params[':idCap'] = $id_cap;
+    }
+
+    if ($exclude_id > 0) {
+        $sql .= ' AND idSK != :excludeId';
+        $params[':excludeId'] = $exclude_id;
+    }
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    return (int) $stmt->fetchColumn() > 0;
+}
+
+// ==========================================
+// CRUD FUNCTIONS
+// ==========================================
+
+/**
+ * Tạo sự kiện mới
+ * 
+ * @param PDO $conn Kết nối database
+ * @param int $id_nguoi_tao ID người tạo
+ * @param string $ten_su_kien Tên sự kiện
+ * @param string $mo_ta Mô tả
+ * @param int|null $id_cap ID cấp tổ chức
+ * @param string|null $ngay_mo_dk Ngày mở đăng ký
+ * @param string|null $ngay_dong_dk Ngày đóng đăng ký
+ * @param string|null $ngay_bat_dau Ngày bắt đầu
+ * @param string|null $ngay_ket_thuc Ngày kết thúc
+ * @param int $is_active Trạng thái active
+ * @return array ['status' => bool, 'message' => string, 'idSK' => int|null, 'warnings' => array]
+ */
 function btc_tao_su_kien(
     $conn,
     $id_nguoi_tao,
@@ -35,30 +198,34 @@ function btc_tao_su_kien(
     $id_cap = ($id_cap !== null && (int) $id_cap > 0) ? (int) $id_cap : null;
     $is_active = ((int) $is_active === 1) ? 1 : 0;
     $ten_su_kien = trim((string) $ten_su_kien);
+    $mo_ta = trim((string) $mo_ta);
+    $warnings = [];
 
+    // Kiểm tra quyền
     if (!co_quyen_quan_ly_su_kien($conn, $id_nguoi_tao)) {
         return ['status' => false, 'message' => 'Không có quyền tạo sự kiện'];
     }
 
-    if ($ten_su_kien === '') {
-        return ['status' => false, 'message' => 'Tên sự kiện không được để trống'];
+    // Validate dữ liệu
+    $validation = validate_du_lieu_su_kien($ten_su_kien, $mo_ta, $ngay_mo_dk, $ngay_dong_dk, $ngay_bat_dau, $ngay_ket_thuc);
+    if (!$validation['valid']) {
+        return ['status' => false, 'message' => implode('. ', $validation['errors'])];
     }
 
+    // Chuẩn hóa ngày tháng
     $ngay_mo_dk = !empty($ngay_mo_dk) ? $ngay_mo_dk : null;
     $ngay_dong_dk = !empty($ngay_dong_dk) ? $ngay_dong_dk : null;
     $ngay_bat_dau = !empty($ngay_bat_dau) ? $ngay_bat_dau : null;
     $ngay_ket_thuc = !empty($ngay_ket_thuc) ? $ngay_ket_thuc : null;
 
-    if ($ngay_mo_dk !== null && $ngay_dong_dk !== null && strtotime((string) $ngay_mo_dk) > strtotime((string) $ngay_dong_dk)) {
-        return ['status' => false, 'message' => 'Ngày mở đăng ký phải trước ngày đóng đăng ký'];
-    }
-
-    if ($ngay_bat_dau !== null && $ngay_ket_thuc !== null && strtotime((string) $ngay_bat_dau) > strtotime((string) $ngay_ket_thuc)) {
-        return ['status' => false, 'message' => 'Ngày bắt đầu phải trước ngày kết thúc'];
-    }
-
+    // Kiểm tra cấp tổ chức tồn tại
     if ($id_cap !== null && !_is_exist($conn, 'cap_tochuc', 'idCap', $id_cap)) {
         return ['status' => false, 'message' => 'Cấp tổ chức không tồn tại'];
+    }
+
+    // Cảnh báo nếu tên trùng (không chặn tạo)
+    if (kiem_tra_trung_ten_su_kien($conn, $ten_su_kien, $id_cap)) {
+        $warnings[] = 'Đã tồn tại sự kiện cùng tên trong cấp tổ chức này';
     }
 
     try {
@@ -128,17 +295,25 @@ function btc_tao_su_kien(
 
         $conn->commit();
 
-        return [
+        $response = [
             'status' => true,
-            'message' => 'Đã khởi tạo sự kiện',
+            'message' => 'Đã khởi tạo sự kiện thành công',
             'idSK' => $id_sk,
         ];
+
+        // Thêm cảnh báo nếu có
+        if (!empty($warnings)) {
+            $response['warnings'] = $warnings;
+        }
+
+        return $response;
     } catch (Throwable $exception) {
         if ($conn instanceof PDO && $conn->inTransaction()) {
             $conn->rollBack();
         }
 
-        return ['status' => false, 'message' => 'Lỗi hệ thống khi tạo sự kiện'];
+        error_log('Lỗi tạo sự kiện: ' . $exception->getMessage());
+        return ['status' => false, 'message' => 'Lỗi hệ thống khi tạo sự kiện. Vui lòng thử lại sau.'];
     }
 }
 
@@ -190,6 +365,11 @@ function _gui_thong_bao_su_kien_moi($conn, int $id_sk, string $ten_su_kien, int 
     }
 }
 
+/**
+ * Cập nhật thông tin sự kiện
+ * 
+ * @return array ['status' => bool, 'message' => string, 'warnings' => array]
+ */
 function btc_cap_nhat_su_kien(
     $conn,
     $id_nguoi_thuc_hien,
@@ -208,47 +388,77 @@ function btc_cap_nhat_su_kien(
     $id_cap = ($id_cap !== null && (int) $id_cap > 0) ? (int) $id_cap : null;
     $is_active = ((int) $is_active === 1) ? 1 : 0;
     $ten_su_kien = trim((string) $ten_su_kien);
+    $mo_ta = trim((string) $mo_ta);
+    $warnings = [];
 
-    if ($id_su_kien <= 0 || $ten_su_kien === '') {
-        return ['status' => false, 'message' => 'Dữ liệu cập nhật không hợp lệ'];
+    // Validate ID
+    if ($id_su_kien <= 0) {
+        return ['status' => false, 'message' => 'ID sự kiện không hợp lệ'];
     }
 
+    // Kiểm tra quyền
     if (!co_quyen_quan_ly_su_kien($conn, $id_nguoi_thuc_hien, $id_su_kien)) {
         return ['status' => false, 'message' => 'Không có quyền cập nhật sự kiện'];
     }
 
+    // Kiểm tra sự kiện tồn tại
     $su_kien = truy_van_mot_ban_ghi($conn, 'sukien', 'idSK', $id_su_kien);
     if (!$su_kien) {
-        return ['status' => false, 'message' => 'Sự kiện không tồn tại'];
+        return ['status' => false, 'message' => 'Sự kiện không tồn tại hoặc đã bị xoá'];
     }
 
+    // Validate dữ liệu
+    $validation = validate_du_lieu_su_kien($ten_su_kien, $mo_ta, $ngay_mo_dk, $ngay_dong_dk, $ngay_bat_dau, $ngay_ket_thuc);
+    if (!$validation['valid']) {
+        return ['status' => false, 'message' => implode('. ', $validation['errors'])];
+    }
+
+    // Kiểm tra cấp tổ chức tồn tại
     if ($id_cap !== null && !_is_exist($conn, 'cap_tochuc', 'idCap', $id_cap)) {
         return ['status' => false, 'message' => 'Cấp tổ chức không tồn tại'];
     }
 
+    // Cảnh báo nếu tên trùng (không chặn cập nhật)
+    if (kiem_tra_trung_ten_su_kien($conn, $ten_su_kien, $id_cap, $id_su_kien)) {
+        $warnings[] = 'Đã tồn tại sự kiện cùng tên trong cấp tổ chức này';
+    }
+
+    // Chuẩn hóa ngày tháng
     $ngay_mo_dk = !empty($ngay_mo_dk) ? $ngay_mo_dk : null;
     $ngay_dong_dk = !empty($ngay_dong_dk) ? $ngay_dong_dk : null;
     $ngay_bat_dau = !empty($ngay_bat_dau) ? $ngay_bat_dau : null;
     $ngay_ket_thuc = !empty($ngay_ket_thuc) ? $ngay_ket_thuc : null;
 
-    if ($ngay_mo_dk !== null && $ngay_dong_dk !== null && strtotime((string) $ngay_mo_dk) > strtotime((string) $ngay_dong_dk)) {
-        return ['status' => false, 'message' => 'Ngày mở đăng ký phải trước ngày đóng đăng ký'];
+    try {
+        $fields = ['tenSK', 'moTa', 'idCap', 'ngayMoDangKy', 'ngayDongDangKy', 'ngayBatDau', 'ngayKetThuc', 'isActive'];
+        $values = [$ten_su_kien, $mo_ta, $id_cap, $ngay_mo_dk, $ngay_dong_dk, $ngay_bat_dau, $ngay_ket_thuc, $is_active];
+
+        $updated = _update_info($conn, 'sukien', $fields, $values, ['idSK' => ['=', $id_su_kien, '']]);
+
+        if (!$updated) {
+            return ['status' => false, 'message' => 'Lỗi cập nhật sự kiện. Vui lòng thử lại.'];
+        }
+
+        $response = [
+            'status' => true,
+            'message' => 'Cập nhật sự kiện thành công',
+        ];
+
+        if (!empty($warnings)) {
+            $response['warnings'] = $warnings;
+        }
+
+        return $response;
+
+    } catch (Throwable $exception) {
+        error_log('Lỗi cập nhật sự kiện: ' . $exception->getMessage());
+        return ['status' => false, 'message' => 'Lỗi hệ thống khi cập nhật sự kiện'];
     }
-
-    if ($ngay_bat_dau !== null && $ngay_ket_thuc !== null && strtotime((string) $ngay_bat_dau) > strtotime((string) $ngay_ket_thuc)) {
-        return ['status' => false, 'message' => 'Ngày bắt đầu phải trước ngày kết thúc'];
-    }
-
-    $fields = ['tenSK', 'moTa', 'idCap', 'ngayMoDangKy', 'ngayDongDangKy', 'ngayBatDau', 'ngayKetThuc', 'isActive'];
-    $values = [$ten_su_kien, $mo_ta, $id_cap, $ngay_mo_dk, $ngay_dong_dk, $ngay_bat_dau, $ngay_ket_thuc, $is_active];
-
-    $updated = _update_info($conn, 'sukien', $fields, $values, ['idSK' => ['=', $id_su_kien, '']]);
-
-    return $updated
-        ? ['status' => true, 'message' => 'Cập nhật sự kiện thành công']
-        : ['status' => false, 'message' => 'Lỗi cập nhật sự kiện'];
 }
 
+/**
+ * Lấy chi tiết sự kiện bao gồm thông tin cấp và người tạo
+ */
 function btc_lay_chi_tiet_su_kien($conn, $id_su_kien)
 {
     $id_su_kien = (int) $id_su_kien;
@@ -270,4 +480,69 @@ function btc_lay_chi_tiet_su_kien($conn, $id_su_kien)
     $su_kien['nguoiTaoTen'] = $nguoi_tao['tenTK'] ?? null;
 
     return $su_kien;
+}
+
+/**
+ * Lấy trạng thái hiện tại của sự kiện
+ * 
+ * @return string|null 'chua_bat_dau' | 'dang_dien_ra' | 'da_ket_thuc' | 'bi_vo_hieu'
+ */
+function lay_trang_thai_su_kien($conn, int $id_su_kien): ?string
+{
+    $su_kien = truy_van_mot_ban_ghi($conn, 'sukien', 'idSK', $id_su_kien);
+    if (!$su_kien) {
+        return null;
+    }
+
+    if ((int) $su_kien['isActive'] !== 1) {
+        return 'bi_vo_hieu';
+    }
+
+    $now = time();
+    $ngay_bat_dau = !empty($su_kien['ngayBatDau']) ? strtotime((string) $su_kien['ngayBatDau']) : null;
+    $ngay_ket_thuc = !empty($su_kien['ngayKetThuc']) ? strtotime((string) $su_kien['ngayKetThuc']) : null;
+
+    if ($ngay_bat_dau !== null && $now < $ngay_bat_dau) {
+        return 'chua_bat_dau';
+    }
+
+    if ($ngay_ket_thuc !== null && $now > $ngay_ket_thuc) {
+        return 'da_ket_thuc';
+    }
+
+    return 'dang_dien_ra';
+}
+
+/**
+ * Lấy thống kê sự kiện (số nhóm, số bài nộp, etc.)
+ */
+function lay_thong_ke_su_kien($conn, int $id_su_kien): array
+{
+    if (!$conn instanceof PDO || $id_su_kien <= 0) {
+        return [];
+    }
+
+    $stats = [];
+
+    // Đếm số nhóm tham gia
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM nhom_sukien WHERE idSK = ? AND isActive = 1');
+    $stmt->execute([$id_su_kien]);
+    $stats['so_nhom'] = (int) $stmt->fetchColumn();
+
+    // Đếm số bài nộp
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM bainop WHERE idSK = ?');
+    $stmt->execute([$id_su_kien]);
+    $stats['so_bai_nop'] = (int) $stmt->fetchColumn();
+
+    // Đếm số vòng thi
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM vongthi WHERE idSK = ? AND isActive = 1');
+    $stmt->execute([$id_su_kien]);
+    $stats['so_vong_thi'] = (int) $stmt->fetchColumn();
+
+    // Đếm số giám khảo
+    $stmt = $conn->prepare('SELECT COUNT(DISTINCT idTK) FROM taikhoan_vaitro_sukien WHERE idSK = ? AND idVaiTro = 3 AND isActive = 1');
+    $stmt->execute([$id_su_kien]);
+    $stats['so_giam_khao'] = (int) $stmt->fetchColumn();
+
+    return $stats;
 }

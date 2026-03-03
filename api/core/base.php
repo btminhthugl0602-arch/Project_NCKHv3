@@ -2,6 +2,12 @@
 if (!defined('_AUTHEN')) {
     die('Truy cập không hợp lệ');
 }
+
+// Start session nếu chưa có
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once __DIR__ . '/db_connect.php';
 
 function _safe_identifier(string $identifier): string

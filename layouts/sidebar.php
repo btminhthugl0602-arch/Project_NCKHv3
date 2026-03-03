@@ -1,6 +1,6 @@
 <!-- Sidebar Navigation -->
-<aside class="max-w-62.5 ease-nav-brand z-990 fixed inset-y-0 my-4 ml-4 block w-full -translate-x-full flex-wrap items-center justify-between overflow-y-auto rounded-2xl border-0 bg-white p-0 antialiased shadow-none transition-transform duration-200 xl:left-0 xl:translate-x-0 xl:bg-transparent">
-    <div class="h-19.5">
+<aside class="max-w-62.5 ease-nav-brand z-990 fixed inset-y-0 my-4 ml-4 flex flex-col w-full -translate-x-full rounded-2xl border-0 bg-white p-0 antialiased shadow-soft-xl transition-transform duration-200 xl:left-0 xl:translate-x-0" style="height: calc(100vh - 2rem);">
+    <div class="flex-shrink-0">
         <i class="absolute top-0 right-0 hidden p-4 opacity-50 cursor-pointer fas fa-times text-slate-400 xl:hidden" sidenav-close></i>
         <a class="block px-8 py-6 m-0 text-sm whitespace-nowrap text-slate-700" href="/">
             <img src="/assets/img/logo-ct.png" class="inline h-full max-w-full transition-all duration-200 ease-nav-brand max-h-8" alt="main_logo" />
@@ -8,10 +8,10 @@
         </a>
     </div>
 
-    <hr class="h-px mt-0 bg-transparent bg-gradient-to-r from-transparent via-black/40 to-transparent" />
+    <hr class="h-px mt-0 bg-transparent bg-gradient-to-r from-transparent via-black/40 to-transparent flex-shrink-0" />
 
-    <div class="items-center block w-auto max-h-screen overflow-auto h-sidenav grow basis-full">
-        <ul class="flex flex-col pl-0 mb-0">
+    <div class="flex-1 overflow-y-auto">
+        <ul class="flex flex-col pl-0 mb-0 pb-8">
             <?php
                 $useEventSidebar = isset($useEventSidebar) && $useEventSidebar === true;
                 $eventSidebarEventId = isset($eventSidebarEventId) ? (int) $eventSidebarEventId : 0;
@@ -19,95 +19,112 @@
             ?>
 
             <?php if ($useEventSidebar): ?>
-            <li class="px-4 py-3 mx-4 mb-3 text-white bg-gradient-to-tl from-purple-700 to-pink-500 rounded-xl shadow-soft-xl">
+            <li class="px-4 py-3 mx-4 mb-3 text-white bg-gradient-to-tl from-purple-700 to-pink-500 rounded-xl shadow-soft-xl flex-none">
                 <div class="flex items-center justify-between">
                     <div class="min-w-0">
                         <p class="mb-0 text-xs text-white opacity-80">Sự kiện hiện tại</p>
-                        <p id="sidebarEventName" class="mb-0 text-xl font-bold leading-tight truncate">Đang tải...</p>
+                        <p id="sidebarEventName" class="mb-0 text-lg font-bold leading-tight truncate">Đang tải...</p>
                     </div>
-                    <a href="/events" class="flex items-center justify-center w-9 h-9 text-white rounded-xl bg-white/20 hover:bg-white/30 transition-colors" title="Quay lại danh sách sự kiện">
-                        <i class="fas fa-exchange-alt"></i>
+                    <a href="/events" class="flex items-center justify-center w-8 h-8 text-white rounded-lg bg-white/20 hover:bg-white/30 transition-colors" title="Quay lại danh sách sự kiện">
+                        <i class="fas fa-exchange-alt text-xs"></i>
                     </a>
                 </div>
             </li>
 
             <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo $eventSidebarSection === 'overview' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=overview">
-                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
-                        <i class="fas fa-home text-slate-700 text-sm"></i>
-                    </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Tổng quan</span>
+                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'overview' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=overview">
+                    <i class="fas fa-home w-5 text-center mr-3 <?php echo $eventSidebarSection === 'overview' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
+                    <span>Tổng quan</span>
                 </a>
             </li>
 
             <li class="w-full mt-4">
-                <h6 class="pl-6 ml-2 text-xs font-bold leading-tight uppercase opacity-60">Cấu hình</h6>
+                <h6 class="px-6 text-xs font-bold leading-tight uppercase text-slate-400">Cấu hình sự kiện</h6>
             </li>
 
             <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo $eventSidebarSection === 'config' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=config">
-                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
-                        <i class="fas fa-cog text-slate-700 text-sm"></i>
-                    </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Cấu hình sự kiện</span>
+                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'config-basic' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=config-basic">
+                    <i class="fas fa-cog w-5 text-center mr-3 <?php echo $eventSidebarSection === 'config-basic' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
+                    <span>Cấu hình cơ bản</span>
+                </a>
+            </li>
+
+            <li class="mt-0.5 w-full">
+                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'config-rules' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=config-rules">
+                    <i class="fas fa-balance-scale w-5 text-center mr-3 <?php echo $eventSidebarSection === 'config-rules' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
+                    <span>Cấu hình quy chế</span>
+                </a>
+            </li>
+
+            <li class="mt-0.5 w-full">
+                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'config-criteria' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=config-criteria">
+                    <i class="fas fa-tasks w-5 text-center mr-3 <?php echo $eventSidebarSection === 'config-criteria' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
+                    <span>Thiết lập bộ tiêu chí</span>
                 </a>
             </li>
 
             <li class="w-full mt-4">
-                <h6 class="pl-6 ml-2 text-xs font-bold leading-tight uppercase opacity-60">Quản lý bài nộp</h6>
+                <h6 class="px-6 text-xs font-bold leading-tight uppercase text-slate-400">Quản lý bài nộp</h6>
             </li>
 
             <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo $eventSidebarSection === 'submissions' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=submissions">
-                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
-                        <i class="fas fa-file-alt text-slate-700 text-sm"></i>
-                    </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Tất cả bài nộp</span>
+                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'submissions' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=submissions">
+                    <i class="fas fa-file-alt w-5 text-center mr-3 <?php echo $eventSidebarSection === 'submissions' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
+                    <span>Tất cả bài nộp</span>
                 </a>
             </li>
 
             <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo $eventSidebarSection === 'review-assign' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=review-assign">
-                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
-                        <i class="fas fa-user-check text-slate-700 text-sm"></i>
-                    </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Phân công phản biện</span>
+                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'review-assign' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=review-assign">
+                    <i class="fas fa-user-check w-5 text-center mr-3 <?php echo $eventSidebarSection === 'review-assign' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
+                    <span>Phân công phản biện</span>
                 </a>
             </li>
 
             <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo $eventSidebarSection === 'review-results' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=review-results">
-                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
-                        <i class="fas fa-chart-bar text-slate-700 text-sm"></i>
-                    </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Kết quả Review</span>
+                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'review-results' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=review-results">
+                    <i class="fas fa-chart-bar w-5 text-center mr-3 <?php echo $eventSidebarSection === 'review-results' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
+                    <span>Kết quả Review</span>
                 </a>
             </li>
 
             <li class="w-full mt-4">
-                <h6 class="pl-6 ml-2 text-xs font-bold leading-tight uppercase opacity-60">Tiểu ban &amp; giải thưởng</h6>
+                <h6 class="px-6 text-xs font-bold leading-tight uppercase text-slate-400">Nghiệp vụ chấm thi</h6>
             </li>
 
             <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo $eventSidebarSection === 'committees' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=committees">
-                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
-                        <i class="fas fa-users text-slate-700 text-sm"></i>
-                    </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Quản lý tiểu ban</span>
+                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors bg-gradient-to-r from-amber-100 to-yellow-100 hover:from-amber-200 hover:to-yellow-200 border border-amber-300 <?php echo $eventSidebarSection === 'scoring' ? 'ring-2 ring-amber-400 font-semibold' : ''; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=scoring">
+                    <i class="fas fa-edit w-5 text-center mr-3 text-amber-600"></i>
+                    <span class="text-slate-700">Phân công & Quản lý Điểm</span>
+                </a>
+            </li>
+
+            <li class="mt-1 w-full">
+                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors bg-gradient-to-r from-emerald-100 to-green-100 hover:from-emerald-200 hover:to-green-200 border border-emerald-300 <?php echo $eventSidebarSection === 'subcommittees' ? 'ring-2 ring-emerald-400 font-semibold' : ''; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=subcommittees">
+                    <i class="fas fa-sitemap w-5 text-center mr-3 text-emerald-600"></i>
+                    <span class="text-slate-700">Quản lý Tiểu ban</span>
+                </a>
+            </li>
+
+            <li class="w-full mt-4">
+                <h6 class="px-6 text-xs font-bold leading-tight uppercase text-slate-400">Tiểu ban & giải thưởng</h6>
+            </li>
+
+            <li class="mt-0.5 w-full">
+                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'committees' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=committees">
+                    <i class="fas fa-users w-5 text-center mr-3 <?php echo $eventSidebarSection === 'committees' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
+                    <span>Quản lý tiểu ban</span>
                 </a>
             </li>
 
             <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo $eventSidebarSection === 'judges' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=judges">
-                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
-                        <i class="fas fa-gavel text-slate-700 text-sm"></i>
-                    </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Phân công BGK</span>
+                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'judges' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=judges">
+                    <i class="fas fa-gavel w-5 text-center mr-3 <?php echo $eventSidebarSection === 'judges' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
+                    <span>Phân công BGK</span>
                 </a>
             </li>
 
             <?php else: ?>
-            <!-- Dashboard -->
             <li class="mt-0.5 w-full">
                 <a class="py-2.7 <?php echo isset($currentPage) && $currentPage == 'dashboard' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/dashboard">
                     <div class="<?php echo isset($currentPage) && $currentPage == 'dashboard' ? 'bg-gradient-to-tl from-purple-700 to-pink-500' : ''; ?> shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white bg-center stroke-0 text-center xl:p-2.5">
@@ -129,7 +146,6 @@
                 </a>
             </li>
 
-            <!-- Quản lý sự kiện -->
             <li class="mt-0.5 w-full">
                 <a class="py-2.7 <?php echo isset($currentPage) && $currentPage == 'events' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap px-4 transition-colors" href="/events">
                     <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white bg-center stroke-0 text-center xl:p-2.5">
@@ -151,7 +167,6 @@
                 </a>
             </li>
 
-            <!-- Quản lý nhóm (Sinh viên) -->
             <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'student'): ?>
             <li class="mt-0.5 w-full">
                 <a class="py-2.7 <?php echo isset($currentPage) && $currentPage == 'groups' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap px-4 transition-colors" href="/groups">
@@ -163,7 +178,6 @@
             </li>
             <?php endif; ?>
 
-            <!-- Bình duyệt (Giảng viên) -->
             <?php if (isset($_SESSION['user_role']) && ($_SESSION['user_role'] === 'lecturer' || $_SESSION['user_role'] === 'admin')): ?>
             <li class="mt-0.5 w-full">
                 <a class="py-2.7 <?php echo isset($currentPage) && $currentPage == 'review' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap px-4 transition-colors" href="/review">
@@ -179,7 +193,6 @@
                 <h6 class="pl-6 ml-2 text-xs font-bold leading-tight uppercase opacity-60">Tài khoản</h6>
             </li>
 
-            <!-- Profile -->
             <li class="mt-0.5 w-full">
                 <a class="py-2.7 <?php echo isset($currentPage) && $currentPage == 'profile' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap px-4 transition-colors" href="/profile">
                     <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white bg-center stroke-0 text-center xl:p-2.5">
@@ -189,7 +202,6 @@
                 </a>
             </li>
 
-            <!-- Sign Out -->
             <li class="mt-0.5 w-full">
                 <a class="py-2.7 text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap px-4 transition-colors" href="/api/auth/logout.php">
                     <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white bg-center stroke-0 text-center xl:p-2.5">
@@ -202,4 +214,3 @@
         </ul>
     </div>
 </aside>
-<!-- End Sidebar -->
