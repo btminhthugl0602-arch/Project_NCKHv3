@@ -87,6 +87,12 @@ function _sb_section_label(string $label): string {
         <?php echo _sb_link('committees', $eventSidebarSection, $eventSidebarEventId, 'groups', 'Quản lý tiểu ban'); ?>
         <?php echo _sb_link('judges',     $eventSidebarSection, $eventSidebarEventId, 'gavel',  'Phân công BGK'); ?>
 
+        <!-- Nhóm thi -->
+        <?php echo _sb_section_label('Nhóm thi'); ?>
+        <?php echo _sb_link('nhom-my',      $eventSidebarSection, $eventSidebarEventId, 'group',  'Nhóm của tôi'); ?>
+        <?php echo _sb_link('nhom-all',     $eventSidebarSection, $eventSidebarEventId, 'groups', 'Tất cả nhóm'); ?>
+        <?php echo _sb_link('nhom-request', $eventSidebarSection, $eventSidebarEventId, 'mail',   'Lời mời'); ?>
+
         <?php else: ?>
 
         <!-- Standard nav (non-event pages) -->

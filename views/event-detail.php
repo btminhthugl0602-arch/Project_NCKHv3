@@ -28,6 +28,9 @@ $allowedTabs = [
     'subcommittees',
     'committees',
     'judges',
+    'nhom-my',
+    'nhom-all',
+    'nhom-request',
 ];
 if (!in_array($tab, $allowedTabs, true)) {
     $tab = 'overview';
@@ -45,6 +48,9 @@ $tabTitles = [
     'subcommittees'    => 'Quản lý Tiểu ban (Bảo vệ Vòng trong)',
     'committees'       => 'Quản lý tiểu ban',
     'judges'           => 'Phân công BGK',
+    'nhom-my'          => 'Nhóm của tôi',
+    'nhom-all'         => 'Tất cả nhóm',
+    'nhom-request'     => 'Lời mời tham gia',
 ];
 
 // Mọi tab đều load event-detail.js
@@ -116,6 +122,10 @@ window.EVENT_DETAIL_TAB = <?php echo json_encode($tab, JSON_UNESCAPED_UNICODE); 
 
 <?php if ($tab === 'scoring'): ?>
 <script src="<?php echo $basePath; ?>/assets/js/scoring.js"></script>
+<?php endif; ?>
+
+<?php if (in_array($tab, ['nhom-my', 'nhom-all', 'nhom-request'])): ?>
+<script src="<?php echo $basePath; ?>/assets/js/nhom_thi.js"></script>
 <?php endif; ?>
 
 <?php
