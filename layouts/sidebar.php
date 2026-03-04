@@ -89,27 +89,27 @@
             </li>
 
             <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo $eventSidebarSection === 'nhom-thi' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/nhom/tat-ca-nhom?id_sk=<?php echo $eventSidebarEventId; ?>">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'nhom-all' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/nhom/allgroup?id_sk=<?php echo $eventSidebarEventId; ?>">
                     <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
-                        <i class="fas fa-layer-group text-slate-700 text-sm"></i>
+                        <i class="fas fa-globe text-slate-700 text-sm"></i>
                     </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Tất cả nhóm</span>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Nhóm công khai</span>
                 </a>
             </li>
             <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo $eventSidebarSection === 'nhom-thi' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/nhom/tat-ca-nhom?id_sk=<?php echo $eventSidebarEventId; ?>">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'nhom-my' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/nhom/mygroup?id_sk=<?php echo $eventSidebarEventId; ?>">
                     <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
-                        <i class="fas fa-layer-group text-slate-700 text-sm"></i>
+                        <i class="fas fa-users text-slate-700 text-sm"></i>
                     </div>
                     <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Nhóm của tôi</span>
                 </a>
             </li>
             <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo $eventSidebarSection === 'nhom-thi' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/nhom/tat-ca-nhom?id_sk=<?php echo $eventSidebarEventId; ?>">
+                <a class="py-2.7 <?php echo $eventSidebarSection === 'nhom-request' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/nhom/request?id_sk=<?php echo $eventSidebarEventId; ?>">
                     <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-center xl:p-2.5">
-                        <i class="fas fa-layer-group text-slate-700 text-sm"></i>
+                        <i class="fas fa-envelope text-slate-700 text-sm"></i>
                     </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">lời mời nhóm</span>
+                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Lời mời nhóm</span>
                 </a>
             </li>
             <li class="w-full mt-4">

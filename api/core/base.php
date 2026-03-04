@@ -2,6 +2,7 @@
 if (!defined('_AUTHEN')) {
     die('Truy cập không hợp lệ');
 }
+require_once __DIR__ . '/dev_mock_session.php';
 require_once __DIR__ . '/db_connect.php';
 
 function _safe_identifier(string $identifier): string
