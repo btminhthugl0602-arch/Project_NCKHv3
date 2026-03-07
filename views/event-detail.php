@@ -5,9 +5,17 @@
  * Mỗi tab được render từ file partial riêng trong views/partials/event-detail/
  */
 
-// TODO: Xóa 2 dòng này sau khi test xong
-session_start();
-$_SESSION['user_id'] = 1;
+if (session_status() === PHP_SESSION_NONE) session_start();
+
+// Guard đăng nhập
+if (!isset($_SESSION['idTK'])) {
+    header('Location: /views/dang_nhap.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+    exit;
+}
+
+// Load $conn và helpers cho partials
+if (!defined('_AUTHEN')) define('_AUTHEN', true);
+require_once __DIR__ . '/../api/core/base.php';
 
 $pageTitle   = "Chi tiết sự kiện - ezManagement";
 $currentPage = "events";

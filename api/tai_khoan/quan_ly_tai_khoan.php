@@ -176,12 +176,38 @@ function admin_khoa_tai_khoan($conn, $id_nguoi_thuc_hien, $id_tai_khoan)
         : ['status' => false, 'message' => 'Lỗi hệ thống'];
 }
 
+function admin_mo_tai_khoan($conn, $id_nguoi_thuc_hien, $id_tai_khoan)
+{
+    $id_nguoi_thuc_hien = (int) $id_nguoi_thuc_hien;
+    $id_tai_khoan = (int) $id_tai_khoan;
+
+    if (!co_quyen_quan_ly_tai_khoan($conn, $id_nguoi_thuc_hien)) {
+        return ['status' => false, 'message' => 'Không đủ quyền thao tác'];
+    }
+
+    if (!_is_exist($conn, 'taikhoan', 'idTK', $id_tai_khoan)) {
+        return ['status' => false, 'message' => 'Tài khoản không tồn tại'];
+    }
+
+    $result = _update_info($conn, 'taikhoan', ['isActive'], [1], ['idTK' => ['=', $id_tai_khoan, '']]);
+
+    return $result
+        ? ['status' => true, 'message' => 'Đã mở khóa tài khoản']
+        : ['status' => false, 'message' => 'Lỗi hệ thống'];
+}
+
 function upsert_quyen_cho_tai_khoan($conn, int $id_tai_khoan, int $id_quyen): bool
 {
     $exists = _select_info($conn, 'taikhoan_quyen', [], [
         'WHERE' => [
-            'idTK', '=', $id_tai_khoan, 'AND',
-            'idQuyen', '=', $id_quyen, '',
+            'idTK',
+            '=',
+            $id_tai_khoan,
+            'AND',
+            'idQuyen',
+            '=',
+            $id_quyen,
+            '',
         ],
         'LIMIT' => [1],
     ]);
@@ -286,4 +312,30 @@ function admin_cap_nhat_quyen_tai_khoan($conn, $id_nguoi_thuc_hien, $id_tai_khoa
 
         return ['status' => false, 'message' => $exception->getMessage()];
     }
+}
+
+function admin_reset_mat_khau($conn, int $id_nguoi_thuc_hien, int $id_tai_khoan, string $mat_khau_moi): array
+{
+    if (!co_quyen_quan_ly_tai_khoan($conn, $id_nguoi_thuc_hien)) {
+        return ['status' => false, 'message' => 'Không đủ quyền thao tác'];
+    }
+
+    if ($id_nguoi_thuc_hien === $id_tai_khoan) {
+        return ['status' => false, 'message' => 'Dùng trang hồ sơ để đổi mật khẩu của chính mình'];
+    }
+
+    if (strlen($mat_khau_moi) < 6) {
+        return ['status' => false, 'message' => 'Mật khẩu mới phải có ít nhất 6 ký tự'];
+    }
+
+    if (!_is_exist($conn, 'taikhoan', 'idTK', $id_tai_khoan)) {
+        return ['status' => false, 'message' => 'Tài khoản không tồn tại'];
+    }
+
+    $hash = password_hash($mat_khau_moi, PASSWORD_DEFAULT);
+    $ok   = _update_info($conn, 'taikhoan', ['matKhau'], [$hash], ['idTK' => ['=', $id_tai_khoan, '']]);
+
+    return $ok
+        ? ['status' => true,  'message' => 'Đặt lại mật khẩu thành công']
+        : ['status' => false, 'message' => 'Lỗi hệ thống'];
 }

@@ -3,6 +3,12 @@
  * Event Management Page
  */
 
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!isset($_SESSION['idTK'])) {
+    header('Location: /views/dang_nhap.php');
+    exit;
+}
+
 $pageTitle = "Quản lý sự kiện - ezManagement";
 $currentPage = "events";
 $pageHeading = "Quản lý sự kiện";

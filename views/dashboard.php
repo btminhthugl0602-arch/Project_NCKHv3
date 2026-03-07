@@ -3,6 +3,12 @@
  * Dashboard Page
  */
 
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!isset($_SESSION['idTK'])) {
+    header('Location: /views/dang_nhap.php');
+    exit;
+}
+
 // Thiết lập các biến cho layout
 $pageTitle = "Dashboard - ezManagement";
 $currentPage = "dashboard";

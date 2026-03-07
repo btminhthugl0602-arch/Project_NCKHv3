@@ -19,7 +19,7 @@ if ($idSk <= 0) {
 }
 
 if (session_status() === PHP_SESSION_NONE) session_start();
-$idTK = (int) ($_SESSION['user_id'] ?? 0);
+$idTK = (int) ($_SESSION['idTK'] ?? 0);
 
 try {
     $nhoms       = lay_tat_ca_nhom($conn, $idSk);

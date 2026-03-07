@@ -44,7 +44,7 @@ if ($idSkRequest <= 0) {
     exit;
 }
 
-$idUser = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0;
+$idUser = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
 if ($idUser <= 0 && isset($input['id_nguoi_thuc_hien'])) {
     $idUser = (int) $input['id_nguoi_thuc_hien'];
 }

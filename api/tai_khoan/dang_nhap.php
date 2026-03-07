@@ -158,9 +158,33 @@ if (!$isValidHash && !$isValidPlain) {
     exit;
 }
 
-// --- Bước 6: Tạo session ---
+// --- Bước 6: Lấy họ tên từ profile ---
+$hoTen = $taiKhoan['tenTK']; // fallback
+try {
+    $idLoaiTK = (int) $taiKhoan['idLoaiTK'];
+    if ($idLoaiTK === 3) {
+        $stmtHoTen = $conn->prepare('SELECT tenSV FROM sinhvien WHERE idTK = ? LIMIT 1');
+    } elseif ($idLoaiTK === 2) {
+        $stmtHoTen = $conn->prepare('SELECT tenGV AS tenSV FROM giangvien WHERE idTK = ? LIMIT 1');
+    } else {
+        $stmtHoTen = null;
+    }
+    if ($stmtHoTen) {
+        $stmtHoTen->execute([$taiKhoan['idTK']]);
+        $profile = $stmtHoTen->fetch(PDO::FETCH_ASSOC);
+        if ($profile && !empty($profile['tenSV'])) {
+            $hoTen = $profile['tenSV'];
+        }
+    }
+} catch (Throwable $e) {
+    // Không critical — fallback về tenTK
+}
+
+// --- Bước 7: Tạo session ---
 session_regenerate_id(true);
-$_SESSION['idTK'] = (int) $taiKhoan['idTK'];
+$_SESSION['idTK']      = (int) $taiKhoan['idTK'];
+$_SESSION['idLoaiTK']  = (int) $taiKhoan['idLoaiTK'];
+$_SESSION['hoTen']     = $hoTen;
 
 // --- Bước 7: Trả kết quả ---
 http_response_code(200);

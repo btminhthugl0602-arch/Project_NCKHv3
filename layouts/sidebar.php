@@ -105,17 +105,39 @@ function _sb_section_label(string $label): string {
             <span class="text-sm">Quản lý Sự kiện</span>
         </a>
 
-        <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'student'): ?>
+        <?php if (isset($_SESSION['idLoaiTK']) && (int)$_SESSION['idLoaiTK'] === 3): ?>
         <a href="/groups" class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors <?php echo isset($currentPage) && $currentPage === 'groups' ? 'bg-primary/5 text-primary font-semibold' : 'text-slate-600 hover:bg-slate-50'; ?>">
             <span class="material-symbols-outlined text-[18px] shrink-0">group</span>
             <span class="text-sm">Nhóm của tôi</span>
         </a>
         <?php endif; ?>
 
-        <?php if (isset($_SESSION['user_role']) && in_array($_SESSION['user_role'], ['lecturer', 'admin'])): ?>
+        <?php if (isset($_SESSION['idLoaiTK']) && in_array((int)$_SESSION['idLoaiTK'], [1, 2], true)): ?>
         <a href="/review" class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors <?php echo isset($currentPage) && $currentPage === 'review' ? 'bg-primary/5 text-primary font-semibold' : 'text-slate-600 hover:bg-slate-50'; ?>">
             <span class="material-symbols-outlined text-[18px] shrink-0">rate_review</span>
             <span class="text-sm">Bình duyệt</span>
+        </a>
+        <?php endif; ?>
+
+        <?php
+        // Hiện link Quản lý tài khoản nếu có quyền
+        $canManageUsers = false;
+        if (isset($_SESSION['idTK'])) {
+            // Đảm bảo $conn và hàm kiem_tra_quyen_he_thong sẵn sàng
+            if (!isset($conn) || !($conn instanceof PDO)) {
+                if (!defined('_AUTHEN')) define('_AUTHEN', true);
+                require_once __DIR__ . '/../api/core/base.php';
+            }
+            if (function_exists('kiem_tra_quyen_he_thong')) {
+                $canManageUsers = kiem_tra_quyen_he_thong($conn, (int)$_SESSION['idTK'], 'quan_ly_tai_khoan');
+            }
+        }
+        if ($canManageUsers): ?>
+        <?php echo _sb_section_label('Hệ thống'); ?>
+        <a href="/admin_users"
+           class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors <?php echo isset($currentPage) && $currentPage === 'admin-users' ? 'bg-primary/5 text-primary border-l-2 border-primary font-semibold' : 'text-slate-600 hover:bg-slate-50 border-l-2 border-transparent'; ?>">
+            <span class="material-symbols-outlined text-[18px] shrink-0 <?php echo isset($currentPage) && $currentPage === 'admin-users' ? 'text-primary active-icon' : 'text-slate-400'; ?>">manage_accounts</span>
+            <span class="text-sm">Quản lý Tài khoản</span>
         </a>
         <?php endif; ?>
 
@@ -124,10 +146,18 @@ function _sb_section_label(string $label): string {
             <span class="material-symbols-outlined text-[18px] shrink-0">person</span>
             <span class="text-sm">Hồ sơ</span>
         </a>
-        <a href="/api/auth/logout.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-rose-500 hover:bg-rose-50">
+        <a href="/api/tai_khoan/dang_nhap.php" id="logoutBtn"
+           class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-rose-500 hover:bg-rose-50 cursor-pointer">
             <span class="material-symbols-outlined text-[18px] shrink-0">logout</span>
             <span class="text-sm">Đăng xuất</span>
         </a>
+        <script>
+        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            fetch('/api/tai_khoan/dang_nhap.php', { method: 'DELETE', credentials: 'same-origin' })
+                .finally(function() { window.location.href = '/views/dang_nhap.php'; });
+        });
+        </script>
 
         <?php endif; ?>
     </nav>

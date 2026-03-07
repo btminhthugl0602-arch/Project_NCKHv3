@@ -22,7 +22,7 @@ if (!is_array($input)) {
     $input = [];
 }
 
-$idNguoiTao = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0;
+$idNguoiTao = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
 
 if ($idNguoiTao <= 0 && isset($input['id_nguoi_tao'])) {
     $idNguoiTao = (int) $input['id_nguoi_tao'];

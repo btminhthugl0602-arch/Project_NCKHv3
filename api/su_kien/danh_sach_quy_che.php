@@ -48,7 +48,7 @@ if ($loaiQuyCheRaw !== '' && $loaiQuyChe === '') {
     exit;
 }
 
-$idUser = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0;
+$idUser = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
 if ($idUser > 0 && !xac_thuc_quyen_quy_che($conn, $idUser, $idSk)) {
     http_response_code(403);
     echo json_encode([
