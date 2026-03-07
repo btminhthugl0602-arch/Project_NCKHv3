@@ -10,17 +10,20 @@ function lay_nhom_theo_id($conn, int $id_nhom): ?array
 
 function la_truong_nhom($conn, int $id_tk, int $id_nhom): bool
 {
-    $rows = _select_info($conn, 'thanhviennhom', [], [
-        'WHERE' => [
-            'idnhom', '=', $id_nhom, 'AND',
-            'idtk', '=', $id_tk, 'AND',
-            'idvaitronhom', '=', 1, 'AND',
-            'trangthai', '=', 1, '',
-        ],
-        'LIMIT' => [1],
-    ]);
+    if (!$conn instanceof PDO) return false;
 
-    return !empty($rows);
+    $stmt = $conn->prepare("
+        SELECT 1
+        FROM thanhviennhom tv
+        JOIN vaitronhom v ON v.id = tv.idvaitronhom
+        WHERE tv.idnhom = :idNhom
+          AND tv.idtk = :idTK
+          AND tv.trangthai = 1
+          AND v.maVaiTroNhom = 'TRUONG_NHOM'
+        LIMIT 1
+    ");
+    $stmt->execute([':idNhom' => $id_nhom, ':idTK' => $id_tk]);
+    return (bool) $stmt->fetchColumn();
 }
 
 function so_thanh_vien_hien_tai($conn, int $id_nhom): int
@@ -120,11 +123,19 @@ function tao_nhom_moi($conn, $idTK, $idSK, $tenNhom, $moTa, $soLuongToiDa, $dang
             return ['status' => false, 'message' => 'Lỗi lưu thông tin nhóm'];
         }
 
+        $stmtVT = $conn->prepare("SELECT id FROM vaitronhom WHERE maVaiTroNhom = 'TRUONG_NHOM' LIMIT 1");
+        $stmtVT->execute();
+        $idVaiTroTruongNhom = (int) $stmtVT->fetchColumn();
+        if ($idVaiTroTruongNhom <= 0) {
+            $conn->rollBack();
+            return ['status' => false, 'message' => 'Không tìm thấy vai trò Trưởng nhóm'];
+        }
+
         $okThanhVien = _insert_info(
             $conn,
             'thanhviennhom',
             ['idnhom', 'idtk', 'idvaitronhom', 'trangthai', 'ngaythamgia'],
-            [$idNhomMoi, $idTK, 1, 1, date('Y-m-d H:i:s')]
+            [$idNhomMoi, $idTK, $idVaiTroTruongNhom, 1, date('Y-m-d H:i:s')]
         );
 
         if (!$okThanhVien) {
@@ -195,16 +206,18 @@ function gui_yeu_cau_nhom($conn, $id_nhom, $id_tk_doi_phuong, $chieu_moi, $loi_n
     }
 
     if ($chieu_moi === 0 && (int) $doi_phuong['idLoaiTK'] === 2) {
-        $kt_gv = _select_info($conn, 'thanhviennhom', [], [
-            'WHERE' => [
-                'idnhom', '=', $id_nhom, 'AND',
-                'idvaitronhom', '=', 3, 'AND',
-                'trangthai', '=', 1, '',
-            ],
-            'LIMIT' => [1],
-        ]);
+        $stmtGV = $conn->prepare("
+            SELECT 1
+            FROM thanhviennhom tv
+            JOIN vaitronhom v ON v.id = tv.idvaitronhom
+            WHERE tv.idnhom = :idNhom
+              AND tv.trangthai = 1
+              AND v.maVaiTroNhom = 'GVHD'
+            LIMIT 1
+        ");
+        $stmtGV->execute([':idNhom' => $id_nhom]);
 
-        if (!empty($kt_gv)) {
+        if ((bool) $stmtGV->fetchColumn()) {
             return ['status' => false, 'message' => 'Nhóm đã có giảng viên hướng dẫn'];
         }
     }
@@ -302,7 +315,14 @@ function duyet_yeu_cau_nhom($conn, $id_nguoi_duyet, $id_yeu_cau, $trang_thai_moi
                 }
             }
 
-            $vai_tro = ((int) $user_join['idLoaiTK'] === 2) ? 3 : 2;
+            $maNhomVaiTro = ((int) $user_join['idLoaiTK'] === 2) ? 'GVHD' : 'THANH_VIEN';
+            $stmtVT = $conn->prepare("SELECT id FROM vaitronhom WHERE maVaiTroNhom = ? LIMIT 1");
+            $stmtVT->execute([$maNhomVaiTro]);
+            $vai_tro = (int) $stmtVT->fetchColumn();
+            if ($vai_tro <= 0) {
+                $conn->rollBack();
+                return ['status' => false, 'message' => 'Không tìm thấy vai trò phù hợp'];
+            }
 
             $existing = _select_info($conn, 'thanhviennhom', [], [
                 'WHERE' => ['idnhom', '=', $id_nhom, 'AND', 'idtk', '=', $id_tk_yeu_cau, ''],
@@ -376,7 +396,15 @@ function roi_nhom($conn, $id_nguoi_thuc_hien, $id_nhom, $id_tk_bi_xoa)
         return ['status' => false, 'message' => 'Thành viên không tồn tại trong nhóm'];
     }
 
-    if ((int) $tv[0]['idvaitronhom'] === 1) {
+    if (!$conn instanceof PDO) {
+        return ['status' => false, 'message' => 'Kết nối không hợp lệ'];
+    }
+
+    $stmtVT = $conn->prepare("SELECT id FROM vaitronhom WHERE maVaiTroNhom = 'TRUONG_NHOM' LIMIT 1");
+    $stmtVT->execute();
+    $idVaiTroTruongNhom = (int) $stmtVT->fetchColumn();
+
+    if ($idVaiTroTruongNhom > 0 && (int) $tv[0]['idvaitronhom'] === $idVaiTroTruongNhom) {
         return ['status' => false, 'message' => 'Trưởng nhóm không thể rời nhóm. Hãy chuyển quyền trước'];
     }
 
@@ -461,10 +489,11 @@ function lay_tat_ca_nhom($conn, int $id_sk): array
                 SELECT CASE WHEN tk2.idLoaiTK = 3 THEN sv.tenSV
                             WHEN tk2.idLoaiTK = 2 THEN gv.tenGV END
                 FROM thanhviennhom tv3
+                JOIN vaitronhom vtn ON vtn.id = tv3.idvaitronhom
                 LEFT JOIN taikhoan tk2 ON tv3.idtk = tk2.idTK
                 LEFT JOIN sinhvien sv  ON tk2.idTK = sv.idTK
                 LEFT JOIN giangvien gv ON tk2.idTK = gv.idTK
-                WHERE tv3.idnhom = n.idnhom AND tv3.idvaitronhom = 1 AND tv3.trangthai = 1
+                WHERE tv3.idnhom = n.idnhom AND vtn.maVaiTroNhom = 'TRUONG_NHOM' AND tv3.trangthai = 1
                 LIMIT 1
             ) AS ten_truong_nhom
         FROM nhom n
@@ -472,9 +501,6 @@ function lay_tat_ca_nhom($conn, int $id_sk): array
         WHERE n.idSK = :idSK AND n.isActive = 1
         ORDER BY n.ngaytao DESC'
     );
-    $stmt->execute([':idSK' => $id_sk]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
 
 function lay_nhom_cua_toi($conn, int $id_tk, int $id_sk): ?array
 {
@@ -557,10 +583,11 @@ function lay_loi_moi($conn, int $id_tk, int $id_sk, bool $tat_ca = false): array
                 SELECT CASE WHEN tk2.idLoaiTK = 3 THEN sv.tenSV
                             WHEN tk2.idLoaiTK = 2 THEN gv.tenGV END
                 FROM thanhviennhom tv3
+                JOIN vaitronhom vtn ON vtn.id = tv3.idvaitronhom
                 LEFT JOIN taikhoan tk2 ON tv3.idtk = tk2.idTK
                 LEFT JOIN sinhvien sv  ON tk2.idTK = sv.idTK
                 LEFT JOIN giangvien gv ON tk2.idTK = gv.idTK
-                WHERE tv3.idnhom = n.idnhom AND tv3.idvaitronhom = 1 AND tv3.trangthai = 1
+                WHERE tv3.idnhom = n.idnhom AND vtn.maVaiTroNhom = 'TRUONG_NHOM' AND tv3.trangthai = 1
                 LIMIT 1
             ) AS ten_truong_nhom
         FROM yeucau_thamgia yc

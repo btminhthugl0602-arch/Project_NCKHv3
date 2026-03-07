@@ -24,10 +24,6 @@ define('VONG_THI_MO_TA_MAX_LENGTH', 2000);
  */
 function co_quyen_quan_ly_vong_thi($conn, int $id_nguoi_thuc_hien, int $id_sk): bool
 {
-    if (kiem_tra_quyen_he_thong($conn, $id_nguoi_thuc_hien, 'admin_events')) {
-        return true;
-    }
-
     if (kiem_tra_quyen_he_thong($conn, $id_nguoi_thuc_hien, 'tao_su_kien')) {
         return true;
     }

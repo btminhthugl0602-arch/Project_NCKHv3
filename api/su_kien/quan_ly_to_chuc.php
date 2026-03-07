@@ -4,10 +4,6 @@ require_once __DIR__ . '/../core/base.php';
 
 function co_quyen_to_chuc_su_kien($conn, int $id_tk, int $id_sk): bool
 {
-    if (kiem_tra_quyen_he_thong($conn, $id_tk, 'admin_events')) {
-        return true;
-    }
-
     if (kiem_tra_quyen_he_thong($conn, $id_tk, 'tao_su_kien')) {
         return true;
     }

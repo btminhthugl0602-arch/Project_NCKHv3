@@ -14,7 +14,7 @@ function lay_id_quyen_theo_ma($conn, $ma_quyen)
 
 function co_quyen_quan_ly_tai_khoan($conn, int $id_nguoi_thuc_hien): bool
 {
-    return kiem_tra_quyen_he_thong($conn, $id_nguoi_thuc_hien, 'admin_users');
+    return kiem_tra_quyen_he_thong($conn, $id_nguoi_thuc_hien, 'quan_ly_tai_khoan');
 }
 
 function tao_tai_khoan_sinh_vien($conn, $id_tai_khoan, $ho_ten, $ma_so_sinh_vien, $id_lop)

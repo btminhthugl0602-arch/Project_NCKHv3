@@ -29,12 +29,7 @@ define('SU_KIEN_MO_TA_MAX_LENGTH', 5000);
  */
 function co_quyen_quan_ly_su_kien($conn, int $id_tk, int $id_sk = 0): bool
 {
-    // Admin hệ thống có toàn quyền
-    if (kiem_tra_quyen_he_thong($conn, $id_tk, 'admin_events')) {
-        return true;
-    }
-
-    // Người có quyền tạo sự kiện
+    // Người có quyền tạo sự kiện (Admin tự bypass qua kiem_tra_quyen_he_thong)
     if (kiem_tra_quyen_he_thong($conn, $id_tk, 'tao_su_kien')) {
         return true;
     }
@@ -52,21 +47,22 @@ function co_quyen_quan_ly_su_kien($conn, int $id_tk, int $id_sk = 0): bool
  */
 function la_btc_su_kien($conn, int $id_tk, int $id_sk): bool
 {
-    if ($id_tk <= 0 || $id_sk <= 0) {
+    if ($id_tk <= 0 || $id_sk <= 0 || !$conn instanceof PDO) {
         return false;
     }
 
-    $result = _select_info($conn, 'taikhoan_vaitro_sukien', ['id'], [
-        'WHERE' => [
-            'idTK', '=', $id_tk, 'AND',
-            'idSK', '=', $id_sk, 'AND',
-            'idVaiTro', '=', 1, 'AND',
-            'isActive', '=', 1, '',
-        ],
-        'LIMIT' => [1],
-    ]);
-
-    return !empty($result);
+    $stmt = $conn->prepare("
+        SELECT 1
+        FROM taikhoan_vaitro_sukien tvs
+        JOIN vaitro v ON v.idVaiTro = tvs.idVaiTro
+        WHERE tvs.idTK = :idTK
+          AND tvs.idSK = :idSK
+          AND tvs.isActive = 1
+          AND v.maVaiTro = 'BTC'
+        LIMIT 1
+    ");
+    $stmt->execute([':idTK' => $id_tk, ':idSK' => $id_sk]);
+    return (bool) $stmt->fetchColumn();
 }
 
 // ==========================================
@@ -265,12 +261,20 @@ function btc_tao_su_kien(
 
         $id_sk = (int) $conn->lastInsertId();
 
+        $stmtBTC = $conn->prepare("SELECT idVaiTro FROM vaitro WHERE maVaiTro = 'BTC' LIMIT 1");
+        $stmtBTC->execute();
+        $idVaiTroBTC = (int) $stmtBTC->fetchColumn();
+        if ($idVaiTroBTC <= 0) {
+            $conn->rollBack();
+            return ['status' => false, 'message' => 'Không tìm thấy vai trò BTC trong hệ thống'];
+        }
+
         $existsBtcRole = _select_info($conn, 'taikhoan_vaitro_sukien', ['id'], [
             'WHERE' => [
-                'idTK', '=', $id_nguoi_tao, 'AND',
-                'idSK', '=', $id_sk, 'AND',
-                'idVaiTro', '=', 1, 'AND',
-                'isActive', '=', 1, '',
+                'idTK',     '=', $id_nguoi_tao, 'AND',
+                'idSK',     '=', $id_sk,        'AND',
+                'idVaiTro', '=', $idVaiTroBTC,  'AND',
+                'isActive', '=', 1,              '',
             ],
             'LIMIT' => [1],
         ]);
@@ -280,7 +284,7 @@ function btc_tao_su_kien(
                 $conn,
                 'taikhoan_vaitro_sukien',
                 ['idTK', 'idSK', 'idVaiTro', 'nguonTao', 'idNguoiCap', 'isActive'],
-                [$id_nguoi_tao, $id_sk, 1, 'BTC_THEM', $id_nguoi_tao, 1]
+                [$id_nguoi_tao, $id_sk, $idVaiTroBTC, 'BTC_THEM', $id_nguoi_tao, 1]
             );
 
             if (!$assigned) {
@@ -539,8 +543,15 @@ function lay_thong_ke_su_kien($conn, int $id_su_kien): array
     $stmt->execute([$id_su_kien]);
     $stats['so_vong_thi'] = (int) $stmt->fetchColumn();
 
-    // Đếm số giám khảo
-    $stmt = $conn->prepare('SELECT COUNT(DISTINCT idTK) FROM taikhoan_vaitro_sukien WHERE idSK = ? AND idVaiTro = 3 AND isActive = 1');
+    // Đếm số giám khảo (các vai trò chấm điểm: GV_PHAN_BIEN, GV_CHAM_DOCLAP, GV_CHAM_TIEUBAN)
+    $stmt = $conn->prepare("
+        SELECT COUNT(DISTINCT tvs.idTK)
+        FROM taikhoan_vaitro_sukien tvs
+        JOIN vaitro v ON v.idVaiTro = tvs.idVaiTro
+        WHERE tvs.idSK = ?
+          AND tvs.isActive = 1
+          AND v.maVaiTro IN ('GV_PHAN_BIEN', 'GV_CHAM_DOCLAP', 'GV_CHAM_TIEUBAN')
+    ");
     $stmt->execute([$id_su_kien]);
     $stats['so_giam_khao'] = (int) $stmt->fetchColumn();
 
