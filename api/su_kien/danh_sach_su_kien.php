@@ -27,16 +27,35 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
+$search = trim((string)($_GET['search'] ?? ''));
+$limit  = isset($_GET['search']) ? 8 : 50; // search mode trả ít hơn cho dropdown
+
 try {
-    $stmt = $conn->prepare(
-        'SELECT sk.idSK, sk.tenSK, sk.ngayBatDau, sk.ngayKetThuc, sk.isActive,
-                ct.tenCap, lc.tenLoaiCap
-         FROM sukien sk
-         LEFT JOIN cap_tochuc ct ON ct.idCap = sk.idCap
-         LEFT JOIN loaicap lc ON lc.idLoaiCap = ct.idLoaiCap
-         ORDER BY sk.idSK DESC
-         LIMIT 50'
-    );
+    if ($search !== '') {
+        $stmt = $conn->prepare(
+            'SELECT sk.idSK, sk.tenSK, sk.ngayBatDau, sk.ngayKetThuc, sk.isActive,
+                    ct.tenCap, lc.tenLoaiCap
+             FROM sukien sk
+             LEFT JOIN cap_tochuc ct ON ct.idCap = sk.idCap
+             LEFT JOIN loaicap lc ON lc.idLoaiCap = ct.idLoaiCap
+             WHERE sk.tenSK LIKE :search
+             ORDER BY sk.isActive DESC, sk.idSK DESC
+             LIMIT :limit'
+        );
+        $stmt->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    } else {
+        $stmt = $conn->prepare(
+            'SELECT sk.idSK, sk.tenSK, sk.ngayBatDau, sk.ngayKetThuc, sk.isActive,
+                    ct.tenCap, lc.tenLoaiCap
+             FROM sukien sk
+             LEFT JOIN cap_tochuc ct ON ct.idCap = sk.idCap
+             LEFT JOIN loaicap lc ON lc.idLoaiCap = ct.idLoaiCap
+             ORDER BY sk.idSK DESC
+             LIMIT :limit'
+        );
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    }
     $stmt->execute();
 
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -5,7 +5,7 @@
  */
 
 if (session_status() === PHP_SESSION_NONE) session_start();
-if (!isset($_SESSION['idTK'])) {
+if (!isset($_SESSION['idTK']) || (int)$_SESSION['idTK'] <= 0) {
     header('Location: /sign-in?redirect=' . urlencode($_SERVER['REQUEST_URI']));
     exit;
 }
