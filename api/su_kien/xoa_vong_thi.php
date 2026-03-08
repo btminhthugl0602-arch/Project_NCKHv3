@@ -1,4 +1,9 @@
 <?php
+
+define('_AUTHEN', true);
+require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../core/auth_guard.php';
+require_once __DIR__ . '/quan_ly_vong_thi.php';
 /**
  * API Endpoint: Xóa vòng thi
  * Method: DELETE/POST
@@ -7,11 +12,10 @@
  * - id_vong_thi: int (required) - ID vòng thi cần xóa
  */
 
-define('_AUTHEN', true);
-
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/quan_ly_vong_thi.php';
+// ── Auth ──────────────────────────────────────────────────────────
+$actor = auth_require_quyen_he_thong('tao_su_kien');
 
 // Chấp nhận DELETE hoặc POST
 if (!in_array($_SERVER['REQUEST_METHOD'], ['DELETE', 'POST'])) {
@@ -24,17 +28,7 @@ if (!in_array($_SERVER['REQUEST_METHOD'], ['DELETE', 'POST'])) {
 }
 
 try {
-    // Lấy thông tin người dùng từ session
-    $id_nguoi_thuc_hien = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
-
-    if ($id_nguoi_thuc_hien <= 0) {
-        http_response_code(401);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Vui lòng đăng nhập để thực hiện thao tác này',
-        ]);
-        exit;
-    }
+    $id_nguoi_thuc_hien = $actor['idTK'];
 
     // Parse request
     $input = json_decode(file_get_contents('php://input'), true);
@@ -54,7 +48,6 @@ try {
     }
 
     // Gọi service function
-    $conn = _connect();
     $result = xoa_vong_thi($conn, $id_nguoi_thuc_hien, $id_vong_thi);
 
     if ($result['status']) {

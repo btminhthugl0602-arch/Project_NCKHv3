@@ -3,10 +3,13 @@
 define('_AUTHEN', true);
 
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../core/auth_guard.php';
+
 require_once __DIR__ . '/quan_ly_bo_tieu_chi.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
+// ── Auth ──────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode([
@@ -23,6 +26,10 @@ if (!is_array($input)) {
 }
 
 $idSk = isset($input['id_sk']) ? (int) $input['id_sk'] : 0;
+
+// ── Auth ──────────────────────────────────────────────────
+$actor = auth_require_cauhinh_su_kien($idSk);
+
 if ($idSk <= 0) {
     http_response_code(400);
     echo json_encode([

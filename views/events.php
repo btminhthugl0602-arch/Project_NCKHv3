@@ -1,7 +1,49 @@
 <?php
+
 /**
  * Event Management Page
  */
+
+if (session_status() === PHP_SESSION_NONE) session_start();
+$_isGuest = isset($_SESSION['role']) && $_SESSION['role'] === 'guest';
+if (!isset($_SESSION['idTK']) && !$_isGuest) {
+    header('Location: /sign-in');
+    exit;
+}
+
+// Check quyền tạo sự kiện — dùng raw query thay vì require business file
+// Tránh define() conflict với constants trong quan_ly_su_kien.php
+// gây E_WARNING → output trước HTML → DOMContentLoaded không fire đúng
+$_coQuyenTao = false;
+if (!$_isGuest && isset($_SESSION['idTK']) && (int)$_SESSION['idTK'] > 0) {
+    $_idTKCheck = (int)$_SESSION['idTK'];
+    try {
+        if (!defined('_AUTHEN')) define('_AUTHEN', true);
+        require_once __DIR__ . '/../api/core/db_connect.php';
+        // Admin (idLoaiTK=1) luôn có quyền
+        if ((int)($_SESSION['idLoaiTK'] ?? 0) === 1) {
+            $_coQuyenTao = true;
+        } else {
+            // Kiểm tra bảng taikhoan_quyen
+            $_stmtQ = $conn->prepare("
+                SELECT 1
+                FROM taikhoan_quyen tq
+                JOIN quyen q ON q.idQuyen = tq.idQuyen
+                WHERE tq.idTK = :idTK
+                  AND q.maQuyen = 'tao_su_kien'
+                  AND q.phamVi = 'HE_THONG'
+                  AND tq.isActive = 1
+                  AND (tq.thoiGianKetThuc IS NULL OR tq.thoiGianKetThuc > NOW())
+                LIMIT 1
+            ");
+            $_stmtQ->execute([':idTK' => $_idTKCheck]);
+            $_coQuyenTao = (bool) $_stmtQ->fetchColumn();
+        }
+    } catch (Throwable $_e) {
+        // Không critical — nút tạo ẩn đi, list sự kiện vẫn load bình thường
+        $_coQuyenTao = false;
+    }
+}
 
 $pageTitle = "Quản lý sự kiện - ezManagement";
 $currentPage = "events";
@@ -23,18 +65,19 @@ ob_start();
                 <div class="flex flex-wrap items-center justify-between gap-4 p-6 pb-0 mb-0 border-b-0 rounded-t-2xl">
                     <div class="pr-2">
                         <h6 class="mb-1">Cấu hình sự kiện</h6>
-                        <p class="mb-0 text-sm leading-normal text-slate-500">Bắt đầu bằng việc tạo sự kiện mới để cấu hình các bước tiếp theo.</p>
+                        <p class="mb-0 text-sm leading-normal text-slate-500">Bắt đầu bằng việc tạo sự kiện mới để cấu
+                            hình các bước tiếp theo.</p>
                     </div>
-                    <div class="p-1 rounded-2xl bg-gradient-to-tl from-purple-700 via-fuchsia-600 to-pink-500 shadow-soft-xl">
-                        <button
-                            id="openCreateEventBtn"
-                            type="button"
-                            class="inline-flex items-center px-6 py-3 text-xs font-bold text-center text-white uppercase align-middle transition-all border-0 rounded-xl cursor-pointer bg-gradient-to-tl from-purple-700 via-fuchsia-600 to-pink-500 leading-pro ease-soft-in tracking-tight-soft hover:scale-102 active:opacity-85 shadow-soft-md"
-                        >
-                            <i class="mr-2 fas fa-plus"></i>
-                            Tạo sự kiện
-                        </button>
-                    </div>
+                    <?php if ($_coQuyenTao): ?>
+                        <div
+                            class="p-1 rounded-2xl bg-gradient-to-tl from-purple-700 via-fuchsia-600 to-pink-500 shadow-soft-xl">
+                            <button id="openCreateEventBtn" type="button"
+                                class="inline-flex items-center px-6 py-3 text-xs font-bold text-center text-white uppercase align-middle transition-all border-0 rounded-xl cursor-pointer bg-gradient-to-tl from-purple-700 via-fuchsia-600 to-pink-500 leading-pro ease-soft-in tracking-tight-soft hover:scale-102 active:opacity-85 shadow-soft-md">
+                                <i class="mr-2 fas fa-plus"></i>
+                                Tạo sự kiện
+                            </button>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="flex-auto p-6">
@@ -48,7 +91,8 @@ ob_start();
                     </div>
 
                     <div class="mt-4 text-sm text-slate-500">
-                        Sau khi tạo thành công, bạn có thể tiếp tục cấu hình vòng thi và quy chế trong các bước tiếp theo.
+                        Sau khi tạo thành công, bạn có thể tiếp tục cấu hình vòng thi và quy chế trong các bước tiếp
+                        theo.
                     </div>
 
                     <div class="mt-6">
@@ -56,17 +100,35 @@ ob_start();
                             <h6 class="mb-0 text-sm">Danh sách sự kiện</h6>
                             <span class="text-xs text-slate-500">Cập nhật tự động sau khi tạo</span>
                         </div>
-                        <div id="eventListEmpty" class="px-4 py-5 text-sm border border-dashed rounded-xl text-slate-500 border-slate-300 bg-slate-50">
+                        <div id="eventListLoading" class="px-4 py-5 text-sm text-center text-slate-400">
+                            <svg class="animate-spin inline-block w-5 h-5 mr-2 text-purple-500"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                            </svg>
+                            Đang tải danh sách sự kiện...
+                        </div>
+                        <div id="eventListEmpty"
+                            class="hidden px-4 py-5 text-sm border border-dashed rounded-xl text-slate-500 border-slate-300 bg-slate-50">
                             Chưa có sự kiện nào để hiển thị.
                         </div>
                         <div id="eventList" class="hidden overflow-x-auto">
                             <table class="items-center w-full mb-0 align-top border-collapse text-slate-500">
                                 <thead class="align-bottom">
                                     <tr>
-                                        <th class="px-3 py-3 text-xxs font-bold tracking-wider text-left uppercase border-b border-slate-200 text-slate-400">Sự kiện</th>
-                                        <th class="px-3 py-3 text-xxs font-bold tracking-wider text-left uppercase border-b border-slate-200 text-slate-400">Cấp tổ chức</th>
-                                        <th class="px-3 py-3 text-xxs font-bold tracking-wider text-left uppercase border-b border-slate-200 text-slate-400">Thời gian</th>
-                                        <th class="px-3 py-3 text-xxs font-bold tracking-wider text-left uppercase border-b border-slate-200 text-slate-400">Trạng thái</th>
+                                        <th
+                                            class="px-3 py-3 text-xxs font-bold tracking-wider text-left uppercase border-b border-slate-200 text-slate-400">
+                                            Sự kiện</th>
+                                        <th
+                                            class="px-3 py-3 text-xxs font-bold tracking-wider text-left uppercase border-b border-slate-200 text-slate-400">
+                                            Cấp tổ chức</th>
+                                        <th
+                                            class="px-3 py-3 text-xxs font-bold tracking-wider text-left uppercase border-b border-slate-200 text-slate-400">
+                                            Thời gian</th>
+                                        <th
+                                            class="px-3 py-3 text-xxs font-bold tracking-wider text-left uppercase border-b border-slate-200 text-slate-400">
+                                            Trạng thái</th>
                                     </tr>
                                 </thead>
                                 <tbody id="eventListBody"></tbody>

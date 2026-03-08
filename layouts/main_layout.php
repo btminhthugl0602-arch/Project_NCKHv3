@@ -48,7 +48,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Kiểm tra xem người dùng đã đăng nhập chưa (có thể bỏ comment nếu cần)
-// if (!isset($_SESSION['user_id'])) {
+// if (!isset($_SESSION['idTK'])) {
 //     header('Location: ' . $baseUrl . 'views/sign-in.php');
 //     exit();
 // }

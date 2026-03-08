@@ -1,6 +1,7 @@
 <?php
 define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../core/auth_guard.php';
 require_once __DIR__ . '/quan_ly_nhom.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -18,13 +19,13 @@ if ($idSk <= 0) {
     exit;
 }
 
-if (session_status() === PHP_SESSION_NONE) session_start();
-$idTK = (int) ($_SESSION['user_id'] ?? 0);
+// ── Auth ──────────────────────────────────────────────────
+$actor = auth_require_quyen_nhom($idSk, 'xem_nhom');
+$idTK  = $actor['idTK'];
 
 try {
-    $nhoms       = lay_tat_ca_nhom($conn, $idSk);
-    $userHasGroup = ($idTK > 0) ? kiem_tra_sv_co_nhom($conn, $idTK, $idSk) : false;
-
+    $nhoms        = lay_tat_ca_nhom($conn, $idSk);
+    $userHasGroup = kiem_tra_sv_co_nhom($conn, $idTK, $idSk);
     echo json_encode([
         'status'         => 'success',
         'message'        => 'Lấy danh sách nhóm thành công',

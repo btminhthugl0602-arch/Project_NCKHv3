@@ -4,14 +4,6 @@ require_once __DIR__ . '/../core/base.php';
 
 function xac_thuc_quyen_bo_tieu_chi($conn, int $id_nguoi_thuc_hien, int $id_su_kien = 0): bool
 {
-    if (kiem_tra_quyen_he_thong($conn, $id_nguoi_thuc_hien, 'admin_criteria')) {
-        return true;
-    }
-
-    if (kiem_tra_quyen_he_thong($conn, $id_nguoi_thuc_hien, 'admin_events')) {
-        return true;
-    }
-
     if (kiem_tra_quyen_he_thong($conn, $id_nguoi_thuc_hien, 'tao_su_kien')) {
         return true;
     }

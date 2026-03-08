@@ -4,9 +4,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const eventListBody = document.getElementById('eventListBody');
     const eventListEmpty = document.getElementById('eventListEmpty');
 
-    if (!openCreateEventBtn) {
-        return;
-    }
+    // openCreateEventBtn chỉ hiện với người có quyền tao_su_kien
+    // nhưng list sự kiện vẫn cần load cho tất cả user
 
     const normalizeDateTime = (value) => (value ? value.replace('T', ' ') + ':00' : null);
 
@@ -116,19 +115,27 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        const loadingEl = document.getElementById('eventListLoading');
+
+        // Hiện spinner, ẩn list và empty state
+        if (loadingEl) loadingEl.classList.remove('hidden');
+        eventList.classList.add('hidden');
+        eventListEmpty.classList.add('hidden');
+
         try {
             const events = await layDanhSachSuKien();
             eventListBody.innerHTML = '';
 
+            if (loadingEl) loadingEl.classList.add('hidden');
+
             if (events.length === 0) {
-                eventList.classList.add('hidden');
                 eventListEmpty.classList.remove('hidden');
                 return;
             }
 
             events.forEach((item) => taoDongSuKien(item));
         } catch (error) {
-            eventList.classList.add('hidden');
+            if (loadingEl) loadingEl.classList.add('hidden');
             eventListEmpty.classList.remove('hidden');
             eventListEmpty.textContent = 'Không thể tải danh sách sự kiện. Vui lòng thử lại.';
         }
@@ -150,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return firstOption + dynamicOptions;
     }
 
-    openCreateEventBtn.addEventListener('click', async function () {
+    if (openCreateEventBtn) openCreateEventBtn.addEventListener('click', async function () {
         let capList = [];
         try {
             capList = await layDanhSachCapToChuc();
@@ -260,24 +267,16 @@ document.addEventListener('DOMContentLoaded', function () {
             const payload = await response.json();
 
             if (payload.status === 'success') {
-                taoDongSuKien(
-                    {
-                        idSK: payload.data?.idSK || 0,
-                        tenSK: formValues.ten_su_kien,
-                        tenCap: formValues.ten_cap_label || '',
-                        tenLoaiCap: formValues.ten_loai_cap_label || '',
-                        ngayBatDau: formValues.ngay_bat_dau,
-                        ngayKetThuc: formValues.ngay_ket_thuc,
-                        isActive: formValues.is_active,
-                    },
-                    true
-                );
-
                 await Swal.fire({
+                    toast: true,
+                    position: 'top-end',
                     icon: 'success',
-                    title: 'Thành công',
-                    text: payload.message || 'Đã tạo sự kiện mới',
+                    title: payload.message || 'Đã tạo sự kiện mới',
+                    showConfirmButton: false,
+                    timer: 2500,
+                    timerProgressBar: true,
                 });
+                await napDanhSachSuKien();
                 return;
             }
 
@@ -294,4 +293,4 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
     });
-});
+}); // end openCreateEventBtn listener
