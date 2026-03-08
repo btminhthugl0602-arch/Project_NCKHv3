@@ -2,13 +2,9 @@
 define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../core/auth_guard.php';
-
 require_once __DIR__ . '/quan_ly_nhom.php';
 
 header('Content-Type: application/json; charset=utf-8');
-
-// ── Auth ──────────────────────────────────────────────────
-$actor = auth_require_login();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -16,17 +12,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-if (session_status() === PHP_SESSION_NONE) session_start();
-$idTK = (int) ($_SESSION['idTK'] ?? 0);
-if ($idTK <= 0) {
-    http_response_code(401);
-    echo json_encode(['status' => 'error', 'message' => 'Chưa đăng nhập', 'data' => null], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
 $input     = json_decode(file_get_contents('php://input'), true) ?? [];
+$idSk      = (int) ($input['id_sk']      ?? 0);
 $idYeuCau  = (int) ($input['id_yeu_cau'] ?? 0);
 $trangThai = (int) ($input['trang_thai'] ?? 0);
+
+if ($idSk <= 0) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Thiếu id_sk', 'data' => null], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 if ($idYeuCau <= 0 || !in_array($trangThai, [1, 2], true)) {
     http_response_code(400);
@@ -34,9 +29,13 @@ if ($idYeuCau <= 0 || !in_array($trangThai, [1, 2], true)) {
     exit;
 }
 
+// ── Auth ──────────────────────────────────────────────────
+$actor = auth_require_quyen_nhom($idSk, 'xem_nhom');
+$idTK  = $actor['idTK'];
+
+// Logic chi tiết (là chủ nhóm hay người được mời) xử lý trong duyet_yeu_cau_nhom()
 try {
     $result = duyet_yeu_cau_nhom($conn, $idTK, $idYeuCau, $trangThai);
-
     if ($result['status'] === true) {
         echo json_encode(['status' => 'success', 'message' => $result['message'], 'data' => null], JSON_UNESCAPED_UNICODE);
     } else {

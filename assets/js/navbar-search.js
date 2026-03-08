@@ -2,17 +2,17 @@
     'use strict';
 
     // ── Constants ────────────────────────────────────────────
-    const DEBOUNCE_MS = 300;
+    const DEBOUNCE_MS   = 300;
     const MIN_QUERY_LEN = 2;
-    const API_URL = '/api/su_kien/danh_sach_su_kien.php';
+    const API_URL       = '/api/su_kien/danh_sach_su_kien.php';
 
     // ── State ────────────────────────────────────────────────
     let _debounceTimer = null;
-    let _lastQuery = '';
-    let _isOpen = false;
+    let _lastQuery     = '';
+    let _isOpen        = false;
 
     // ── Elements ─────────────────────────────────────────────
-    const input = document.querySelector('#navbarSearch');
+    const input    = document.querySelector('#navbarSearch');
     const dropdown = document.querySelector('#navbarSearchDropdown');
 
     if (!input || !dropdown) return; // navbar search không có trên trang này
@@ -36,7 +36,7 @@
     // Highlight từ khớp trong text
     function highlight(text, query) {
         if (!query) return escHtml(text);
-        const safe = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const safe  = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(`(${safe})`, 'gi');
         return escHtml(text).replace(regex, '<mark class="nss-mark">$1</mark>');
     }
@@ -60,31 +60,31 @@
     function renderSkeleton() {
         const row = () =>
             '<div class="flex items-center gap-3 px-4 py-2.5">' +
-            '<div class="w-8 h-8 rounded-lg flex-shrink-0 nss-shimmer"></div>' +
-            '<div class="flex-1 flex flex-col gap-1.5">' +
-            '<div class="h-3 w-3/5 rounded nss-shimmer"></div>' +
-            '<div class="h-2.5 w-2/5 rounded nss-shimmer"></div>' +
-            '</div>' +
+                '<div class="w-8 h-8 rounded-lg flex-shrink-0 nss-shimmer"></div>' +
+                '<div class="flex-1 flex flex-col gap-1.5">' +
+                    '<div class="h-3 w-3/5 rounded nss-shimmer"></div>' +
+                    '<div class="h-2.5 w-2/5 rounded nss-shimmer"></div>' +
+                '</div>' +
             '</div>';
-        dropdown.innerHTML = '<div class="py-1">' + [1, 2, 3].map(row).join('') + '</div>';
+        dropdown.innerHTML = '<div class="py-1">' + [1,2,3].map(row).join('') + '</div>';
         openDropdown();
     }
 
     function renderEmpty(query) {
         dropdown.innerHTML =
             '<div class="px-4 py-6 text-center">' +
-            '<span class="material-symbols-outlined text-3xl text-slate-300 block mb-2">search_off</span>' +
-            '<p class="text-sm text-slate-400">Không tìm thấy kết quả cho <strong class="text-slate-500 font-semibold">"' + escHtml(query) + '"</strong></p>' +
+                '<span class="material-symbols-outlined text-3xl text-slate-300 block mb-2">search_off</span>' +
+                '<p class="text-sm text-slate-400">Không tìm thấy kết quả cho <strong class="text-slate-500 font-semibold">"' + escHtml(query) + '"</strong></p>' +
             '</div>';
         openDropdown();
     }
 
     function renderResults(items, query) {
         const rows = items.map(function (item) {
-            const idSk = Number(item.idSK || 0);
+            const idSk     = Number(item.idSK || 0);
             const isActive = Number(item.isActive) === 1;
-            const tenCap = [item.tenCap, item.tenLoaiCap].filter(Boolean).join(' · ');
-            const date = formatDate(item.ngayBatDau);
+            const tenCap   = [item.tenCap, item.tenLoaiCap].filter(Boolean).join(' · ');
+            const date     = formatDate(item.ngayBatDau);
 
             const badgeCls = isActive
                 ? 'bg-emerald-100 text-emerald-600'
@@ -93,20 +93,20 @@
             return '<a href="/event-detail?id_sk=' + idSk + '"' +
                 ' class="nss-result-item flex items-center gap-3 px-4 py-2.5 hover:bg-violet-50 focus:bg-violet-50 focus:outline-none transition-colors"' +
                 ' data-id="' + idSk + '">' +
-                '<div class="flex-shrink-0 w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">' +
-                '<span class="material-symbols-outlined text-violet-600" style="font-size:16px">event</span>' +
-                '</div>' +
-                '<div class="flex-1 min-w-0">' +
-                '<p class="text-sm font-semibold text-slate-800 truncate leading-snug">' + highlight(item.tenSK, query) + '</p>' +
-                '<p class="text-xs text-slate-400 truncate leading-snug">' +
-                (tenCap ? escHtml(tenCap) : '') +
-                (tenCap && date ? ' · ' : '') +
-                (date ? date : '') +
-                '</p>' +
-                '</div>' +
-                '<span class="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ' + badgeCls + '">' +
-                (isActive ? 'Đang mở' : 'Tạm ẩn') +
-                '</span>' +
+                    '<div class="flex-shrink-0 w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">' +
+                        '<span class="material-symbols-outlined text-violet-600" style="font-size:16px">event</span>' +
+                    '</div>' +
+                    '<div class="flex-1 min-w-0">' +
+                        '<p class="text-sm font-semibold text-slate-800 truncate leading-snug">' + highlight(item.tenSK, query) + '</p>' +
+                        '<p class="text-xs text-slate-400 truncate leading-snug">' +
+                            (tenCap ? escHtml(tenCap) : '') +
+                            (tenCap && date ? ' · ' : '') +
+                            (date ? date : '') +
+                        '</p>' +
+                    '</div>' +
+                    '<span class="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ' + badgeCls + '">' +
+                        (isActive ? 'Đang mở' : 'Tạm ẩn') +
+                    '</span>' +
                 '</a>';
         }).join('');
 
@@ -125,7 +125,7 @@
         renderSkeleton();
 
         try {
-            const res = await fetch(API_URL + '?search=' + encodeURIComponent(query), {
+            const res  = await fetch(API_URL + '?search=' + encodeURIComponent(query), {
                 credentials: 'same-origin',
             });
             const data = await res.json();
@@ -186,7 +186,7 @@
     // Arrow navigation trong dropdown
     dropdown.addEventListener('keydown', function (e) {
         const items = Array.from(dropdown.querySelectorAll('.nss-result-item'));
-        const idx = items.indexOf(document.activeElement);
+        const idx   = items.indexOf(document.activeElement);
 
         if (e.key === 'ArrowDown') {
             e.preventDefault();

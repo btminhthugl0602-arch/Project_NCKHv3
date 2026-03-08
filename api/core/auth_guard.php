@@ -176,3 +176,48 @@ function auth_require_quan_ly_hoac_btc(int $idSK = 0): array
     _auth_fail(403, 'Bạn không có quyền truy cập');
     return []; // unreachable — để IDE không báo lỗi
 }
+
+/**
+ * Yêu cầu quyền cấu hình sự kiện:
+ * - Có quyền hệ thống tao_su_kien (Admin), HOẶC
+ * - Có quyền sự kiện cauhinh_sukien (BTC được phân quyền)
+ *
+ * Dùng cho các API write: luu/xoa quy chế, bộ tiêu chí, vòng thi, v.v.
+ */
+function auth_require_cauhinh_su_kien(int $idSK): array
+{
+    global $conn;
+    $actor = auth_require_login();
+
+    if (kiem_tra_quyen_he_thong($conn, $actor['idTK'], 'tao_su_kien')) {
+        return $actor;
+    }
+
+    if ($idSK > 0 && kiem_tra_quyen_su_kien($conn, $actor['idTK'], $idSK, 'cauhinh_sukien')) {
+        return $actor;
+    }
+
+    _auth_fail(403, 'Bạn không có quyền cấu hình sự kiện này');
+    return []; // unreachable
+}
+
+/**
+ * Yêu cầu quyền sự kiện cho API nhóm.
+ * Trả JSON 403 + exit nếu không đủ quyền.
+ *
+ * @param int    $idSK    ID sự kiện
+ * @param string $maQuyen Mã quyền cần check (xem_nhom, tao_nhom, ...)
+ * @return array actor
+ */
+function auth_require_quyen_nhom(int $idSK, string $maQuyen): array
+{
+    global $conn;
+    $actor = auth_require_login();
+
+    if ($idSK > 0 && kiem_tra_quyen_su_kien($conn, $actor['idTK'], $idSK, $maQuyen)) {
+        return $actor;
+    }
+
+    _auth_fail(403, 'Bạn không có quyền thực hiện thao tác này trong sự kiện');
+    return []; // unreachable
+}

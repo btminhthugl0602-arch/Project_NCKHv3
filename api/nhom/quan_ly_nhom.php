@@ -657,3 +657,22 @@ function nop_bai_nhom($conn, int $id_tk, int $id_nhom, int $id_sk, string $ten_d
         ? ['status' => true, 'message' => 'Nộp bài thành công! Sản phẩm đang chờ duyệt.']
         : ['status' => false, 'message' => 'Lỗi khi lưu bài nộp'];
 }
+/**
+ * Kiểm tra user có phải thành viên active của nhóm cụ thể không.
+ * Dùng để gate getchitietnhom.
+ */
+function kiem_tra_thanh_vien_nhom($conn, int $idTK, int $idNhom): bool
+{
+    if (!$conn instanceof PDO || $idTK <= 0 || $idNhom <= 0) return false;
+
+    $sql = 'SELECT 1
+            FROM thanhviennhom
+            WHERE idtk   = :idtk
+              AND idnhom  = :idnhom
+              AND trangthai = 1
+            LIMIT 1';
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([':idtk' => $idTK, ':idnhom' => $idNhom]);
+    return (bool) $stmt->fetchColumn();
+}

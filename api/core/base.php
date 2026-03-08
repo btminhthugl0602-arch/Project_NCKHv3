@@ -336,8 +336,10 @@ function anh_xa_ma_quyen($conn, $ma_quyen)
 function kiem_tra_quyen_he_thong($conn, $id_tai_khoan, $ma_quyen)
 {
     // DEV MODE: chỉ bypass khi đang ở môi trường development
-    if (defined('APP_ENV') && APP_ENV === 'development'
-        && defined('_BYPASS_AUTH') && _BYPASS_AUTH === true) {
+    if (
+        defined('APP_ENV') && APP_ENV === 'development'
+        && defined('_BYPASS_AUTH') && _BYPASS_AUTH === true
+    ) {
         return true;
     }
 
@@ -389,8 +391,10 @@ function kiem_tra_quyen_he_thong($conn, $id_tai_khoan, $ma_quyen)
 function kiem_tra_quyen_su_kien($conn, int $idTK, int $idSK, string $maQuyen): bool
 {
     // DEV MODE: chỉ bypass khi đang ở môi trường development
-    if (defined('APP_ENV') && APP_ENV === 'development'
-        && defined('_BYPASS_AUTH') && _BYPASS_AUTH === true) {
+    if (
+        defined('APP_ENV') && APP_ENV === 'development'
+        && defined('_BYPASS_AUTH') && _BYPASS_AUTH === true
+    ) {
         return true;
     }
 

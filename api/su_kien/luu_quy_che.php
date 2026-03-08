@@ -9,9 +9,6 @@ require_once __DIR__ . '/quan_ly_quy_che.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-// ── Auth ──────────────────────────────────────────────────
-$actor = auth_require_quyen_he_thong('tao_su_kien');
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode([
@@ -27,12 +24,15 @@ if (!is_array($input)) {
     $input = [];
 }
 
+$idSk = isset($input['id_sk']) ? (int) $input['id_sk'] : 0;
+
+// ── Auth ──────────────────────────────────────────────────
+$actor = auth_require_cauhinh_su_kien($idSk);
+
 $idUser = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
 if ($idUser <= 0 && isset($input['id_nguoi_thuc_hien'])) {
     $idUser = (int) $input['id_nguoi_thuc_hien'];
 }
-
-$idSk = isset($input['id_sk']) ? (int) $input['id_sk'] : 0;
 $tenQuyChe = trim((string) ($input['ten_quy_che'] ?? ''));
 $loaiQuyCheRaw = strtoupper(trim((string) ($input['loai_quy_che'] ?? '')));
 $moTa = trim((string) ($input['mo_ta'] ?? ''));

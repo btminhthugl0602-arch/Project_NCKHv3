@@ -11,7 +11,6 @@
     line-height: 1;
     user-select: none;
 }
-
 .active-icon {
     font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
 }
@@ -21,38 +20,18 @@ aside {
     scrollbar-width: thin;
     scrollbar-color: #e2e8f0 transparent;
 }
-
-aside::-webkit-scrollbar {
-    width: 4px;
-}
-
-aside::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-aside::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
-    border-radius: 4px;
-}
+aside::-webkit-scrollbar { width: 4px; }
+aside::-webkit-scrollbar-track { background: transparent; }
+aside::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
 
 /* ── Main content scrollbar ── */
 main {
     scrollbar-width: thin;
     scrollbar-color: #e2e8f0 transparent;
 }
-
-main::-webkit-scrollbar {
-    width: 6px;
-}
-
-main::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-main::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 6px;
-}
+main::-webkit-scrollbar { width: 6px; }
+main::-webkit-scrollbar-track { background: transparent; }
+main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 6px; }
 
 /* ── Focus visible ring — primary color ── */
 :focus-visible {
@@ -88,11 +67,7 @@ main::-webkit-scrollbar-thumb {
 }
 
 /* ── Table ── */
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
+.data-table { width: 100%; border-collapse: collapse; }
 .data-table thead th {
     padding: 0.75rem 1rem;
     text-align: left;
@@ -104,28 +79,13 @@ main::-webkit-scrollbar-thumb {
     background: #f8f8fa;
     border-bottom: 1px solid #f1f0f2;
 }
-
-.data-table tbody tr {
-    border-bottom: 1px solid #f1f0f2;
-    transition: background 150ms;
-}
-
-.data-table tbody tr:hover {
-    background: #f7f6f8;
-}
-
-.data-table tbody td {
-    padding: 0.875rem 1rem;
-    font-size: 0.875rem;
-    color: #334155;
-}
+.data-table tbody tr { border-bottom: 1px solid #f1f0f2; transition: background 150ms; }
+.data-table tbody tr:hover { background: #f7f6f8; }
+.data-table tbody td { padding: 0.875rem 1rem; font-size: 0.875rem; color: #334155; }
 
 /* ── Reduce motion ── */
 @media (prefers-reduced-motion: reduce) {
-
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
@@ -139,12 +99,7 @@ main::-webkit-scrollbar-thumb {
     background-size: 200% 100%;
     animation: nss-shimmer 1.2s infinite;
 }
-
-@keyframes nss-shimmer {
-    to {
-        background-position: -200% 0;
-    }
-}
+@keyframes nss-shimmer { to { background-position: -200% 0; } }
 
 /* Highlight từ khớp trong kết quả search */
 .nss-mark {

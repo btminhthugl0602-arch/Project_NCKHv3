@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Quản lý sự kiện - Service Layer
  * 
@@ -271,10 +272,22 @@ function btc_tao_su_kien(
 
         $existsBtcRole = _select_info($conn, 'taikhoan_vaitro_sukien', ['id'], [
             'WHERE' => [
-                'idTK',     '=', $id_nguoi_tao, 'AND',
-                'idSK',     '=', $id_sk,        'AND',
-                'idVaiTro', '=', $idVaiTroBTC,  'AND',
-                'isActive', '=', 1,              '',
+                'idTK',
+                '=',
+                $id_nguoi_tao,
+                'AND',
+                'idSK',
+                '=',
+                $id_sk,
+                'AND',
+                'idVaiTro',
+                '=',
+                $idVaiTroBTC,
+                'AND',
+                'isActive',
+                '=',
+                1,
+                '',
             ],
             'LIMIT' => [1],
         ]);
@@ -453,7 +466,6 @@ function btc_cap_nhat_su_kien(
         }
 
         return $response;
-
     } catch (Throwable $exception) {
         error_log('Lỗi cập nhật sự kiện: ' . $exception->getMessage());
         return ['status' => false, 'message' => 'Lỗi hệ thống khi cập nhật sự kiện'];
@@ -528,18 +540,18 @@ function lay_thong_ke_su_kien($conn, int $id_su_kien): array
 
     $stats = [];
 
-    // Đếm số nhóm tham gia
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM nhom_sukien WHERE idSK = ? AND isActive = 1');
+    // Đếm số nhóm tham gia — bảng `nhom`, cột `idSK`
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM nhom WHERE idSK = ? AND isActive = 1');
     $stmt->execute([$id_su_kien]);
     $stats['so_nhom'] = (int) $stmt->fetchColumn();
 
-    // Đếm số bài nộp
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM bainop WHERE idSK = ?');
+    // Đếm số bài nộp — bảng `sanpham`, cột `idSK`
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM sanpham WHERE idSK = ? AND isActive = 1');
     $stmt->execute([$id_su_kien]);
     $stats['so_bai_nop'] = (int) $stmt->fetchColumn();
 
     // Đếm số vòng thi
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM vongthi WHERE idSK = ? AND isActive = 1');
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM vongthi WHERE idSK = ?');
     $stmt->execute([$id_su_kien]);
     $stats['so_vong_thi'] = (int) $stmt->fetchColumn();
 
