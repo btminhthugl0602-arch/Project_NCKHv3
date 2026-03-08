@@ -99,9 +99,10 @@
         <datalist id="criteriaBankList"></datalist>
     </div>
 
-    <!-- Ngân hàng bộ tiêu chí -->
+    <!-- Bộ tiêu chí của sự kiện này -->
     <div class="p-4 border rounded-xl border-slate-200 bg-white">
-        <p class="mb-1 text-xs font-bold uppercase text-slate-400">Ngân hàng bộ tiêu chí</p>
+        <p class="mb-0 text-xs font-bold uppercase text-slate-400">Bộ tiêu chí của sự kiện này</p>
+        <p class="mb-1 text-xs text-slate-400">Chỉ hiển thị các bộ tiêu chí đã được gán vào vòng thi của sự kiện.</p>
         <div id="criteriaSetList" class="mt-2 space-y-2 text-sm text-slate-600">
             <div class="px-3 py-2 border rounded-lg border-slate-200 bg-slate-50">Đang tải bộ tiêu chí...</div>
         </div>

@@ -28,7 +28,7 @@ if ($idSk <= 0) {
     exit;
 }
 
-$idNguoiThucHien = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0;
+$idNguoiThucHien = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
 if ($idNguoiThucHien <= 0 && isset($_GET['id_nguoi_thuc_hien'])) {
     $idNguoiThucHien = (int) $_GET['id_nguoi_thuc_hien'];
 }

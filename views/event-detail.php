@@ -5,9 +5,6 @@
  * Mỗi tab được render từ file partial riêng trong views/partials/event-detail/
  */
 
-// TODO: Xóa 2 dòng này sau khi test xong
-session_start();
-$_SESSION['user_id'] = 1;
 
 $pageTitle   = "Chi tiết sự kiện - ezManagement";
 $currentPage = "events";

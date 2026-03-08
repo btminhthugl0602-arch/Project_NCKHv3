@@ -9,10 +9,11 @@
  *   Ví dụ: { "1": 1, "2": 3, "3": 2 }
  */
 
+define('_AUTHEN', true);
+
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/quan_ly_vong_thi.php';
-require_once __DIR__ . '/../core/session_helper.php';
 
 // Chỉ chấp nhận PUT hoặc POST
 if (!in_array($_SERVER['REQUEST_METHOD'], ['PUT', 'POST'])) {
@@ -26,8 +27,7 @@ if (!in_array($_SERVER['REQUEST_METHOD'], ['PUT', 'POST'])) {
 
 try {
     // Lấy thông tin người dùng từ session
-    $session_user = get_current_user_from_session();
-    $id_nguoi_thuc_hien = $session_user['idTK'] ?? 0;
+    $id_nguoi_thuc_hien = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
 
     if ($id_nguoi_thuc_hien <= 0) {
         http_response_code(401);
