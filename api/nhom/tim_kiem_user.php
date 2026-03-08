@@ -20,10 +20,7 @@ if (!in_array($loai, ['sv', 'gv'], true)) {
     exit;
 }
 
-if (strlen($q) < 2) {
-    echo json_encode(['status' => 'success', 'message' => 'Từ khoá quá ngắn', 'data' => []], JSON_UNESCAPED_UNICODE);
-    exit;
-}
+// Cho phép q rỗng → trả về top 20 để hiện danh sách khi mở modal
 
 try {
     $data = ($loai === 'sv')

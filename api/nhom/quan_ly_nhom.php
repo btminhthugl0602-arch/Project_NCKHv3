@@ -72,11 +72,6 @@ function tao_nhom_moi($conn, $idTK, $idSK, $tenNhom, $moTa, $soLuongToiDa, $dang
         return ['status' => false, 'message' => 'Dữ liệu đầu vào không hợp lệ'];
     }
 
-    $tai_khoan = truy_van_mot_ban_ghi($conn, 'taikhoan', 'idTK', $idTK);
-    if (!$tai_khoan || (int) $tai_khoan['idLoaiTK'] !== 3) {
-        return ['status' => false, 'message' => 'Chỉ sinh viên mới được tạo nhóm'];
-    }
-
     if (!_is_exist($conn, 'sukien', 'idSK', $idSK)) {
         return ['status' => false, 'message' => 'Sự kiện không tồn tại'];
     }
@@ -97,7 +92,7 @@ function tao_nhom_moi($conn, $idTK, $idSK, $tenNhom, $moTa, $soLuongToiDa, $dang
         $okNhom = _insert_info(
             $conn,
             'nhom',
-            ['idSK', 'idChuNhom', 'manhom', 'ngaytao', 'isActive'],
+            ['idSK', 'idnhomtruong', 'manhom', 'ngaytao', 'isActive'],
             [$idSK, $idTK, $maNhom, date('Y-m-d H:i:s'), 1]
         );
 
@@ -607,7 +602,7 @@ function lay_chi_tiet_nhom($conn, int $id_nhom): ?array
     return $nhom;
 }
 
-function nop_bai_nhom($conn, int $id_tk, int $id_nhom, int $id_sk, string $ten_de_tai, string $mo_ta = '', string $link_tl = ''): array
+function nop_bai_nhom($conn, int $id_tk, int $id_nhom, int $id_sk, string $ten_de_tai, string $mo_ta = '', string $link_tl = '', int $id_chu_de_sk = 0): array
 {
     $ten_de_tai = trim($ten_de_tai);
     if ($ten_de_tai === '') return ['status' => false, 'message' => 'Tên đề tài không được để trống'];
@@ -619,12 +614,15 @@ function nop_bai_nhom($conn, int $id_tk, int $id_nhom, int $id_sk, string $ten_d
     ]);
     if (empty($tv)) return ['status' => false, 'message' => 'Bạn không phải thành viên của nhóm này'];
 
+    $cols = ['idNhom', 'idSK', 'tenSanPham', 'moTa', 'linkTaiLieu', 'TrangThai', 'isActive', 'NgayTao'];
+    $vals = [$id_nhom, $id_sk, $ten_de_tai, $mo_ta, $link_tl, 'Chờ duyệt', 1, date('Y-m-d H:i:s')];
+    if ($id_chu_de_sk > 0) {
+        $cols[] = 'idChuDeSK';
+        $vals[] = $id_chu_de_sk;
+    }
+
     // Dùng _insert_info để lưu
-    $ok = _insert_info(
-        $conn, 'sanpham',
-        ['idNhom', 'idSK', 'tenSanPham', 'moTa', 'linkTaiLieu', 'TrangThai', 'isActive', 'NgayTao'],
-        [$id_nhom, $id_sk, $ten_de_tai, $mo_ta, $link_tl, 'Chờ duyệt', 1, date('Y-m-d H:i:s')]
-    );
+    $ok = _insert_info($conn, 'sanpham', $cols, $vals);
 
     return $ok
         ? ['status' => true, 'message' => 'Nộp bài thành công! Sản phẩm đang chờ duyệt.']
