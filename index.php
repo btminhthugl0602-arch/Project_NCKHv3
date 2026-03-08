@@ -9,6 +9,6 @@ if (session_status() === PHP_SESSION_NONE) {
 if (isset($_SESSION['idTK'])) {
     header('Location: /dashboard');
 } else {
-    header('Location: /views/dang_nhap.php');
+    header('Location: /sign-in');
 }
 exit;

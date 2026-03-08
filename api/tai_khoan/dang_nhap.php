@@ -70,7 +70,10 @@ $redirect = trim($_POST['redirect'] ?? '/dashboard');
 // --- Nhánh khách ---
 if (!empty($_POST['guest'])) {
     session_regenerate_id(true);
-    $_SESSION['role'] = 'guest';
+    $_SESSION['role']     = 'guest';
+    $_SESSION['idTK']     = 0;
+    $_SESSION['idLoaiTK'] = 0;
+    $_SESSION['hoTen']    = 'Khách';
 
     http_response_code(200);
     echo json_encode([
@@ -78,7 +81,7 @@ if (!empty($_POST['guest'])) {
         'message' => 'Tiếp tục với tư cách khách',
         'data'    => [
             'role'     => 'guest',
-            'redirect' => '/su-kien',
+            'redirect' => '/dashboard',
         ],
     ], JSON_UNESCAPED_UNICODE);
     exit;
@@ -181,7 +184,9 @@ try {
 }
 
 // --- Bước 7: Tạo session ---
+// Reset toàn bộ session trước — xóa sạch trạng thái guest hoặc session cũ
 session_regenerate_id(true);
+$_SESSION = [];
 $_SESSION['idTK']      = (int) $taiKhoan['idTK'];
 $_SESSION['idLoaiTK']  = (int) $taiKhoan['idLoaiTK'];
 $_SESSION['hoTen']     = $hoTen;

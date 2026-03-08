@@ -7,9 +7,14 @@
 
 define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../core/auth_guard.php';
+
 require_once __DIR__ . '/quan_ly_nhom.php';
 
 header('Content-Type: application/json; charset=utf-8');
+
+// ── Auth ──────────────────────────────────────────────────
+$actor = auth_require_login();
 
 $q    = trim((string) ($_GET['q']    ?? ''));
 $loai = trim((string) ($_GET['loai'] ?? ''));

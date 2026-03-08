@@ -8,9 +8,14 @@
 define('_AUTHEN', true);
 
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../../api/core/auth_guard.php';
+
 require_once __DIR__ . '/quan_ly_cham_diem.php';
 
 header('Content-Type: application/json; charset=utf-8');
+
+// ── Auth ──────────────────────────────────────────────────
+$actor = auth_require_login();
 
 $method = $_SERVER['REQUEST_METHOD'];
 

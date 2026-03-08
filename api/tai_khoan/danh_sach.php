@@ -12,12 +12,26 @@
 
 define("_AUTHEN", true);
 require_once __DIR__ . "/../core/base.php";
+require_once __DIR__ . "/quan_ly_tai_khoan.php";
 
 header("Content-Type: application/json; charset=utf-8");
 
 if ($_SERVER["REQUEST_METHOD"] !== "GET") {
     http_response_code(405);
     echo json_encode(["status" => "error", "message" => "Phương thức không hợp lệ", "data" => null], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// ── Auth ───────────────────────────────────────────────────
+$idNguoiTH = (int) ($_SESSION['idTK'] ?? 0);
+if ($idNguoiTH <= 0) {
+    http_response_code(401);
+    echo json_encode(["status" => "error", "message" => "Chưa đăng nhập", "data" => null], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+if (!co_quyen_quan_ly_tai_khoan($conn, $idNguoiTH)) {
+    http_response_code(403);
+    echo json_encode(["status" => "error", "message" => "Không đủ quyền", "data" => null], JSON_UNESCAPED_UNICODE);
     exit;
 }
 

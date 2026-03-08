@@ -4,8 +4,9 @@
  */
 
 if (session_status() === PHP_SESSION_NONE) session_start();
-if (!isset($_SESSION['idTK'])) {
-    header('Location: /views/dang_nhap.php');
+$_isGuest = isset($_SESSION['role']) && $_SESSION['role'] === 'guest';
+if (!isset($_SESSION['idTK']) && !$_isGuest) {
+    header('Location: /sign-in');
     exit;
 }
 

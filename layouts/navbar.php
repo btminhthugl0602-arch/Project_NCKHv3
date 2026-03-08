@@ -32,9 +32,9 @@
         <div class="relative hidden sm:block">
             <span class="material-symbols-outlined text-[18px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true">search</span>
             <input type="search"
-                   aria-label="Tìm kiếm"
-                   placeholder="Tìm kiếm…"
-                   class="w-64 pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400
+                aria-label="Tìm kiếm"
+                placeholder="Tìm kiếm…"
+                class="w-64 pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400
                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary
                           transition-colors" />
         </div>
@@ -42,11 +42,11 @@
         <!-- Notification bell -->
         <div class="relative">
             <button type="button"
-                    id="notificationBtn"
-                    aria-label="Thông báo"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                    class="flex items-center justify-center size-9 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100
+                id="notificationBtn"
+                aria-label="Thông báo"
+                aria-haspopup="true"
+                aria-expanded="false"
+                class="flex items-center justify-center size-9 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100
                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-colors">
                 <span class="material-symbols-outlined text-xl">notifications</span>
             </button>
@@ -57,30 +57,40 @@
         <!-- Divider -->
         <div class="h-8 w-px bg-slate-200" aria-hidden="true"></div>
 
-        <!-- User info -->
+        <!-- User info / Guest -->
         <?php
-            $navHoTen    = isset($_SESSION['hoTen'])    ? $_SESSION['hoTen']    : 'Tài khoản';
-            $navIdLoaiTK = isset($_SESSION['idLoaiTK']) ? (int)$_SESSION['idLoaiTK'] : 0;
-            $navLoaiMap  = [1 => 'Quản trị viên', 2 => 'Giảng viên', 3 => 'Sinh viên'];
-            $navLoaiLabel = $navLoaiMap[$navIdLoaiTK] ?? 'Người dùng';
-            $navInitial  = mb_strtoupper(mb_substr($navHoTen, 0, 1, 'UTF-8'), 'UTF-8');
+        $navIsGuest  = isset($_SESSION['role']) && $_SESSION['role'] === 'guest';
+        $navHoTen    = isset($_SESSION['hoTen'])    ? $_SESSION['hoTen']    : 'Tài khoản';
+        $navIdLoaiTK = isset($_SESSION['idLoaiTK']) ? (int)$_SESSION['idLoaiTK'] : 0;
+        $navLoaiMap  = [1 => 'Quản trị viên', 2 => 'Giảng viên', 3 => 'Sinh viên'];
+        $navLoaiLabel = $navLoaiMap[$navIdLoaiTK] ?? 'Người dùng';
+        $navInitial  = mb_strtoupper(mb_substr($navHoTen, 0, 1, 'UTF-8'), 'UTF-8');
         ?>
-        <a href="/profile"
-           class="flex items-center gap-2.5 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl p-1 transition-opacity"
-           aria-label="Trang cá nhân của <?php echo htmlspecialchars($navHoTen); ?>">
-            <div class="text-right hidden sm:block min-w-0">
-                <p class="text-sm font-semibold text-slate-800 leading-tight truncate max-w-[140px]">
-                    <?php echo htmlspecialchars($navHoTen); ?>
-                </p>
-                <p class="text-xs text-slate-500 leading-tight truncate">
-                    <?php echo $navLoaiLabel; ?>
-                </p>
-            </div>
-            <!-- Avatar -->
-            <div class="size-9 rounded-full bg-gradient-to-br from-[#d946ef] to-[#9333ea] flex items-center justify-center text-white font-bold text-sm shrink-0 select-none">
-                <?php echo $navInitial; ?>
-            </div>
-        </a>
+        <?php if ($navIsGuest): ?>
+            <a href="/sign-in"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl transition-all hover:scale-102 active:opacity-85"
+                style="background: linear-gradient(135deg, #d946ef, #9333ea);">
+                <span class="material-symbols-outlined text-[16px]">login</span>
+                Đăng nhập
+            </a>
+        <?php else: ?>
+            <a href="/profile"
+                class="flex items-center gap-2.5 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl p-1 transition-opacity"
+                aria-label="Trang cá nhân của <?php echo htmlspecialchars($navHoTen); ?>">
+                <div class="text-right hidden sm:block min-w-0">
+                    <p class="text-sm font-semibold text-slate-800 leading-tight truncate max-w-[140px]">
+                        <?php echo htmlspecialchars($navHoTen); ?>
+                    </p>
+                    <p class="text-xs text-slate-500 leading-tight truncate">
+                        <?php echo $navLoaiLabel; ?>
+                    </p>
+                </div>
+                <!-- Avatar -->
+                <div class="size-9 rounded-full bg-gradient-to-br from-[#d946ef] to-[#9333ea] flex items-center justify-center text-white font-bold text-sm shrink-0 select-none">
+                    <?php echo $navInitial; ?>
+                </div>
+            </a>
+        <?php endif; ?>
     </div>
 </header>
 <!-- End Navbar -->

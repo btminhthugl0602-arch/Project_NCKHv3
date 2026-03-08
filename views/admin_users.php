@@ -9,7 +9,7 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 if (!isset($_SESSION['idTK'])) {
-    header('Location: /views/dang_nhap.php');
+    header('Location: /sign-in');
     exit;
 }
 

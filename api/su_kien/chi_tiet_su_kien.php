@@ -3,9 +3,20 @@
 define('_AUTHEN', true);
 
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../core/auth_guard.php';
+
 require_once __DIR__ . '/quan_ly_su_kien.php';
 
 header('Content-Type: application/json; charset=utf-8');
+
+// ── Auth ──────────────────────────────────────────────────
+// Guest được phép đọc thông tin tổng quan sự kiện công khai
+$_isGuestRequest = isset($_SESSION['role']) && $_SESSION['role'] === 'guest';
+if (!$_isGuestRequest) {
+    $actor = auth_require_login();
+} else {
+    $actor = ['idTK' => 0, 'idLoaiTK' => 0, 'hoTen' => 'Khách'];
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);

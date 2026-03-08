@@ -489,3 +489,15 @@ function filter()
     }
     return $filterArr;
 }
+
+// ── Guest helper ────────────────────────────────────────────
+function is_guest(): bool
+{
+    return isset($_SESSION['role']) && $_SESSION['role'] === 'guest'
+        && (!isset($_SESSION['idTK']) || (int)$_SESSION['idTK'] === 0);
+}
+
+function is_logged_in(): bool
+{
+    return isset($_SESSION['idTK']) && (int)$_SESSION['idTK'] > 0;
+}

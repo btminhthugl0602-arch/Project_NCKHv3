@@ -1,9 +1,20 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Get base path for API calls
     const BASE_PATH = window.APP_BASE_PATH || '';
-    
+
     const idSk = Number(window.EVENT_DETAIL_ID || 0);
     const currentTab = String(window.EVENT_DETAIL_TAB || 'overview');
+    const isGuest = window.IS_GUEST === true;
+
+    // Global 401/403 handler — nếu API trả về 401/403, redirect về login
+    const _origFetch = window.fetch;
+    window.fetch = async function (...args) {
+        const res = await _origFetch(...args);
+        if ((res.status === 401 || res.status === 403) && isGuest) {
+            window.location.href = '/sign-in?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+        }
+        return res;
+    };
 
     const loadingEl = document.getElementById('eventDetailLoading');
     const errorEl = document.getElementById('eventDetailError');
@@ -369,7 +380,7 @@ document.addEventListener('DOMContentLoaded', function () {
         rows.forEach((row, index) => {
             const stt = row.querySelector('.criteria-stt');
             if (stt) stt.textContent = String(index + 1);
-            
+
             // Disable nút lên cho dòng đầu, nút xuống cho dòng cuối
             const upBtn = row.querySelector('.criteria-row-up');
             const downBtn = row.querySelector('.criteria-row-down');
@@ -389,10 +400,10 @@ document.addEventListener('DOMContentLoaded', function () {
         criteriaTableBody.querySelectorAll('.criteria-row').forEach((row) => {
             const diemInput = row.querySelector('[data-field="diem_toi_da"]');
             const tyTrongInput = row.querySelector('[data-field="ty_trong"]');
-            
+
             const diem = parseFloat(diemInput?.value || 0);
             const tyTrong = parseFloat(tyTrongInput?.value || 0);
-            
+
             if (!isNaN(diem)) totalDiem += diem;
             if (!isNaN(tyTrong)) totalTyTrong += tyTrong;
         });
@@ -403,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function moveCriteriaRow(row, direction) {
         if (!criteriaTableBody || !row) return;
-        
+
         if (direction === 'up') {
             const prev = row.previousElementSibling;
             if (prev) {
@@ -415,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 criteriaTableBody.insertBefore(next, row);
             }
         }
-        
+
         updateCriteriaSTT();
     }
 
@@ -441,11 +452,11 @@ document.addEventListener('DOMContentLoaded', function () {
         criteriaSetList.innerHTML = sets.map((set) => {
             const idBo = Number(set.idBoTieuChi || 0);
             const usage = Array.isArray(criteriaUsageMap[idBo]) ? criteriaUsageMap[idBo] : [];
-            
+
             // Phân loại usage theo loại
             const vongThiUsage = usage.filter((item) => item.loai === 'vong');
             const tieubanUsage = usage.filter((item) => item.loai === 'tieuban');
-            
+
             let usageHtml = '';
             if (vongThiUsage.length > 0 || tieubanUsage.length > 0) {
                 // Có đang sử dụng
@@ -1102,9 +1113,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Get review-assign container elements
-        const reviewAssignContainer = document.querySelector('#reviewAssignContainer') || 
-                                    document.querySelector('[data-tab="review-assign"]') ||
-                                    document.querySelector('.review-assign-content');
+        const reviewAssignContainer = document.querySelector('#reviewAssignContainer') ||
+            document.querySelector('[data-tab="review-assign"]') ||
+            document.querySelector('.review-assign-content');
 
         if (!reviewAssignContainer) {
             console.warn('Review assign container not found');
@@ -1126,9 +1137,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     method: 'GET',
                     credentials: 'same-origin'
                 }).then(r => r.json()),
-                
+
                 fetch(`${BASE_PATH}/api/su_kien/danh_sach_vong_thi.php?id_sk=${encodeURIComponent(idSk)}`, {
-                    method: 'GET', 
+                    method: 'GET',
                     credentials: 'same-origin'
                 }).then(r => r.json())
             ];
@@ -1162,9 +1173,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function renderReviewAssignInterface(giangVien, vongThi) {
-        const reviewAssignContainer = document.querySelector('#reviewAssignContainer') || 
-                                    document.querySelector('[data-tab="review-assign"]') ||
-                                    document.querySelector('.review-assign-content');
+        const reviewAssignContainer = document.querySelector('#reviewAssignContainer') ||
+            document.querySelector('[data-tab="review-assign"]') ||
+            document.querySelector('.review-assign-content');
 
         if (!reviewAssignContainer) return;
 
@@ -1251,7 +1262,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Add reviewer selection event listeners
-        reviewAssignContainer.addEventListener('click', function(event) {
+        reviewAssignContainer.addEventListener('click', function (event) {
             if (event.target.matches('.reviewer-select-btn')) {
                 const reviewerId = event.target.getAttribute('data-reviewer-id');
                 // Handle reviewer selection logic here
@@ -1263,11 +1274,11 @@ document.addEventListener('DOMContentLoaded', function () {
     async function loadSubmissionsForReview() {
         const vongThiSelect = document.getElementById('reviewVongThiSelect');
         const listContainer = document.getElementById('reviewAssignmentList');
-        
+
         if (!vongThiSelect || !listContainer) return;
-        
+
         const selectedVongThi = vongThiSelect.value;
-        
+
         if (!selectedVongThi) {
             listContainer.innerHTML = `
                 <div class="px-4 py-8 text-center text-slate-400">
@@ -1395,8 +1406,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 // Badge đóng nộp
-                const dongNopBadge = daDongNop 
-                    ? '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-rose-100 text-rose-600">Đã đóng nộp</span>' 
+                const dongNopBadge = daDongNop
+                    ? '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-rose-100 text-rose-600">Đã đóng nộp</span>'
                     : '';
 
                 // Nút di chuyển lên/xuống
@@ -1428,10 +1439,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                     </button>
                                     <button type="button" class="btn-toggle-round p-1 ${daDongNop ? 'text-emerald-400 hover:text-emerald-600' : 'text-amber-400 hover:text-amber-600'}" data-round-id="${idVongThi}" title="${daDongNop ? 'Mở lại nộp bài' : 'Đóng nộp bài'}">
-                                        ${daDongNop 
-                                            ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>'
-                                            : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>'
-                                        }
+                                        ${daDongNop
+                        ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>'
+                        : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>'
+                    }
                                     </button>
                                     <button type="button" class="btn-delete-round p-1 text-rose-400 hover:text-rose-600" data-round-id="${idVongThi}" title="Xóa vòng thi">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -1469,7 +1480,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function attachRoundActionListeners() {
         // Nút sửa
         document.querySelectorAll('.btn-edit-round').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const roundId = Number(this.dataset.roundId);
                 handleEditRound(roundId);
             });
@@ -1477,7 +1488,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Nút xóa
         document.querySelectorAll('.btn-delete-round').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const roundId = Number(this.dataset.roundId);
                 handleDeleteRound(roundId);
             });
@@ -1485,7 +1496,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Nút toggle
         document.querySelectorAll('.btn-toggle-round').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const roundId = Number(this.dataset.roundId);
                 handleToggleRound(roundId);
             });
@@ -1493,7 +1504,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Nút di chuyển lên
         document.querySelectorAll('.btn-move-round-up').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const roundId = Number(this.dataset.roundId);
                 handleMoveRound(roundId, 'up');
             });
@@ -1501,7 +1512,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Nút di chuyển xuống
         document.querySelectorAll('.btn-move-round-down').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const roundId = Number(this.dataset.roundId);
                 handleMoveRound(roundId, 'down');
             });
@@ -1650,7 +1661,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const confirm = await Swal.fire({
             title: `Xác nhận ${action}`,
-            text: daDongNop 
+            text: daDongNop
                 ? `Bạn có muốn mở lại cho sinh viên nộp bài vào vòng "${round.tenVongThi}"?`
                 : `Bạn có muốn đóng nộp bài cho vòng "${round.tenVongThi}"? Sinh viên sẽ không thể nộp bài mới.`,
             icon: 'question',
@@ -1818,9 +1829,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     khoiTaoTrangChiTiet();
-    khoiTaoTabConfigRules();
-    khoiTaoTabConfigCriteria();
-    khoiTaoTabReviewAssign();
+    // Các tab sau yêu cầu đăng nhập — guest không init
+    if (!isGuest) {
+        khoiTaoTabConfigRules();
+        khoiTaoTabConfigCriteria();
+        khoiTaoTabReviewAssign();
+    }
 
     if (btnSaveBasicConfig) {
         btnSaveBasicConfig.addEventListener('click', async function () {
@@ -2232,7 +2246,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const removeBtn = event.target.closest('.criteria-row-remove');
             const upBtn = event.target.closest('.criteria-row-up');
             const downBtn = event.target.closest('.criteria-row-down');
-            
+
             if (removeBtn) {
                 const row = removeBtn.closest('.criteria-row');
                 if (row) {
@@ -2245,19 +2259,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 return;
             }
-            
+
             if (upBtn) {
                 const row = upBtn.closest('.criteria-row');
                 moveCriteriaRow(row, 'up');
                 return;
             }
-            
+
             if (downBtn) {
                 const row = downBtn.closest('.criteria-row');
                 moveCriteriaRow(row, 'down');
             }
         });
-        
+
         // Cập nhật tổng khi input thay đổi
         criteriaTableBody.addEventListener('input', function (event) {
             const target = event.target;

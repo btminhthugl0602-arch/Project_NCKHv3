@@ -7,9 +7,10 @@
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-// Guard đăng nhập
-if (!isset($_SESSION['idTK'])) {
-    header('Location: /views/dang_nhap.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+// Guard đăng nhập — cho phép cả guest
+$_isGuest = isset($_SESSION['role']) && $_SESSION['role'] === 'guest';
+if (!isset($_SESSION['idTK']) && !$_isGuest) {
+    header('Location: /sign-in?redirect=' . urlencode($_SERVER['REQUEST_URI']));
     exit;
 }
 
@@ -23,6 +24,11 @@ $pageCss     = "event-detail.css";
 
 $idSk = isset($_GET['id_sk']) ? (int) $_GET['id_sk'] : 0;
 $tab  = isset($_GET['tab'])   ? trim((string) $_GET['tab']) : 'overview';
+
+// Guest chỉ được xem tab overview
+if ($_isGuest) {
+    $tab = 'overview';
+}
 
 $allowedTabs = [
     'overview',
@@ -123,17 +129,18 @@ ob_start();
 </div>
 
 <script>
-window.APP_BASE_PATH = <?php echo json_encode($basePath); ?>;
-window.EVENT_DETAIL_ID = <?php echo (int) $idSk; ?>;
-window.EVENT_DETAIL_TAB = <?php echo json_encode($tab, JSON_UNESCAPED_UNICODE); ?>;
+    window.APP_BASE_PATH = <?php echo json_encode($basePath); ?>;
+    window.EVENT_DETAIL_ID = <?php echo (int) $idSk; ?>;
+    window.EVENT_DETAIL_TAB = <?php echo json_encode($tab, JSON_UNESCAPED_UNICODE); ?>;
+window.IS_GUEST = <?php echo $_isGuest ? 'true' : 'false'; ?>;
 </script>
 
 <?php if ($tab === 'scoring'): ?>
-<script src="<?php echo $basePath; ?>/assets/js/scoring.js"></script>
+    <script src="<?php echo $basePath; ?>/assets/js/scoring.js"></script>
 <?php endif; ?>
 
 <?php if (in_array($tab, ['nhom-my', 'nhom-all', 'nhom-request'])): ?>
-<script src="<?php echo $basePath; ?>/assets/js/nhom_thi.js"></script>
+    <script src="<?php echo $basePath; ?>/assets/js/nhom_thi.js"></script>
 <?php endif; ?>
 
 <?php

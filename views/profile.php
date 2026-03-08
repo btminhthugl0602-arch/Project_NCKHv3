@@ -6,7 +6,7 @@
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['idTK'])) {
-    header('Location: /views/dang_nhap.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+    header('Location: /sign-in?redirect=' . urlencode($_SERVER['REQUEST_URI']));
     exit;
 }
 

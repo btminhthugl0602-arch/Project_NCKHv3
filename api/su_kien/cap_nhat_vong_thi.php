@@ -1,4 +1,6 @@
 <?php
+
+define('_AUTHEN', true);
 /**
  * API Endpoint: Cập nhật vòng thi
  * Method: PUT/POST
@@ -13,6 +15,9 @@
  */
 
 header('Content-Type: application/json; charset=utf-8');
+
+// ── Auth ──────────────────────────────────────────────────
+$actor = auth_require_quyen_he_thong('tao_su_kien');
 
 require_once __DIR__ . '/quan_ly_vong_thi.php';
 require_once __DIR__ . '/../core/session_helper.php';

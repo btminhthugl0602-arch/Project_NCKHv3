@@ -223,7 +223,32 @@
     // ════════════════════════════════════════════════════════════
     // DANH SÁCH TÀI KHOẢN
     // ════════════════════════════════════════════════════════════
+    function showTableSkeleton() {
+        const rows = Array.from({ length: state.limit }, () => `
+            <tr class="au-skeleton-row border-b border-slate-100">
+                <td class="px-6 py-3">
+                    <div class="flex items-center gap-3">
+                        <div class="size-9 rounded-xl bg-slate-200 animate-pulse shrink-0"></div>
+                        <div class="space-y-1.5">
+                            <div class="h-3 w-24 bg-slate-200 rounded animate-pulse"></div>
+                            <div class="h-2.5 w-32 bg-slate-100 rounded animate-pulse"></div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-4 py-3"><div class="h-5 w-20 bg-slate-200 rounded-full animate-pulse"></div></td>
+                <td class="px-4 py-3"><div class="h-3 w-28 bg-slate-200 rounded animate-pulse"></div></td>
+                <td class="px-4 py-3"><div class="h-3 w-20 bg-slate-200 rounded animate-pulse"></div></td>
+                <td class="px-4 py-3"><div class="h-5 w-16 bg-slate-200 rounded-full animate-pulse"></div></td>
+                <td class="px-4 py-3"><div class="h-3 w-20 bg-slate-200 rounded animate-pulse"></div></td>
+                <td class="px-4 py-3 text-right"><div class="h-7 w-14 bg-slate-200 rounded-lg animate-pulse ml-auto"></div></td>
+            </tr>`).join('');
+        el.tableBody.innerHTML = rows;
+        el.emptyState.classList.add('hidden');
+        el.resultCount.textContent = 'Đang tải…';
+    }
+
     async function loadDanhSach() {
+        showTableSkeleton();
         try {
             const params = new URLSearchParams({
                 page: state.currentPage,
@@ -581,7 +606,8 @@
             if (data.status === 'success') {
                 closeCreateModal();
                 Toast.fire({ icon: 'success', title: 'Tạo tài khoản thành công' });
-                await loadDanhSach(); // Reload bảng
+                state.currentPage = 1; // Về trang 1 để thấy tài khoản mới
+                await loadDanhSach();
             } else {
                 // Lỗi cụ thể — hiện inline nếu biết trường nào
                 const msg = data.message || 'Có lỗi xảy ra';

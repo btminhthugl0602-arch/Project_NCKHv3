@@ -49,7 +49,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Kiểm tra xem người dùng đã đăng nhập chưa (có thể bỏ comment nếu cần)
 // if (!isset($_SESSION['idTK'])) {
-//     header('Location: ' . $baseUrl . 'views/dang_nhap.php');
+//     header('Location: ' . $baseUrl . 'views/sign-in.php');
 //     exit();
 // }
 
