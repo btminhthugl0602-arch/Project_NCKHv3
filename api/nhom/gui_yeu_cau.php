@@ -37,6 +37,15 @@ if ($chieuMoi === 1) {
     exit;
 }
 
+// Khi nhóm mời người (chieuMoi = 0), chỉ chủ nhóm mới được thực hiện
+if ($chieuMoi === 0) {
+    if (!la_chu_nhom($conn, $idTKSession, $idNhom)) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Chỉ chủ nhóm mới được mời thành viên', 'data' => null], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+}
+
 try {
     $result = gui_yeu_cau_nhom($conn, $idNhom, $idTKDoiPhuong, $chieuMoi, $loiNhan);
     if ($result['status'] === true) {

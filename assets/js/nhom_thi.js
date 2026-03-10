@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const idSk      = Number(window.NHOM_THI_ID_SK || 0);
-    const tab       = String(window.NHOM_THI_TAB   || 'tat-ca');
-    const qlNhomId  = Number(window.QUAN_LY_NHOM_ID || 0);
-    const qlTab     = String(window.QUAN_LY_TAB     || 'thanh-vien');
+    const idSk = Number(window.NHOM_THI_ID_SK || 0);
+    const tab = String(window.NHOM_THI_TAB || 'tat-ca');
+    const qlNhomId = Number(window.QUAN_LY_NHOM_ID || 0);
+    const qlTab = String(window.QUAN_LY_TAB || 'thanh-vien');
 
     // ── Load tên sự kiện lên sidebar ──
     const sidebarNameEl = document.getElementById('sidebarEventName');
@@ -13,11 +13,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (d.status === 'success' && d.data) {
                     sidebarNameEl.textContent = d.data.tenSK || '';
                 }
-            }).catch(() => {});
+            }).catch(() => { });
     }
 
     function esc(s) {
-        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     async function apiFetch(url) {
@@ -44,11 +44,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // ================================================================
     if (tab === 'tat-ca') {
         const elLoading = document.getElementById('groupsLoading');
-        const elError   = document.getElementById('groupsError');
-        const elEmpty   = document.getElementById('groupsEmpty');
-        const elGrid    = document.getElementById('groupsGrid');
-        const elCount   = document.getElementById('groupCountText');
-        const searchEl  = document.getElementById('searchInput');
+        const elError = document.getElementById('groupsError');
+        const elEmpty = document.getElementById('groupsEmpty');
+        const elGrid = document.getElementById('groupsGrid');
+        const elCount = document.getElementById('groupCountText');
+        const searchEl = document.getElementById('searchInput');
         const formWrapper = document.getElementById('formTaoNhomWrapper');
 
         let allGroups = [], userHasGroup = false;
@@ -74,9 +74,9 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btnSubmitTaoNhom')?.addEventListener('click', submitTaoNhom);
 
         function renderCard(g) {
-            const soTV  = parseInt(g.so_thanh_vien || 0);
-            const toiDa = parseInt(g.soluongtoida  || 5);
-            const open  = parseInt(g.dangtuyen)    === 1;
+            const soTV = parseInt(g.so_thanh_vien || 0);
+            const toiDa = parseInt(g.soluongtoida || 5);
+            const open = parseInt(g.dangtuyen) === 1;
             // Chỉ hiển thị nhóm công khai
             if (!open) return '';
             const badge = `<span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">${soTV}/${toiDa} thành viên</span>`;
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const d = await apiFetch(`/api/nhom/getallnhom.php?id_sk=${idSk}`);
                 elLoading.classList.add('hidden');
                 if (d.status !== 'success') { elError.textContent = d.message; elError.classList.remove('hidden'); return; }
-                allGroups    = d.data || [];
+                allGroups = d.data || [];
                 userHasGroup = !!d.user_has_group;
                 const publicCount = allGroups.filter(g => parseInt(g.dangtuyen) === 1).length;
                 if (elCount) elCount.textContent = `${publicCount} nhóm công khai`;
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
             searchTimer = setTimeout(() => {
                 const q = searchEl.value.trim().toLowerCase();
                 renderGrid(q ? allGroups.filter(g =>
-                    (g.tennhom||'').toLowerCase().includes(q) || (g.manhom||'').toLowerCase().includes(q)
+                    (g.tennhom || '').toLowerCase().includes(q) || (g.manhom || '').toLowerCase().includes(q)
                 ) : allGroups);
             }, 300);
         });
@@ -148,10 +148,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // ── Chế độ Quản lý nhóm (có id_nhom trên URL) ──
         if (qlNhomId > 0) {
             const elLoading = document.getElementById('qlLoading');
-            const elError   = document.getElementById('qlError');
+            const elError = document.getElementById('qlError');
             const elContent = document.getElementById('qlContent');
-            const elTitle   = document.getElementById('qlNhomTitle');
-            const elBadge   = document.getElementById('yeuCauBadge');
+            const elTitle = document.getElementById('qlNhomTitle');
+            const elBadge = document.getElementById('yeuCauBadge');
 
             async function loadQL() {
                 try {
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (soYC > 0 && elBadge) { elBadge.textContent = soYC; elBadge.classList.remove('hidden'); }
 
                     // Render theo tab
-                    if (qlTab === 'thanh-vien')  elContent.innerHTML = renderThanhVien(nhom);
+                    if (qlTab === 'thanh-vien') elContent.innerHTML = renderThanhVien(nhom);
                     else if (qlTab === 'yeu-cau') elContent.innerHTML = renderYeuCau(nhom);
                     else if (qlTab === 'cai-dat') elContent.innerHTML = renderCaiDat(nhom);
 
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             function renderThanhVien(nhom) {
                 const svList = (nhom.thanh_vien || []).filter(tv => parseInt(tv.idvaitronhom) !== 3);
-                const gvhd   = (nhom.thanh_vien || []).find(tv => parseInt(tv.idvaitronhom) === 3);
+                const gvhd = (nhom.thanh_vien || []).find(tv => parseInt(tv.idvaitronhom) === 3);
 
                 const roleLabel = r => {
                     if (r == 1) return '<span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-semibold">Trưởng nhóm</span>';
@@ -206,15 +206,15 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                         <div class="flex items-center gap-2">
                             ${roleLabel(tv.idvaitronhom)}
-                            ${parseInt(tv.idvaitronhom) !== 1
-                                ? `<button onclick="kickMember(${tv.idtk}, '${esc(tv.ten)}')"
+                            ${nhom.is_chu_nhom && parseInt(tv.idvaitronhom) !== 1
+                        ? `<button onclick="kickMember(${tv.idtk}, '${esc(tv.ten)}')"
                                        class="text-xs text-rose-500 hover:text-rose-700 transition"><i class="fas fa-times-circle"></i></button>`
-                                : ''}
+                        : ''}
                         </div>
                     </div>`).join('');
 
                 return `<div class="divide-y-0">${memberRows}</div>
-                    <div class="mt-4 flex gap-2">
+                    ${nhom.is_chu_nhom ? `<div class="mt-4 flex gap-2">
                         <button onclick="document.getElementById('modalMoiTV').classList.remove('hidden')"
                             class="inline-flex items-center gap-1 px-4 py-2 text-xs font-semibold text-white rounded-lg bg-blue-600 hover:bg-blue-700 transition">
                             <i class="fas fa-user-plus"></i> Mời thành viên
@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             class="inline-flex items-center gap-1 px-4 py-2 text-xs font-semibold text-white rounded-lg bg-orange-500 hover:bg-orange-600 transition">
                             <i class="fas fa-chalkboard-teacher"></i> Mời GVHD
                         </button>` : ''}
-                    </div>`;
+                    </div>` : ''}`;
             }
 
             function renderYeuCau(nhom) {
@@ -286,17 +286,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
             function bindCaiDat(nhom) {
                 document.getElementById('btnLuuCaiDat')?.addEventListener('click', async () => {
-                    const tenNhom   = document.getElementById('caiDatTenNhom')?.value.trim();
+                    const tenNhom = document.getElementById('caiDatTenNhom')?.value.trim();
                     const dangTuyen = document.getElementById('caiDatDangTuyen')?.value;
-                    const moTa      = document.getElementById('caiDatMoTa')?.value.trim();
+                    const moTa = document.getElementById('caiDatMoTa')?.value.trim();
                     if (!tenNhom) { Swal.fire({ icon: 'warning', title: 'Vui lòng nhập tên nhóm' }); return; }
-                    // TODO: gọi API cập nhật thông tin nhóm
-                    Swal.fire({ icon: 'success', title: 'Đã lưu thay đổi', timer: 1500, showConfirmButton: false });
+                    const btnLuu = document.getElementById('btnLuuCaiDat');
+                    if (btnLuu) { btnLuu.disabled = true; btnLuu.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i> Đang lưu...'; }
+                    const res = await apiPost('/api/nhom/cap_nhat_nhom.php', {
+                        id_sk: idSk, id_nhom: qlNhomId,
+                        ten_nhom: tenNhom, mo_ta: moTa, dang_tuyen: parseInt(dangTuyen)
+                    });
+                    if (btnLuu) { btnLuu.disabled = false; btnLuu.innerHTML = '<i class="fas fa-save"></i> Lưu thay đổi'; }
+                    if (res.status === 'success') {
+                        Swal.fire({ icon: 'success', title: 'Đã lưu thay đổi', timer: 1500, showConfirmButton: false });
+                    } else {
+                        Swal.fire({ icon: 'error', title: res.message });
+                    }
                 });
             }
 
             // Kick member
-            window.kickMember = async function(idTk, ten) {
+            window.kickMember = async function (idTk, ten) {
                 const c = await Swal.fire({
                     title: `Xoá ${ten} khỏi nhóm?`,
                     icon: 'warning', showCancelButton: true,
@@ -304,14 +314,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     confirmButtonColor: '#ef4444',
                 });
                 if (!c.isConfirmed) return;
-                const res = await apiPost('/api/nhom/roinhom.php', { id_nhom: qlNhomId, id_tk_bi_xoa: idTk });
+                const res = await apiPost('/api/nhom/roinhom.php', { id_sk: idSk, id_nhom: qlNhomId, id_tk_bi_xoa: idTk });
                 if (res.status === 'success') { Swal.fire({ icon: 'success', title: res.message, timer: 1200, showConfirmButton: false }).then(() => location.reload()); }
                 else Swal.fire({ icon: 'error', title: res.message });
             };
 
             // Duyệt yêu cầu
-            window.duyetYeuCau = async function(idYC, tt) {
-                const res = await apiPost('/api/nhom/duyet_yeu_cau.php', { id_yeu_cau: idYC, trang_thai: tt });
+            window.duyetYeuCau = async function (idYC, tt) {
+                const res = await apiPost('/api/nhom/duyet_yeu_cau.php', { id_sk: idSk, id_yeu_cau: idYC, trang_thai: tt });
                 if (res.status === 'success') {
                     document.getElementById(`yc-${idYC}`)?.remove();
                     Swal.fire({ icon: 'success', title: res.message, timer: 1200, showConfirmButton: false });
@@ -323,16 +333,16 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('btnCloseMoiGVHD')?.addEventListener('click', () => document.getElementById('modalMoiGVHD')?.classList.add('hidden'));
 
             let svTimer, gvTimer;
-            document.getElementById('searchSVInput')?.addEventListener('input', function() {
+            document.getElementById('searchSVInput')?.addEventListener('input', function () {
                 clearTimeout(svTimer);
                 svTimer = setTimeout(() => searchUser('sv', this.value.trim(), 'svSearchResults'), 350);
             });
-            document.getElementById('searchGVInput')?.addEventListener('input', function() {
+            document.getElementById('searchGVInput')?.addEventListener('input', function () {
                 clearTimeout(gvTimer);
                 gvTimer = setTimeout(() => searchUser('gv', this.value.trim(), 'gvSearchResults'), 350);
             });
 
-            window.sendInvite = async function(idTK) {
+            window.sendInvite = async function (idTK) {
                 const res = await apiPost('/api/nhom/gui_yeu_cau.php', { id_nhom: qlNhomId, chieu_moi: 0, id_tk_doi_phuong: idTK });
                 document.getElementById('modalMoiTV')?.classList.add('hidden');
                 document.getElementById('modalMoiGVHD')?.classList.add('hidden');
@@ -341,7 +351,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Nộp bài
             document.getElementById('btnCloseNopBai')?.addEventListener('click', () => document.getElementById('modalNopBai')?.classList.add('hidden'));
-            document.getElementById('btnHuyNopBai')?.addEventListener('click',   () => document.getElementById('modalNopBai')?.classList.add('hidden'));
+            document.getElementById('btnHuyNopBai')?.addEventListener('click', () => document.getElementById('modalNopBai')?.classList.add('hidden'));
             document.getElementById('btnSubmitNopBai')?.addEventListener('click', async () => {
                 const tenDeTai = document.getElementById('inputTenDeTai')?.value.trim();
                 if (!tenDeTai) { Swal.fire({ icon: 'warning', title: 'Vui lòng nhập tên đề tài' }); return; }
@@ -363,15 +373,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // ── Danh sách nhóm của tôi ──
         const elLoading = document.getElementById('myGroupLoading');
-        const elError   = document.getElementById('myGroupError');
+        const elError = document.getElementById('myGroupError');
         const elNoGroup = document.getElementById('noGroupState');
         const elContent = document.getElementById('myGroupContent');
 
         function renderGroupCard(nhom) {
-            const gvhd     = (nhom.thanh_vien || []).find(tv => parseInt(tv.idvaitronhom) === 3);
-            const hasGvhd  = !!gvhd;
-            const open     = parseInt(nhom.dangtuyen) === 1;
-            const svList   = (nhom.thanh_vien || []).filter(tv => parseInt(tv.idvaitronhom) !== 3);
+            const gvhd = (nhom.thanh_vien || []).find(tv => parseInt(tv.idvaitronhom) === 3);
+            const hasGvhd = !!gvhd;
+            const open = parseInt(nhom.dangtuyen) === 1;
+            const svList = (nhom.thanh_vien || []).filter(tv => parseInt(tv.idvaitronhom) !== 3);
 
             const statusBadge = open
                 ? `<span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">Công khai</span>`
@@ -395,8 +405,8 @@ document.addEventListener('DOMContentLoaded', function () {
                        <span class="text-xs font-semibold text-amber-700">Nhóm cần có GVHD</span>
                    </div>`;
 
-            const qlUrl = `/nhom/mygroup?id_sk=${idSk}&id_nhom=${nhom.idnhom}&quan_ly_tab=thanh-vien`;
-            const moiUrl = `/nhom/mygroup?id_sk=${idSk}&id_nhom=${nhom.idnhom}&quan_ly_tab=thanh-vien`;
+            const qlUrl = `/event-detail?id_sk=${idSk}&tab=nhom-my&id_nhom=${nhom.idnhom}&quan_ly_tab=thanh-vien`;
+            const moiUrl = `/event-detail?id_sk=${idSk}&tab=nhom-my&id_nhom=${nhom.idnhom}&quan_ly_tab=thanh-vien`;
 
             return `
             <div class="bg-white border ${hasGvhd ? 'border-slate-200' : 'border-orange-300 border-l-4 border-l-orange-400'} rounded-xl p-4 flex flex-col gap-3 shadow-soft-sm">
@@ -416,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function () {
                        class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white rounded-lg bg-blue-600 hover:bg-blue-700 transition">
                        <i class="fas fa-user-plus"></i> Mời
                     </a>
-                    ${!hasGvhd ? `<a href="/nhom/mygroup?id_sk=${idSk}&id_nhom=${nhom.idnhom}&quan_ly_tab=thanh-vien"
+                    ${!hasGvhd ? `<a href="/event-detail?id_sk=${idSk}&tab=nhom-my&id_nhom=${nhom.idnhom}&quan_ly_tab=thanh-vien"
                         class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white rounded-lg bg-orange-500 hover:bg-orange-600 transition">
                         <i class="fas fa-chalkboard-teacher"></i> Mời GVHD
                     </a>` : ''}
@@ -454,7 +464,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('modalNopBai')?.classList.remove('hidden');
         };
         document.getElementById('btnCloseNopBai')?.addEventListener('click', () => document.getElementById('modalNopBai')?.classList.add('hidden'));
-        document.getElementById('btnHuyNopBai')?.addEventListener('click',   () => document.getElementById('modalNopBai')?.classList.add('hidden'));
+        document.getElementById('btnHuyNopBai')?.addEventListener('click', () => document.getElementById('modalNopBai')?.classList.add('hidden'));
         document.getElementById('btnSubmitNopBai')?.addEventListener('click', async () => {
             const tenDeTai = document.getElementById('inputTenDeTai')?.value.trim();
             if (!tenDeTai) { Swal.fire({ icon: 'warning', title: 'Vui lòng nhập tên đề tài' }); return; }
@@ -474,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const modalTao = document.getElementById('modalTaoNhom');
         document.getElementById('btnTaoNhomCuaToi')?.addEventListener('click', () => modalTao?.classList.remove('hidden'));
         document.getElementById('btnCloseModalTaoNhom')?.addEventListener('click', () => modalTao?.classList.add('hidden'));
-        document.getElementById('btnHuyTaoNhom')?.addEventListener('click',   () => modalTao?.classList.add('hidden'));
+        document.getElementById('btnHuyTaoNhom')?.addEventListener('click', () => modalTao?.classList.add('hidden'));
         document.getElementById('btnSubmitTaoNhom')?.addEventListener('click', submitTaoNhom);
 
         loadMyGroups();
@@ -485,15 +495,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // ================================================================
     if (tab === 'loi-moi') {
         const elLoading = document.getElementById('invitesLoading');
-        const elError   = document.getElementById('invitesError');
-        const elEmpty   = document.getElementById('invitesEmpty');
-        const elList    = document.getElementById('invitesList');
+        const elError = document.getElementById('invitesError');
+        const elEmpty = document.getElementById('invitesEmpty');
+        const elList = document.getElementById('invitesList');
         const elHistory = document.getElementById('historySection');
-        const elHistList= document.getElementById('historyList');
+        const elHistList = document.getElementById('historyList');
 
         function renderInviteCard(inv) {
-            const soTV  = parseInt(inv.so_thanh_vien || 0);
-            const toiDa = parseInt(inv.soluongtoida  || 5);
+            const soTV = parseInt(inv.so_thanh_vien || 0);
+            const toiDa = parseInt(inv.soluongtoida || 5);
             return `<div id="invite-${inv.idYeuCau}" class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3 shadow-soft-sm">
                 <div class="flex items-center justify-between gap-2">
                     <span class="font-bold text-slate-800 text-sm">${esc(inv.tennhom)}</span>
@@ -564,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // HÀM DÙNG CHUNG
     // ================================================================
 
-    window.xinVaoNhom = async function(idNhom) {
+    window.xinVaoNhom = async function (idNhom) {
         const r = await Swal.fire({
             title: 'Xin tham gia nhóm?', input: 'text',
             inputPlaceholder: 'Lời nhắn (tuỳ chọn)...',
@@ -576,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function () {
         Swal.fire({ icon: res.status === 'success' ? 'success' : 'error', title: res.message, confirmButtonColor: '#5e72e4' });
     };
 
-    window.respondInvite = async function(idYC, tt) {
+    window.respondInvite = async function (idYC, tt) {
         const ok = tt === 1;
         const c = await Swal.fire({
             title: ok ? 'Chấp nhận lời mời?' : 'Từ chối lời mời?',
@@ -585,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function () {
             confirmButtonColor: ok ? '#2dce89' : '#adb5bd',
         });
         if (!c.isConfirmed) return;
-        const res = await apiPost('/api/nhom/duyet_yeu_cau.php', { id_yeu_cau: idYC, trang_thai: tt });
+        const res = await apiPost('/api/nhom/duyet_yeu_cau.php', { id_sk: idSk, id_yeu_cau: idYC, trang_thai: tt });
         if (res.status === 'success') {
             document.getElementById(`invite-${idYC}`)?.remove();
             Swal.fire({ icon: 'success', title: res.message, timer: 1500, showConfirmButton: false });
@@ -593,9 +603,9 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     async function submitTaoNhom() {
-        const tenNhom   = document.getElementById('inputTenNhom')?.value.trim();
-        const moTa      = document.getElementById('inputMoTa')?.value.trim();
-        const soLuong   = parseInt(document.getElementById('inputSoLuong')?.value || 5);
+        const tenNhom = document.getElementById('inputTenNhom')?.value.trim();
+        const moTa = document.getElementById('inputMoTa')?.value.trim();
+        const soLuong = parseInt(document.getElementById('inputSoLuong')?.value || 5);
         const dangTuyen = parseInt(document.getElementById('inputDangTuyen')?.value ?? 1);
 
         if (!tenNhom) {
@@ -623,7 +633,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 confirmButtonColor: '#5e72e4',
                 confirmButtonText: 'OK'
             });
-            location.reload();
+            window.location.href = `/event-detail?id_sk=${idSk}&tab=nhom-my`;
         } else {
             Swal.fire({ icon: 'error', title: 'Không thể tạo nhóm', text: res.message, confirmButtonColor: '#5e72e4' });
         }
@@ -639,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!list.length) { el.innerHTML = '<p class="text-xs text-slate-400 p-2">Không tìm thấy kết quả</p>'; return; }
         el.innerHTML = list.map(u => {
             const name = esc(u.tenSV || u.tenGV || '');
-            const sub  = loai === 'sv' ? esc(u.MSV || '') : '';
+            const sub = loai === 'sv' ? esc(u.MSV || '') : '';
             return `<button onclick="sendInvite(${u.idTK})"
                 class="w-full flex items-center gap-3 px-3 py-2 text-left text-sm hover:bg-slate-50 rounded-lg transition">
                 <div class="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
