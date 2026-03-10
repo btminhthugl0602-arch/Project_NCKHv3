@@ -13,20 +13,28 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $input     = json_decode(file_get_contents('php://input'), true) ?? [];
-$idSk      = (int) ($input['id_sk']        ?? 0);
 $idNhom    = (int) ($input['id_nhom']      ?? 0);
 
-if ($idSk <= 0 || $idNhom <= 0) {
+if ($idNhom <= 0) {
     http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Thiếu id_sk hoặc id_nhom', 'data' => null], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['status' => 'error', 'message' => 'Thiếu id_nhom', 'data' => null], JSON_UNESCAPED_UNICODE);
     exit;
 }
+
+// Lấy idSK từ nhóm
+$nhomCheck = lay_nhom_theo_id($conn, $idNhom);
+if (!$nhomCheck) {
+    http_response_code(404);
+    echo json_encode(['status' => 'error', 'message' => 'Nhóm không tồn tại', 'data' => null], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+$idSk = (int) $nhomCheck['idSK'];
 
 // ── Auth ──────────────────────────────────────────────────
 $actor       = auth_require_quyen_nhom($idSk, 'xem_nhom');
 $idTKSession = $actor['idTK'];
 
-// Không truyền id_tk_bi_xoa = tự rời, truyền thì trưởng nhóm đang kick
+// Không truyền id_tk_bi_xoa = tự rời, truyền thì chủ nhóm đang kick
 $idTKBiXoa = isset($input['id_tk_bi_xoa']) ? (int) $input['id_tk_bi_xoa'] : $idTKSession;
 
 try {

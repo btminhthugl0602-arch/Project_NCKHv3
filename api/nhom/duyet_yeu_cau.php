@@ -13,15 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $input     = json_decode(file_get_contents('php://input'), true) ?? [];
-$idSk      = (int) ($input['id_sk']      ?? 0);
 $idYeuCau  = (int) ($input['id_yeu_cau'] ?? 0);
 $trangThai = (int) ($input['trang_thai'] ?? 0);
-
-if ($idSk <= 0) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Thiếu id_sk', 'data' => null], JSON_UNESCAPED_UNICODE);
-    exit;
-}
 
 if ($idYeuCau <= 0 || !in_array($trangThai, [1, 2], true)) {
     http_response_code(400);
@@ -29,11 +22,25 @@ if ($idYeuCau <= 0 || !in_array($trangThai, [1, 2], true)) {
     exit;
 }
 
+// Lấy idSK từ yêu cầu → nhóm
+$ycCheck = truy_van_mot_ban_ghi($conn, 'yeucau_thamgia', 'idYeuCau', $idYeuCau);
+if (!$ycCheck) {
+    http_response_code(404);
+    echo json_encode(['status' => 'error', 'message' => 'Yêu cầu không tồn tại', 'data' => null], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+$nhomCheck = lay_nhom_theo_id($conn, (int) $ycCheck['idNhom']);
+if (!$nhomCheck) {
+    http_response_code(404);
+    echo json_encode(['status' => 'error', 'message' => 'Nhóm không tồn tại', 'data' => null], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+$idSk = (int) $nhomCheck['idSK'];
+
 // ── Auth ──────────────────────────────────────────────────
 $actor = auth_require_quyen_nhom($idSk, 'xem_nhom');
 $idTK  = $actor['idTK'];
 
-// Logic chi tiết (là chủ nhóm hay người được mời) xử lý trong duyet_yeu_cau_nhom()
 try {
     $result = duyet_yeu_cau_nhom($conn, $idTK, $idYeuCau, $trangThai);
     if ($result['status'] === true) {

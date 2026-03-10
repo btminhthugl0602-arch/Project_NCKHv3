@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## 2026-03-10 — Refactor Nhóm 2: Thành viên (Schema v2)
+
+### Thay đổi nghiệp vụ
+- **Gửi yêu cầu** hỗ trợ `loaiYeuCau` = `'SV'` | `'GVHD'`, validate đúng loại tài khoản
+- Kiểm tra config sự kiện: `soThanhVienToiDa`, `soGVHDToiDa`, `soNhomToiDaGVHD` khi gửi & duyệt
+- **Duyệt yêu cầu SV**: INSERT vào `thanhviennhom`, auto-reject pending requests của SV trong cùng SK
+- **Duyệt yêu cầu GVHD**: INSERT vào `nhom_gvhd` + INSERT `taikhoan_vaitro_sukien` (nguonTao=`QUA_NHOM`)
+- **Rời nhóm**: SV → DELETE `thanhviennhom`, GV → DELETE `nhom_gvhd` + deactivate `taikhoan_vaitro_sukien`
+- Chủ nhóm không thể rời, Trưởng nhóm không thể tự rời (chủ nhóm kick → SET `idTruongNhom=NULL`)
+
+### API thay đổi
+- **`api/nhom/gui_yeu_cau.php`**: Bỏ param `id_sk` (lấy từ DB). Thêm param `loai_yeu_cau` (`'SV'`|`'GVHD'`)
+- **`api/nhom/duyet_yeu_cau.php`**: Bỏ param `id_sk` (lấy từ yêu cầu → nhóm). Input: `id_yeu_cau`, `trang_thai`
+- **`api/nhom/roinhom.php`**: Bỏ param `id_sk` (lấy từ DB). Hỗ trợ rời nhóm GV/SV
+
+### Business logic (`api/nhom/quan_ly_nhom.php`)
+- Viết lại: `gui_yeu_cau_nhom()`, `duyet_yeu_cau_nhom()`, `roi_nhom()`
+- Bỏ tham chiếu tới: `vaitronhom`, `trangthai`, `laChuNhom`, `soluongtoida`
+- Sử dụng transaction cho `duyet_yeu_cau_nhom()` và `roi_nhom()`
+
+---
+
 ## 2026-03-10 — Refactor Nhóm 1: Khởi tạo nhóm (Schema v2)
 
 ### Thay đổi nghiệp vụ
