@@ -29,7 +29,9 @@ if (!in_array($loai, ['sv', 'gv'], true)) {
     exit;
 }
 
-if (strlen($q) < 2) {
+// Khi q rỗng: trả về danh sách đầu (cho modal load list ngay)
+// Khi q có đúng 1 ký tự: trả rỗng (cho user tiếp tục gõ)
+if ($q !== '' && strlen($q) < 2) {
     echo json_encode(['status' => 'success', 'message' => 'Từ khoá quá ngắn', 'data' => []], JSON_UNESCAPED_UNICODE);
     exit;
 }

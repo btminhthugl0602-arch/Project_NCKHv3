@@ -500,47 +500,66 @@ function roi_nhom($conn, $id_nguoi_thuc_hien, $id_nhom, $id_tk_bi_xoa)
 
 function tim_kiem_giang_vien($conn, $keyword)
 {
-    if (!$conn instanceof PDO) {
-        return [];
+    if (!$conn instanceof PDO) return [];
+
+    $keyword = trim((string) $keyword);
+
+    if ($keyword === '') {
+        // Load all - given to modal on open
+        $sql = 'SELECT tk.idTK, gv.tenGV, gv.idKhoa
+                FROM taikhoan tk
+                JOIN giangvien gv ON tk.idTK = gv.idTK
+                WHERE tk.idLoaiTK = 2 AND tk.isActive = 1
+                ORDER BY gv.tenGV ASC
+                LIMIT 20';
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+    } else {
+        $kw = '%' . $keyword . '%';
+        $sql = 'SELECT tk.idTK, gv.tenGV, gv.idKhoa
+                FROM taikhoan tk
+                JOIN giangvien gv ON tk.idTK = gv.idTK
+                WHERE tk.idLoaiTK = 2 AND tk.isActive = 1
+                  AND gv.tenGV LIKE :keyword
+                ORDER BY gv.tenGV ASC
+                LIMIT 10';
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([':keyword' => $kw]);
     }
 
-    $keyword = '%' . trim((string) $keyword) . '%';
-
-    $sql = 'SELECT tk.idTK, gv.tenGV, gv.idKhoa
-            FROM taikhoan tk
-            JOIN giangvien gv ON tk.idTK = gv.idTK
-            WHERE tk.idLoaiTK = 2
-              AND tk.isActive = 1
-              AND gv.tenGV LIKE :keyword
-            LIMIT 10';
-
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([':keyword' => $keyword]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function tim_kiem_sinh_vien($conn, $keyword)
 {
-    if (!$conn instanceof PDO) {
-        return [];
+    if (!$conn instanceof PDO) return [];
+
+    $keyword = trim((string) $keyword);
+
+    if ($keyword === '') {
+        // Load all - given to modal on open
+        $sql = 'SELECT tk.idTK, sv.tenSV, sv.MSV, l.tenLop
+                FROM taikhoan tk
+                JOIN sinhvien sv ON tk.idTK = sv.idTK
+                LEFT JOIN lop l ON sv.idLop = l.idLop
+                WHERE tk.idLoaiTK = 3 AND tk.isActive = 1
+                ORDER BY sv.tenSV ASC
+                LIMIT 20';
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+    } else {
+        $kw = '%' . $keyword . '%';
+        $sql = 'SELECT tk.idTK, sv.tenSV, sv.MSV, l.tenLop
+                FROM taikhoan tk
+                JOIN sinhvien sv ON tk.idTK = sv.idTK
+                LEFT JOIN lop l ON sv.idLop = l.idLop
+                WHERE tk.idLoaiTK = 3 AND tk.isActive = 1
+                  AND (sv.tenSV LIKE :keyword OR sv.MSV LIKE :keyword2)
+                ORDER BY sv.tenSV ASC
+                LIMIT 10';
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([':keyword' => $kw, ':keyword2' => $kw]);
     }
-
-    $keyword = '%' . trim((string) $keyword) . '%';
-
-    $sql = 'SELECT tk.idTK, sv.tenSV, sv.MSV, l.tenLop
-            FROM taikhoan tk
-            JOIN sinhvien sv ON tk.idTK = sv.idTK
-            LEFT JOIN lop l ON sv.idLop = l.idLop
-            WHERE tk.idLoaiTK = 3
-              AND tk.isActive = 1
-              AND (sv.tenSV LIKE :keyword OR sv.MSV LIKE :keyword2)
-            LIMIT 10';
-
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([
-        ':keyword' => $keyword,
-        ':keyword2' => $keyword,
-    ]);
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }

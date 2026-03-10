@@ -150,12 +150,13 @@ $qlTabTitles = [
                     <span class="material-symbols-outlined text-[20px]">close</span>
                 </button>
             </div>
-            <div class="relative mb-3">
+            <div class="relative mb-2">
                 <span class="material-symbols-outlined text-[16px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">search</span>
                 <input type="text" id="searchSVInput" placeholder="Tìm sinh viên (tên hoặc MSSV)..."
                     class="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-primary">
             </div>
-            <div id="svSearchResults" class="max-h-56 overflow-y-auto space-y-1"></div>
+            <p class="text-xs text-slate-400 mb-3">Hiển thị 20 sinh viên đầu tiên — nhập tên hoặc MSSV để tìm kiếm</p>
+            <div id="svSearchResults" class="max-h-64 overflow-y-auto space-y-1 border border-slate-100 rounded-lg"></div>
         </div>
     </div>
 </div>
@@ -170,12 +171,13 @@ $qlTabTitles = [
                     <span class="material-symbols-outlined text-[20px]">close</span>
                 </button>
             </div>
-            <div class="relative mb-3">
+            <div class="relative mb-2">
                 <span class="material-symbols-outlined text-[16px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">search</span>
                 <input type="text" id="searchGVInput" placeholder="Tìm giảng viên theo tên..."
                     class="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-primary">
             </div>
-            <div id="gvSearchResults" class="max-h-56 overflow-y-auto space-y-1"></div>
+            <p class="text-xs text-slate-400 mb-3">Hiển thị 20 giảng viên đầu tiên — nhập tên để tìm kiếm</p>
+            <div id="gvSearchResults" class="max-h-64 overflow-y-auto space-y-1 border border-slate-100 rounded-lg"></div>
         </div>
     </div>
 </div>

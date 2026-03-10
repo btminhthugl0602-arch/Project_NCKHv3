@@ -215,11 +215,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 return `<div class="divide-y-0">${memberRows}</div>
                     ${nhom.is_chu_nhom ? `<div class="mt-4 flex gap-2">
-                        <button onclick="document.getElementById('modalMoiTV').classList.remove('hidden')"
+                        <button onclick="openMoiTV()"
                             class="inline-flex items-center gap-1 px-4 py-2 text-xs font-semibold text-white rounded-lg bg-blue-600 hover:bg-blue-700 transition">
                             <i class="fas fa-user-plus"></i> Mời thành viên
                         </button>
-                        ${!gvhd ? `<button onclick="document.getElementById('modalMoiGVHD').classList.remove('hidden')"
+                        ${!gvhd ? `<button onclick="openMoiGVHD()"
                             class="inline-flex items-center gap-1 px-4 py-2 text-xs font-semibold text-white rounded-lg bg-orange-500 hover:bg-orange-600 transition">
                             <i class="fas fa-chalkboard-teacher"></i> Mời GVHD
                         </button>` : ''}
@@ -329,8 +329,28 @@ document.addEventListener('DOMContentLoaded', function () {
             };
 
             // Modal mời TV/GVHD
-            document.getElementById('btnCloseMoiTV')?.addEventListener('click', () => document.getElementById('modalMoiTV')?.classList.add('hidden'));
-            document.getElementById('btnCloseMoiGVHD')?.addEventListener('click', () => document.getElementById('modalMoiGVHD')?.classList.add('hidden'));
+            document.getElementById('btnCloseMoiTV')?.addEventListener('click', () => {
+                document.getElementById('modalMoiTV')?.classList.add('hidden');
+                document.getElementById('searchSVInput').value = '';
+                document.getElementById('svSearchResults').innerHTML = '';
+            });
+            document.getElementById('btnCloseMoiGVHD')?.addEventListener('click', () => {
+                document.getElementById('modalMoiGVHD')?.classList.add('hidden');
+                document.getElementById('searchGVInput').value = '';
+                document.getElementById('gvSearchResults').innerHTML = '';
+            });
+
+            // Hàm mở modal + load danh sách ngay
+            window.openMoiTV = function () {
+                document.getElementById('searchSVInput').value = '';
+                document.getElementById('modalMoiTV').classList.remove('hidden');
+                searchUser('sv', '', 'svSearchResults');
+            };
+            window.openMoiGVHD = function () {
+                document.getElementById('searchGVInput').value = '';
+                document.getElementById('modalMoiGVHD').classList.remove('hidden');
+                searchUser('gv', '', 'gvSearchResults');
+            };
 
             let svTimer, gvTimer;
             document.getElementById('searchSVInput')?.addEventListener('input', function () {
@@ -343,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             window.sendInvite = async function (idTK) {
-                const res = await apiPost('/api/nhom/gui_yeu_cau.php', { id_nhom: qlNhomId, chieu_moi: 0, id_tk_doi_phuong: idTK });
+                const res = await apiPost('/api/nhom/gui_yeu_cau.php', { id_sk: idSk, id_nhom: qlNhomId, chieu_moi: 0, id_tk_doi_phuong: idTK });
                 document.getElementById('modalMoiTV')?.classList.add('hidden');
                 document.getElementById('modalMoiGVHD')?.classList.add('hidden');
                 Swal.fire({ icon: res.status === 'success' ? 'success' : 'error', title: res.message, timer: 1500, showConfirmButton: false });
@@ -582,7 +602,7 @@ document.addEventListener('DOMContentLoaded', function () {
             confirmButtonColor: '#5e72e4',
         });
         if (!r.isConfirmed) return;
-        const res = await apiPost('/api/nhom/gui_yeu_cau.php', { id_nhom: idNhom, chieu_moi: 1, loi_nhan: r.value || '' });
+        const res = await apiPost('/api/nhom/gui_yeu_cau.php', { id_sk: idSk, id_nhom: idNhom, chieu_moi: 1, loi_nhan: r.value || '' });
         Swal.fire({ icon: res.status === 'success' ? 'success' : 'error', title: res.message, confirmButtonColor: '#5e72e4' });
     };
 
@@ -642,9 +662,10 @@ document.addEventListener('DOMContentLoaded', function () {
     async function searchUser(loai, q, resultId) {
         const el = document.getElementById(resultId);
         if (!el) return;
-        if (q.length < 2) { el.innerHTML = ''; return; }
-        el.innerHTML = '<p class="text-xs text-slate-400 p-2"><i class="fas fa-circle-notch fa-spin mr-1"></i>Đang tìm...</p>';
-        const d = await apiFetch(`/api/nhom/tim_kiem_user.php?loai=${loai}&q=${encodeURIComponent(q)}`);
+        // Cho phép q rỗng để load danh sách ban đầu; chặn khi gõ 1 ký tự
+        if (q.length === 1) { el.innerHTML = '<p class="text-xs text-slate-400 p-2">Tiếp tục gõ để tìm kiếm...</p>'; return; }
+        el.innerHTML = '<p class="text-xs text-slate-400 p-2"><i class="fas fa-circle-notch fa-spin mr-1"></i>Đang tải...</p>';
+        const d = await apiFetch(`/api/nhom/tim_kiem_user.php?loai=${loai}&q=${encodeURIComponent(q)}&id_sk=${idSk}`);
         const list = d.data || [];
         if (!list.length) { el.innerHTML = '<p class="text-xs text-slate-400 p-2">Không tìm thấy kết quả</p>'; return; }
         el.innerHTML = list.map(u => {
