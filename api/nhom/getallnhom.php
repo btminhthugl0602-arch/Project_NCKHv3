@@ -25,12 +25,14 @@ $idTK  = $actor['idTK'];
 
 try {
     $nhoms        = lay_tat_ca_nhom($conn, $idSk);
-    $userHasGroup = kiem_tra_sv_co_nhom($conn, $idTK, $idSk);
+    $userHasGroup = kiem_tra_user_co_nhom($conn, $idTK, $idSk);
     echo json_encode([
-        'status'         => 'success',
-        'message'        => 'Lấy danh sách nhóm thành công',
-        'data'           => $nhoms,
-        'user_has_group' => $userHasGroup,
+        'status'  => 'success',
+        'message' => 'Lấy danh sách nhóm thành công',
+        'data'    => [
+            'nhom'           => $nhoms,
+            'user_has_group' => $userHasGroup,
+        ],
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     http_response_code(500);

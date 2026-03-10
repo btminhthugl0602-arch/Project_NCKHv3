@@ -702,47 +702,69 @@ function roi_nhom(PDO $conn, int $idNguoiThucHien, int $idNhom, int $idTKBiXoa):
     }
 }
 
-function tim_kiem_giang_vien($conn, $keyword)
-{
-    if (!$conn instanceof PDO) return [];
+// ==========================================
+// HÀM TÌM KIẾM
+// ==========================================
 
-    $keyword = trim((string) $keyword);
+function tim_kiem_giang_vien(PDO $conn, string $keyword, int $idSK): array
+{
+    $keyword = trim($keyword);
 
     if ($keyword === '') {
-        // Load all - given to modal on open
-        $sql = 'SELECT tk.idTK, gv.tenGV, gv.idKhoa
+        $sql = 'SELECT
+                    tk.idTK, gv.tenGV, gv.idKhoa,
+                    (SELECT 1 FROM taikhoan_vaitro_sukien tvs
+                     WHERE tvs.idTK = tk.idTK AND tvs.idSK = :idSK AND tvs.isActive = 1
+                     LIMIT 1) AS da_dang_ky_sk,
+                    (SELECT COUNT(*) FROM nhom_gvhd g2
+                     JOIN nhom n2 ON g2.idNhom = n2.idNhom
+                     WHERE g2.idTK = tk.idTK AND n2.idSK = :idSK2 AND n2.isActive = 1
+                    ) AS so_nhom_dang_huong_dan
                 FROM taikhoan tk
                 JOIN giangvien gv ON tk.idTK = gv.idTK
                 WHERE tk.idLoaiTK = 2 AND tk.isActive = 1
                 ORDER BY gv.tenGV ASC
                 LIMIT 20';
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([':idSK' => $idSK, ':idSK2' => $idSK]);
     } else {
         $kw = '%' . $keyword . '%';
-        $sql = 'SELECT tk.idTK, gv.tenGV, gv.idKhoa
+        $sql = 'SELECT
+                    tk.idTK, gv.tenGV, gv.idKhoa,
+                    (SELECT 1 FROM taikhoan_vaitro_sukien tvs
+                     WHERE tvs.idTK = tk.idTK AND tvs.idSK = :idSK AND tvs.isActive = 1
+                     LIMIT 1) AS da_dang_ky_sk,
+                    (SELECT COUNT(*) FROM nhom_gvhd g2
+                     JOIN nhom n2 ON g2.idNhom = n2.idNhom
+                     WHERE g2.idTK = tk.idTK AND n2.idSK = :idSK2 AND n2.isActive = 1
+                    ) AS so_nhom_dang_huong_dan
                 FROM taikhoan tk
                 JOIN giangvien gv ON tk.idTK = gv.idTK
                 WHERE tk.idLoaiTK = 2 AND tk.isActive = 1
-                  AND gv.tenGV LIKE :keyword
+                  AND gv.tenGV LIKE :kw
                 ORDER BY gv.tenGV ASC
                 LIMIT 10';
         $stmt = $conn->prepare($sql);
-        $stmt->execute([':keyword' => $kw]);
+        $stmt->execute([':idSK' => $idSK, ':idSK2' => $idSK, ':kw' => $kw]);
     }
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function tim_kiem_sinh_vien($conn, $keyword)
+function tim_kiem_sinh_vien(PDO $conn, string $keyword, int $idSK): array
 {
-    if (!$conn instanceof PDO) return [];
-
-    $keyword = trim((string) $keyword);
+    $keyword = trim($keyword);
 
     if ($keyword === '') {
-        // Load all - given to modal on open
-        $sql = 'SELECT tk.idTK, sv.tenSV, sv.MSV, l.tenLop
+        $sql = 'SELECT
+                    tk.idTK, sv.tenSV, sv.MSV, l.tenLop,
+                    (SELECT 1 FROM taikhoan_vaitro_sukien tvs
+                     WHERE tvs.idTK = tk.idTK AND tvs.idSK = :idSK AND tvs.isActive = 1
+                     LIMIT 1) AS da_dang_ky_sk,
+                    (SELECT 1 FROM thanhviennhom tv2
+                     JOIN nhom n2 ON tv2.idNhom = n2.idNhom
+                     WHERE tv2.idTK = tk.idTK AND n2.idSK = :idSK2 AND n2.isActive = 1
+                     LIMIT 1) AS da_co_nhom
                 FROM taikhoan tk
                 JOIN sinhvien sv ON tk.idTK = sv.idTK
                 LEFT JOIN lop l ON sv.idLop = l.idLop
@@ -750,19 +772,27 @@ function tim_kiem_sinh_vien($conn, $keyword)
                 ORDER BY sv.tenSV ASC
                 LIMIT 20';
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([':idSK' => $idSK, ':idSK2' => $idSK]);
     } else {
         $kw = '%' . $keyword . '%';
-        $sql = 'SELECT tk.idTK, sv.tenSV, sv.MSV, l.tenLop
+        $sql = 'SELECT
+                    tk.idTK, sv.tenSV, sv.MSV, l.tenLop,
+                    (SELECT 1 FROM taikhoan_vaitro_sukien tvs
+                     WHERE tvs.idTK = tk.idTK AND tvs.idSK = :idSK AND tvs.isActive = 1
+                     LIMIT 1) AS da_dang_ky_sk,
+                    (SELECT 1 FROM thanhviennhom tv2
+                     JOIN nhom n2 ON tv2.idNhom = n2.idNhom
+                     WHERE tv2.idTK = tk.idTK AND n2.idSK = :idSK2 AND n2.isActive = 1
+                     LIMIT 1) AS da_co_nhom
                 FROM taikhoan tk
                 JOIN sinhvien sv ON tk.idTK = sv.idTK
                 LEFT JOIN lop l ON sv.idLop = l.idLop
                 WHERE tk.idLoaiTK = 3 AND tk.isActive = 1
-                  AND (sv.tenSV LIKE :keyword OR sv.MSV LIKE :keyword2)
+                  AND (sv.tenSV LIKE :kw OR sv.MSV LIKE :kw2)
                 ORDER BY sv.tenSV ASC
                 LIMIT 10';
         $stmt = $conn->prepare($sql);
-        $stmt->execute([':keyword' => $kw, ':keyword2' => $kw]);
+        $stmt->execute([':idSK' => $idSK, ':idSK2' => $idSK, ':kw' => $kw, ':kw2' => $kw]);
     }
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -772,197 +802,513 @@ function tim_kiem_sinh_vien($conn, $keyword)
 // HÀM TRUY VẤN DỮ LIỆU NHÓM
 // ==========================================
 
-function lay_tat_ca_nhom($conn, int $id_sk): array
+/**
+ * Kiểm tra user (SV hoặc GV) có nhóm trong sự kiện không.
+ */
+function kiem_tra_user_co_nhom(PDO $conn, int $idTK, int $idSK): bool
 {
-    if (!$conn instanceof PDO) return [];
+    // Lấy loại tài khoản
+    $tk = truy_van_mot_ban_ghi($conn, 'taikhoan', 'idTK', $idTK);
+    if (!$tk) return false;
+    $loaiTK = (int) $tk['idLoaiTK'];
 
+    if ($loaiTK === 3) {
+        // SV: check thanhviennhom hoặc idChuNhom/idTruongNhom
+        return kiem_tra_sv_co_nhom($conn, $idTK, $idSK);
+    } elseif ($loaiTK === 2) {
+        // GV: check nhom_gvhd hoặc idChuNhom
+        $stmt = $conn->prepare(
+            'SELECT 1 FROM nhom_gvhd g
+             JOIN nhom n ON g.idNhom = n.idNhom
+             WHERE g.idTK = :idTK AND n.idSK = :idSK AND n.isActive = 1
+             LIMIT 1'
+        );
+        $stmt->execute([':idTK' => $idTK, ':idSK' => $idSK]);
+        if ($stmt->fetchColumn()) return true;
+
+        $stmt2 = $conn->prepare(
+            'SELECT 1 FROM nhom WHERE idChuNhom = :idTK AND idSK = :idSK AND isActive = 1 LIMIT 1'
+        );
+        $stmt2->execute([':idTK' => $idTK, ':idSK' => $idSK]);
+        return (bool) $stmt2->fetchColumn();
+    }
+
+    return false;
+}
+
+/**
+ * Lấy tất cả nhóm trong sự kiện. Dùng JOIN, không correlated subquery.
+ */
+function lay_tat_ca_nhom(PDO $conn, int $idSK): array
+{
     $stmt = $conn->prepare(
         "SELECT
-            n.idnhom, n.idSK, n.manhom, n.ngaytao,
-            tn.tennhom, tn.mota, tn.soluongtoida, tn.dangtuyen,
-            (
-                SELECT COUNT(*)
-                FROM thanhviennhom tv2
-                WHERE tv2.idnhom = n.idnhom AND tv2.trangthai = 1
-            ) AS so_thanh_vien,
-            (
-                SELECT CASE WHEN tk2.idLoaiTK = 3 THEN sv.tenSV
-                            WHEN tk2.idLoaiTK = 2 THEN gv.tenGV END
-                FROM thanhviennhom tv3
-                JOIN vaitronhom vtn ON vtn.id = tv3.idvaitronhom
-                LEFT JOIN taikhoan tk2 ON tv3.idtk = tk2.idTK
-                LEFT JOIN sinhvien sv  ON tk2.idTK = sv.idTK
-                LEFT JOIN giangvien gv ON tk2.idTK = gv.idTK
-                WHERE tv3.idnhom = n.idnhom AND vtn.maVaiTroNhom = 'TRUONG_NHOM' AND tv3.trangthai = 1
-                LIMIT 1
-            ) AS ten_truong_nhom
+            n.idNhom, n.maNhom, n.ngayTao, n.isActive,
+            n.idChuNhom, n.idTruongNhom,
+            tn.tennhom, tn.mota, tn.dangTuyen,
+            sk.soThanhVienToiDa,
+            CASE WHEN tk_chu.idLoaiTK = 3 THEN sv_chu.tenSV
+                 WHEN tk_chu.idLoaiTK = 2 THEN gv_chu.tenGV END AS ten_chu_nhom,
+            CASE WHEN tk_truong.idLoaiTK = 3 THEN sv_truong.tenSV END AS ten_truong_nhom,
+            COUNT(DISTINCT tv.idTK) AS so_thanh_vien_sv,
+            COUNT(DISTINCT gvhd.idTK) AS so_gvhd
         FROM nhom n
-        LEFT JOIN thongtinnhom tn ON tn.idnhom = n.idnhom
+        LEFT JOIN thongtinnhom tn        ON tn.idnhom = n.idNhom
+        LEFT JOIN sukien sk              ON sk.idSK = n.idSK
+        LEFT JOIN taikhoan tk_chu        ON tk_chu.idTK = n.idChuNhom
+        LEFT JOIN sinhvien sv_chu        ON sv_chu.idTK = n.idChuNhom
+        LEFT JOIN giangvien gv_chu       ON gv_chu.idTK = n.idChuNhom
+        LEFT JOIN taikhoan tk_truong     ON tk_truong.idTK = n.idTruongNhom
+        LEFT JOIN sinhvien sv_truong     ON sv_truong.idTK = n.idTruongNhom
+        LEFT JOIN thanhviennhom tv       ON tv.idNhom = n.idNhom
+        LEFT JOIN nhom_gvhd gvhd        ON gvhd.idNhom = n.idNhom
         WHERE n.idSK = :idSK AND n.isActive = 1
-        ORDER BY n.ngaytao DESC"
+        GROUP BY n.idNhom
+        ORDER BY n.ngayTao DESC"
     );
-    $stmt->execute([':idSK' => $id_sk]);
+    $stmt->execute([':idSK' => $idSK]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function lay_nhom_cua_toi($conn, int $id_tk, int $id_sk): ?array
+/**
+ * Lấy nhóm của user (SV hoặc GV) trong sự kiện.
+ * Dùng UNION để handle cả SV lẫn GV.
+ */
+function lay_nhom_cua_toi(PDO $conn, int $idTK, int $idSK): ?array
 {
-    if (!$conn instanceof PDO) return null;
-
-    // Tìm nhóm user đang tham gia
-    $stmt = $conn->prepare(
-        'SELECT
-            n.idnhom, n.idSK, n.manhom, n.ngaytao,
-            tn.tennhom, tn.mota, tn.soluongtoida, tn.dangtuyen,
-            tv.idvaitronhom AS my_role,
-            tv.laChuNhom AS is_chu_nhom
-        FROM thanhviennhom tv
-        JOIN nhom n           ON tv.idnhom = n.idnhom
-        LEFT JOIN thongtinnhom tn ON tn.idnhom = n.idnhom
-        WHERE tv.idtk = :idTK AND n.idSK = :idSK AND tv.trangthai = 1 AND n.isActive = 1
-        LIMIT 1'
+    // Tìm idNhom user liên quan
+    $stmtFind = $conn->prepare(
+        'SELECT n.idNhom FROM nhom n
+         JOIN thanhviennhom tv ON tv.idNhom = n.idNhom AND tv.idTK = :idTK1
+         WHERE n.idSK = :idSK1 AND n.isActive = 1
+         UNION
+         SELECT n.idNhom FROM nhom n
+         JOIN nhom_gvhd g ON g.idNhom = n.idNhom AND g.idTK = :idTK2
+         WHERE n.idSK = :idSK2 AND n.isActive = 1
+         UNION
+         SELECT idNhom FROM nhom
+         WHERE idChuNhom = :idTK3 AND idSK = :idSK3 AND isActive = 1
+         LIMIT 1'
     );
-    $stmt->execute([':idTK' => $id_tk, ':idSK' => $id_sk]);
-    $nhom = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmtFind->execute([
+        ':idTK1' => $idTK,
+        ':idSK1' => $idSK,
+        ':idTK2' => $idTK,
+        ':idSK2' => $idSK,
+        ':idTK3' => $idTK,
+        ':idSK3' => $idSK,
+    ]);
+    $row = $stmtFind->fetch(PDO::FETCH_ASSOC);
+    if (!$row) return null;
+
+    $idNhom = (int) $row['idNhom'];
+
+    // Lấy thông tin nhóm đầy đủ
+    $stmtNhom = $conn->prepare(
+        'SELECT n.idNhom, n.maNhom, n.ngayTao, n.isActive,
+                n.idChuNhom, n.idTruongNhom,
+                tn.tennhom, tn.mota, tn.dangTuyen,
+                sk.soThanhVienToiDa
+         FROM nhom n
+         LEFT JOIN thongtinnhom tn ON tn.idnhom = n.idNhom
+         LEFT JOIN sukien sk ON sk.idSK = n.idSK
+         WHERE n.idNhom = :idNhom'
+    );
+    $stmtNhom->execute([':idNhom' => $idNhom]);
+    $nhom = $stmtNhom->fetch(PDO::FETCH_ASSOC);
     if (!$nhom) return null;
 
-    $id_nhom = (int) $nhom['idnhom'];
+    $nhom['is_chu_nhom'] = ($idTK === (int) $nhom['idChuNhom']);
+    $nhom['is_truong_nhom'] = ($nhom['idTruongNhom'] !== null && $idTK === (int) $nhom['idTruongNhom']);
+    $nhom['so_thanh_vien_toi_da'] = $nhom['soThanhVienToiDa'] !== null ? (int) $nhom['soThanhVienToiDa'] : null;
+    unset($nhom['soThanhVienToiDa']);
 
-    // Lấy thành viên
-    $stmtTV = $conn->prepare(
-        'SELECT
-            tv.idtk, tv.idvaitronhom, tv.ngaythamgia,
-            CASE WHEN tk.idLoaiTK = 3 THEN sv.tenSV
-                 WHEN tk.idLoaiTK = 2 THEN gv.tenGV END AS ten,
-            CASE WHEN tk.idLoaiTK = 3 THEN sv.MSV END AS msv_ma,
-            l.tenLop
-        FROM thanhviennhom tv
-        LEFT JOIN taikhoan tk  ON tv.idtk = tk.idTK
-        LEFT JOIN sinhvien sv  ON tk.idTK = sv.idTK
-        LEFT JOIN lop l        ON sv.idLop = l.idLop
-        LEFT JOIN giangvien gv ON tk.idTK = gv.idTK
-        WHERE tv.idnhom = :idNhom AND tv.trangthai = 1
-        ORDER BY tv.idvaitronhom ASC, tv.ngaythamgia ASC'
+    // Lấy thành viên SV
+    $stmtSV = $conn->prepare(
+        'SELECT tv.idTK, sv.tenSV AS ten, sv.MSV, l.tenLop, tv.ngayThamGia
+         FROM thanhviennhom tv
+         JOIN sinhvien sv ON sv.idTK = tv.idTK
+         LEFT JOIN lop l ON sv.idLop = l.idLop
+         WHERE tv.idNhom = :idNhom
+         ORDER BY tv.ngayThamGia ASC'
     );
-    $stmtTV->execute([':idNhom' => $id_nhom]);
-    $nhom['thanh_vien'] = $stmtTV->fetchAll(PDO::FETCH_ASSOC);
+    $stmtSV->execute([':idNhom' => $idNhom]);
+    $nhom['thanh_vien_sv'] = $stmtSV->fetchAll(PDO::FETCH_ASSOC);
 
-    // Yêu cầu chờ duyệt (chỉ trưởng nhóm mới cần)
+    // Lấy GVHD
+    $stmtGV = $conn->prepare(
+        'SELECT g.idTK, gv.tenGV AS ten, g.ngayThamGia
+         FROM nhom_gvhd g
+         JOIN giangvien gv ON gv.idTK = g.idTK
+         WHERE g.idNhom = :idNhom
+         ORDER BY g.ngayThamGia ASC'
+    );
+    $stmtGV->execute([':idNhom' => $idNhom]);
+    $nhom['gvhd'] = $stmtGV->fetchAll(PDO::FETCH_ASSOC);
+
+    // Yêu cầu chờ: chỉ trả nếu user là Chủ nhóm
     $nhom['yeu_cau_cho'] = [];
-    $nhom['is_chu_nhom'] = (bool) ($nhom['is_chu_nhom'] ?? false);
     if ($nhom['is_chu_nhom']) {
         $stmtYC = $conn->prepare(
-            'SELECT
-                yc.idYeuCau, yc.idTK, yc.loiNhan, yc.ngayGui,
-                CASE WHEN tk.idLoaiTK = 3 THEN sv.tenSV
-                     WHEN tk.idLoaiTK = 2 THEN gv.tenGV END AS ten
-            FROM yeucau_thamgia yc
-            LEFT JOIN taikhoan tk  ON yc.idTK = tk.idTK
-            LEFT JOIN sinhvien sv  ON tk.idTK = sv.idTK
-            LEFT JOIN giangvien gv ON tk.idTK = gv.idTK
-            WHERE yc.idNhom = :idNhom AND yc.ChieuMoi = 1 AND yc.trangThai = 0
-            ORDER BY yc.ngayGui DESC'
+            'SELECT yc.idYeuCau, yc.idTK, yc.ChieuMoi, yc.loaiYeuCau,
+                    yc.loiNhan, yc.ngayGui,
+                    CASE WHEN tk.idLoaiTK = 3 THEN sv.tenSV
+                         WHEN tk.idLoaiTK = 2 THEN gv.tenGV END AS ten
+             FROM yeucau_thamgia yc
+             LEFT JOIN taikhoan tk ON yc.idTK = tk.idTK
+             LEFT JOIN sinhvien sv ON tk.idTK = sv.idTK
+             LEFT JOIN giangvien gv ON tk.idTK = gv.idTK
+             WHERE yc.idNhom = :idNhom AND yc.trangThai = 0
+             ORDER BY yc.ngayGui DESC'
         );
-        $stmtYC->execute([':idNhom' => $id_nhom]);
+        $stmtYC->execute([':idNhom' => $idNhom]);
         $nhom['yeu_cau_cho'] = $stmtYC->fetchAll(PDO::FETCH_ASSOC);
     }
 
     return $nhom;
 }
 
-function lay_loi_moi($conn, int $id_tk, int $id_sk, bool $tat_ca = false): array
+/**
+ * Lấy yêu cầu của user trong sự kiện: lời mời đến và yêu cầu gửi đi.
+ */
+function lay_yeu_cau_cua_toi(PDO $conn, int $idTK, int $idSK): array
 {
-    if (!$conn instanceof PDO) return [];
-
-    $whereStatus = $tat_ca ? '' : 'AND yc.trangThai = 0';
-
-    $stmt = $conn->prepare(
-        "SELECT
-            yc.idYeuCau, yc.idNhom, yc.loiNhan, yc.trangThai, yc.ngayGui, yc.ngayPhanHoi,
-            tn.tennhom, n.manhom, tn.mota, tn.soluongtoida, tn.dangtuyen,
-            (
-                SELECT COUNT(*) FROM thanhviennhom tv2
-                WHERE tv2.idnhom = n.idnhom AND tv2.trangthai = 1
-            ) AS so_thanh_vien,
-            (
-                SELECT CASE WHEN tk2.idLoaiTK = 3 THEN sv.tenSV
-                            WHEN tk2.idLoaiTK = 2 THEN gv.tenGV END
-                FROM thanhviennhom tv3
-                JOIN vaitronhom vtn ON vtn.id = tv3.idvaitronhom
-                LEFT JOIN taikhoan tk2 ON tv3.idtk = tk2.idTK
-                LEFT JOIN sinhvien sv  ON tk2.idTK = sv.idTK
-                LEFT JOIN giangvien gv ON tk2.idTK = gv.idTK
-                WHERE tv3.idnhom = n.idnhom AND vtn.maVaiTroNhom = 'TRUONG_NHOM' AND tv3.trangthai = 1
-                LIMIT 1
-            ) AS ten_truong_nhom
-        FROM yeucau_thamgia yc
-        JOIN nhom n               ON yc.idNhom = n.idnhom
-        LEFT JOIN thongtinnhom tn ON tn.idnhom = n.idnhom
-        WHERE yc.idTK = :idTK AND yc.ChieuMoi = 0 AND n.idSK = :idSK $whereStatus
-        ORDER BY yc.ngayGui DESC"
+    // Lời mời đến: nhóm mời user (ChieuMoi=0), chỉ pending
+    $stmtMoi = $conn->prepare(
+        'SELECT yc.idYeuCau, yc.idNhom, yc.loaiYeuCau, yc.loiNhan, yc.ngayGui,
+                tn.tennhom, n.maNhom,
+                COUNT(tv.idTK) AS so_thanh_vien_sv
+         FROM yeucau_thamgia yc
+         JOIN nhom n ON yc.idNhom = n.idNhom
+         LEFT JOIN thongtinnhom tn ON tn.idnhom = n.idNhom
+         LEFT JOIN thanhviennhom tv ON tv.idNhom = n.idNhom
+         WHERE yc.idTK = :idTK
+           AND yc.ChieuMoi = 0
+           AND n.idSK = :idSK
+           AND yc.trangThai = 0
+         GROUP BY yc.idYeuCau
+         ORDER BY yc.ngayGui DESC'
     );
-    $stmt->execute([':idTK' => $id_tk, ':idSK' => $id_sk]);
+    $stmtMoi->execute([':idTK' => $idTK, ':idSK' => $idSK]);
+    $loiMoiDen = $stmtMoi->fetchAll(PDO::FETCH_ASSOC);
+
+    // Yêu cầu gửi đi: user tự xin vào (ChieuMoi=1), trả cả lịch sử
+    $stmtGui = $conn->prepare(
+        'SELECT yc.idYeuCau, yc.idNhom, yc.loaiYeuCau, yc.loiNhan,
+                yc.trangThai, yc.ngayGui, yc.ngayPhanHoi,
+                tn.tennhom, n.maNhom
+         FROM yeucau_thamgia yc
+         JOIN nhom n ON yc.idNhom = n.idNhom
+         LEFT JOIN thongtinnhom tn ON tn.idnhom = n.idNhom
+         WHERE yc.idTK = :idTK
+           AND yc.ChieuMoi = 1
+           AND n.idSK = :idSK
+         ORDER BY yc.ngayGui DESC'
+    );
+    $stmtGui->execute([':idTK' => $idTK, ':idSK' => $idSK]);
+    $yeuCauGuiDi = $stmtGui->fetchAll(PDO::FETCH_ASSOC);
+
+    return [
+        'loi_moi_den' => $loiMoiDen,
+        'yeu_cau_gui_di' => $yeuCauGuiDi,
+    ];
+}
+
+/**
+ * Lấy chi tiết nhóm. Check quyền xem: chủ nhóm, thành viên SV, hoặc GVHD.
+ */
+function lay_chi_tiet_nhom(PDO $conn, int $idNhom, int $idTKNguoiXem): ?array
+{
+    $nhom = lay_nhom_theo_id($conn, $idNhom);
+    if (!$nhom || (int) $nhom['isActive'] !== 1) return null;
+
+    // Auth check: cho phép xem nếu là chủ nhóm, thành viên SV, hoặc GVHD
+    $duocXem = ($idTKNguoiXem === (int) $nhom['idChuNhom'])
+        || la_thanh_vien_sv($conn, $idTKNguoiXem, $idNhom)
+        || la_gvhd_nhom($conn, $idTKNguoiXem, $idNhom);
+
+    if (!$duocXem) {
+        return ['_forbidden' => true];
+    }
+
+    // Lấy thông tin nhóm đầy đủ
+    $stmtNhom = $conn->prepare(
+        'SELECT n.idNhom, n.maNhom, n.ngayTao, n.isActive,
+                n.idChuNhom, n.idTruongNhom,
+                tn.tennhom, tn.mota, tn.dangTuyen,
+                sk.soThanhVienToiDa
+         FROM nhom n
+         LEFT JOIN thongtinnhom tn ON tn.idnhom = n.idNhom
+         LEFT JOIN sukien sk ON sk.idSK = n.idSK
+         WHERE n.idNhom = :idNhom'
+    );
+    $stmtNhom->execute([':idNhom' => $idNhom]);
+    $data = $stmtNhom->fetch(PDO::FETCH_ASSOC);
+    if (!$data) return null;
+
+    $data['so_thanh_vien_toi_da'] = $data['soThanhVienToiDa'] !== null ? (int) $data['soThanhVienToiDa'] : null;
+    unset($data['soThanhVienToiDa']);
+
+    // Thành viên SV
+    $stmtSV = $conn->prepare(
+        'SELECT tv.idTK, sv.tenSV AS ten, sv.MSV, l.tenLop, tv.ngayThamGia
+         FROM thanhviennhom tv
+         JOIN sinhvien sv ON sv.idTK = tv.idTK
+         LEFT JOIN lop l ON sv.idLop = l.idLop
+         WHERE tv.idNhom = :idNhom
+         ORDER BY tv.ngayThamGia ASC'
+    );
+    $stmtSV->execute([':idNhom' => $idNhom]);
+    $data['thanh_vien_sv'] = $stmtSV->fetchAll(PDO::FETCH_ASSOC);
+
+    // GVHD
+    $stmtGV = $conn->prepare(
+        'SELECT g.idTK, gv.tenGV AS ten, g.ngayThamGia
+         FROM nhom_gvhd g
+         JOIN giangvien gv ON gv.idTK = g.idTK
+         WHERE g.idNhom = :idNhom
+         ORDER BY g.ngayThamGia ASC'
+    );
+    $stmtGV->execute([':idNhom' => $idNhom]);
+    $data['gvhd'] = $stmtGV->fetchAll(PDO::FETCH_ASSOC);
+
+    return $data;
+}
+
+// ==========================================
+// HÀM SẢN PHẨM & NỘP TÀI LIỆU
+// ==========================================
+
+/**
+ * Tạo hoặc cập nhật sản phẩm của nhóm trong SK.
+ * Chỉ Trưởng nhóm mới được thực hiện.
+ */
+function tao_hoac_cap_nhat_san_pham(PDO $conn, int $idTK, int $idNhom, string $tenSanPham, ?int $idChuDeSK): array
+{
+    $tenSanPham = trim($tenSanPham);
+    if ($tenSanPham === '' || mb_strlen($tenSanPham) > 200) {
+        return ['status' => false, 'message' => 'Tên sản phẩm không được rỗng và tối đa 200 ký tự'];
+    }
+
+    $nhom = lay_nhom_theo_id($conn, $idNhom);
+    if (!$nhom || (int) $nhom['isActive'] !== 1) {
+        return ['status' => false, 'message' => 'Nhóm không tồn tại hoặc đã ngừng hoạt động'];
+    }
+
+    if ($idTK !== (int) $nhom['idTruongNhom']) {
+        return ['status' => false, 'message' => 'Chỉ Trưởng nhóm mới được quản lý sản phẩm'];
+    }
+
+    $idSK = (int) $nhom['idSK'];
+    $sukien = truy_van_mot_ban_ghi($conn, 'sukien', 'idSK', $idSK);
+    if (!$sukien) {
+        return ['status' => false, 'message' => 'Sự kiện không tồn tại'];
+    }
+
+    // Check yêu cầu có GVHD
+    if ((int) ($sukien['yeuCauCoGVHD'] ?? 0) === 1) {
+        if (so_gvhd_nhom($conn, $idNhom) === 0) {
+            return ['status' => false, 'message' => 'Sự kiện yêu cầu nhóm phải có GVHD trước khi tạo sản phẩm'];
+        }
+    }
+
+    // Check đã có sản phẩm chưa
+    $stmt = $conn->prepare('SELECT idSanPham FROM sanpham WHERE idNhom = :idNhom AND idSK = :idSK LIMIT 1');
+    $stmt->execute([':idNhom' => $idNhom, ':idSK' => $idSK]);
+    $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existing) {
+        $okUpdate = $conn->prepare('UPDATE sanpham SET tenSanPham = :ten, idChuDeSK = :chuDe WHERE idSanPham = :id');
+        $okUpdate->execute([':ten' => $tenSanPham, ':chuDe' => $idChuDeSK, ':id' => $existing['idSanPham']]);
+        return ['status' => true, 'message' => 'Cập nhật sản phẩm thành công', 'idSanPham' => (int) $existing['idSanPham']];
+    } else {
+        $ok = _insert_info(
+            $conn,
+            'sanpham',
+            ['idNhom', 'idSK', 'idChuDeSK', 'tenSanPham', 'trangThai', 'ngayTao'],
+            [$idNhom, $idSK, $idChuDeSK, $tenSanPham, 'CHO_DUYET', date('Y-m-d H:i:s')]
+        );
+        if (!$ok) {
+            return ['status' => false, 'message' => 'Lỗi khi tạo sản phẩm'];
+        }
+        return ['status' => true, 'message' => 'Tạo sản phẩm thành công', 'idSanPham' => (int) $conn->lastInsertId()];
+    }
+}
+
+/**
+ * Nộp tài liệu cho một vòng thi.
+ * Chỉ Trưởng nhóm mới được thực hiện.
+ */
+function nop_tai_lieu_vong(PDO $conn, int $idTK, int $idNhom, int $idVongThi, array $fieldValues, array $uploadedFiles): array
+{
+    $nhom = lay_nhom_theo_id($conn, $idNhom);
+    if (!$nhom || (int) $nhom['isActive'] !== 1) {
+        return ['status' => false, 'message' => 'Nhóm không tồn tại hoặc đã ngừng hoạt động'];
+    }
+
+    if ($idTK !== (int) $nhom['idTruongNhom']) {
+        return ['status' => false, 'message' => 'Chỉ Trưởng nhóm mới được nộp tài liệu'];
+    }
+
+    $idSK = (int) $nhom['idSK'];
+
+    // Lấy vòng thi
+    $vongthi = truy_van_mot_ban_ghi($conn, 'vongthi', 'idVongThi', $idVongThi);
+    if (!$vongthi) {
+        return ['status' => false, 'message' => 'Vòng thi không tồn tại'];
+    }
+
+    // Check deadline
+    if (!empty($vongthi['thoiGianDongNop']) && strtotime($vongthi['thoiGianDongNop']) <= time()) {
+        return ['status' => false, 'message' => 'Đã quá hạn nộp bài'];
+    }
+
+    // Lấy form fields
+    $formFields = lay_form_vong_thi($conn, $idVongThi);
+    if (empty($formFields)) {
+        return ['status' => false, 'message' => 'Vòng thi này không yêu cầu nộp tài liệu'];
+    }
+
+    // Check sản phẩm đã tồn tại
+    $stmt = $conn->prepare('SELECT idSanPham FROM sanpham WHERE idNhom = :idNhom AND idSK = :idSK LIMIT 1');
+    $stmt->execute([':idNhom' => $idNhom, ':idSK' => $idSK]);
+    $sanpham = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$sanpham) {
+        return ['status' => false, 'message' => 'Vui lòng tạo sản phẩm trước'];
+    }
+
+    // Validate từng field
+    foreach ($formFields as $field) {
+        $idField = (int) $field['idField'];
+        $kieuTruong = $field['kieuTruong'];
+        $batBuoc = (bool) $field['batBuoc'];
+        $cauHinh = json_decode($field['cauHinhJson'] ?? '{}', true) ?: [];
+
+        if ($kieuTruong === 'FILE') {
+            $hasFile = isset($uploadedFiles[$idField]) && $uploadedFiles[$idField]['size'] > 0;
+            if ($batBuoc && !$hasFile) {
+                return ['status' => false, 'message' => "Field '{$field['tenTruong']}' là bắt buộc"];
+            }
+            if ($hasFile) {
+                $accept = $cauHinh['accept'] ?? '';
+                if ($accept !== '') {
+                    $allowedExts = array_map('trim', explode(',', $accept));
+                    $ext = strtolower(pathinfo($uploadedFiles[$idField]['name'], PATHINFO_EXTENSION));
+                    if (!in_array($ext, $allowedExts, true)) {
+                        return ['status' => false, 'message' => "Định dạng file không hợp lệ cho '{$field['tenTruong']}'. Chấp nhận: $accept"];
+                    }
+                }
+                $maxKB = (int) ($cauHinh['maxSizeKB'] ?? 0);
+                if ($maxKB > 0 && $uploadedFiles[$idField]['size'] > $maxKB * 1024) {
+                    return ['status' => false, 'message' => "File '{$field['tenTruong']}' quá lớn. Tối đa {$maxKB}KB"];
+                }
+            }
+        } else {
+            $val = trim((string) ($fieldValues[$idField] ?? ''));
+            if ($batBuoc && $val === '') {
+                return ['status' => false, 'message' => "Field '{$field['tenTruong']}' là bắt buộc"];
+            }
+            if ($kieuTruong === 'URL' && $val !== '' && !filter_var($val, FILTER_VALIDATE_URL)) {
+                return ['status' => false, 'message' => "Field '{$field['tenTruong']}' phải là URL hợp lệ"];
+            }
+        }
+    }
+
+    // Upload files và lưu DB
+    $conn->beginTransaction();
+    try {
+        foreach ($formFields as $field) {
+            $idField = (int) $field['idField'];
+            $kieuTruong = $field['kieuTruong'];
+            $giaTriText = null;
+            $duongDanFile = null;
+
+            if ($kieuTruong === 'FILE' && isset($uploadedFiles[$idField]) && $uploadedFiles[$idField]['size'] > 0) {
+                $uploadDir = __DIR__ . "/../../uploads/sanpham/{$idSK}/{$idNhom}/{$idVongThi}/";
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                $ext = strtolower(pathinfo($uploadedFiles[$idField]['name'], PATHINFO_EXTENSION));
+                $tenFileMoi = $idField . '_' . time() . '.' . $ext;
+                $fullPath = $uploadDir . $tenFileMoi;
+                if (!move_uploaded_file($uploadedFiles[$idField]['tmp_name'], $fullPath)) {
+                    $conn->rollBack();
+                    return ['status' => false, 'message' => 'Lỗi upload file'];
+                }
+                $duongDanFile = "/uploads/sanpham/{$idSK}/{$idNhom}/{$idVongThi}/{$tenFileMoi}";
+            } elseif ($kieuTruong !== 'FILE') {
+                $giaTriText = trim((string) ($fieldValues[$idField] ?? ''));
+            } else {
+                continue;
+            }
+
+            $sql = "INSERT INTO sanpham_field_value (idSanPham, idField, giaTriText, duongDanFile)
+                    VALUES (?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE
+                        giaTriText = VALUES(giaTriText),
+                        duongDanFile = VALUES(duongDanFile),
+                        ngayNop = CURRENT_TIMESTAMP";
+            $stmtInsert = $conn->prepare($sql);
+            $stmtInsert->execute([$sanpham['idSanPham'], $idField, $giaTriText, $duongDanFile]);
+        }
+        $conn->commit();
+        return ['status' => true, 'message' => 'Nộp tài liệu thành công'];
+    } catch (Throwable $e) {
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
+        return ['status' => false, 'message' => 'Lỗi hệ thống khi nộp tài liệu'];
+    }
+}
+
+/**
+ * Lấy sản phẩm của nhóm trong SK.
+ */
+function lay_san_pham_nhom(PDO $conn, int $idNhom, int $idSK): ?array
+{
+    $stmt = $conn->prepare(
+        'SELECT sp.*, cs.tenChuDe
+         FROM sanpham sp
+         LEFT JOIN chude_sukien cs ON cs.idChuDeSK = sp.idChuDeSK
+         WHERE sp.idNhom = :idNhom AND sp.idSK = :idSK
+         LIMIT 1'
+    );
+    $stmt->execute([':idNhom' => $idNhom, ':idSK' => $idSK]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ?: null;
+}
+
+/**
+ * Lấy tài liệu đã nộp cho một vòng thi.
+ */
+function lay_tai_lieu_da_nop(PDO $conn, int $idSanPham, int $idVongThi): array
+{
+    $stmt = $conn->prepare(
+        'SELECT sfv.*, ff.tenTruong, ff.kieuTruong, ff.thuTu
+         FROM sanpham_field_value sfv
+         JOIN form_field ff ON ff.idField = sfv.idField
+         WHERE sfv.idSanPham = :idSanPham
+           AND ff.idVongThi = :idVongThi
+         ORDER BY ff.thuTu ASC'
+    );
+    $stmt->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function lay_chi_tiet_nhom($conn, int $id_nhom): ?array
+/**
+ * Lấy form fields của một vòng thi.
+ */
+function lay_form_vong_thi(PDO $conn, int $idVongThi): array
 {
-    // Dùng lại hàm đã có
-    $nhom = lay_nhom_theo_id($conn, $id_nhom);
-    if (!$nhom || (int) $nhom['isActive'] !== 1) return null;
-
-    // Thông tin nhóm từ thongtinnhom — dùng _select_info đã có trong base.php
-    $thongTin = _select_info($conn, 'thongtinnhom', [], [
-        'WHERE' => ['idnhom', '=', $id_nhom, ''],
-        'LIMIT' => [1],
-    ]);
-    if ($thongTin) $nhom = array_merge($nhom, $thongTin[0]);
-
-    // Thành viên
-    if (!$conn instanceof PDO) return $nhom;
     $stmt = $conn->prepare(
-        'SELECT
-            tv.idtk, tv.idvaitronhom, tv.ngaythamgia,
-            CASE WHEN tk.idLoaiTK = 3 THEN sv.tenSV
-                 WHEN tk.idLoaiTK = 2 THEN gv.tenGV END AS ten,
-            CASE WHEN tk.idLoaiTK = 3 THEN sv.MSV END AS msv_ma
-        FROM thanhviennhom tv
-        LEFT JOIN taikhoan tk  ON tv.idtk = tk.idTK
-        LEFT JOIN sinhvien sv  ON tk.idTK = sv.idTK
-        LEFT JOIN giangvien gv ON tk.idTK = gv.idTK
-        WHERE tv.idnhom = :idNhom AND tv.trangthai = 1
-        ORDER BY tv.idvaitronhom ASC'
+        'SELECT * FROM form_field
+         WHERE idVongThi = :idVongThi AND isActive = 1
+         ORDER BY thuTu ASC'
     );
-    $stmt->execute([':idNhom' => $id_nhom]);
-    $nhom['thanh_vien'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    return $nhom;
+    $stmt->execute([':idVongThi' => $idVongThi]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function nop_bai_nhom($conn, int $id_tk, int $id_nhom, int $id_sk, string $ten_de_tai, string $mo_ta = '', string $link_tl = ''): array
-{
-    $ten_de_tai = trim($ten_de_tai);
-    if ($ten_de_tai === '') return ['status' => false, 'message' => 'Tên đề tài không được để trống'];
-
-    // Dùng _select_info để kiểm tra user có trong nhóm không
-    $tv = _select_info($conn, 'thanhviennhom', ['idnhom'], [
-        'WHERE' => ['idnhom', '=', $id_nhom, 'AND', 'idtk', '=', $id_tk, 'AND', 'trangthai', '=', 1, ''],
-        'LIMIT' => [1],
-    ]);
-    if (empty($tv)) return ['status' => false, 'message' => 'Bạn không phải thành viên của nhóm này'];
-
-    // Dùng _insert_info để lưu
-    $ok = _insert_info(
-        $conn,
-        'sanpham',
-        ['idNhom', 'idSK', 'tenSanPham', 'moTa', 'linkTaiLieu', 'TrangThai', 'isActive', 'NgayTao'],
-        [$id_nhom, $id_sk, $ten_de_tai, $mo_ta, $link_tl, 'Chờ duyệt', 1, date('Y-m-d H:i:s')]
-    );
-
-    return $ok
-        ? ['status' => true, 'message' => 'Nộp bài thành công! Sản phẩm đang chờ duyệt.']
-        : ['status' => false, 'message' => 'Lỗi khi lưu bài nộp'];
-}
 /**
  * Cập nhật thông tin nhóm. Chỉ Chủ nhóm mới được thực hiện.
  */

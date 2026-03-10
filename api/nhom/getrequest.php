@@ -12,8 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-$idSk  = isset($_GET['id_sk'])  ? (int) $_GET['id_sk'] : 0;
-$tatCa = isset($_GET['tat_ca']) && (int) $_GET['tat_ca'] === 1;
+$idSk = isset($_GET['id_sk']) ? (int) $_GET['id_sk'] : 0;
 
 if ($idSk <= 0) {
     http_response_code(400);
@@ -26,11 +25,11 @@ $actor = auth_require_quyen_nhom($idSk, 'xem_nhom');
 $idTK  = $actor['idTK'];
 
 try {
-    $loiMoi = lay_loi_moi($conn, $idTK, $idSk, $tatCa);
+    $data = lay_yeu_cau_cua_toi($conn, $idTK, $idSk);
     echo json_encode([
         'status'  => 'success',
-        'message' => 'Lấy lời mời thành công',
-        'data'    => $loiMoi,
+        'message' => 'Lấy yêu cầu thành công',
+        'data'    => $data,
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     http_response_code(500);

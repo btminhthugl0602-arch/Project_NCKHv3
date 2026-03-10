@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Mar 10, 2026 at 04:37 PM
+-- Generation Time: Mar 10, 2026 at 05:19 PM
 -- Server version: 8.4.3
 -- PHP Version: 8.3.30
 
@@ -661,25 +661,25 @@ CREATE TABLE `phancongcham` (
 --
 
 INSERT INTO `phancongcham` (`idPhanCongCham`, `idGV`, `idSK`, `idVongThi`, `idBoTieuChi`, `trangThaiXacNhan`, `ngayXacNhan`, `isActive`) VALUES
-(1, 1, 1, 1, 1, 'Đã xác nhận', '0000-00-00 00:00:00', 1),
-(2, 2, 1, 1, 1, 'Đã xác nhận', '0000-00-00 00:00:00', 1),
-(3, 3, 1, 1, 1, 'Đã xác nhận', '0000-00-00 00:00:00', 1),
-(4, 1, 11, 3, 1, 'Đã xác nhận', '2026-02-21 15:49:16', 1),
-(500, 2, 500, 500, 1, 'Đã xác nhận', '2026-02-23 15:34:08', 1),
-(501, 3, 500, 500, 1, 'Đã xác nhận', '2026-02-23 15:34:08', 1),
+(1, 1, 1, 1, 1, 'Đang chấm', '0000-00-00 00:00:00', 1),
+(2, 2, 1, 1, 1, 'Đang chấm', '0000-00-00 00:00:00', 1),
+(3, 3, 1, 1, 1, 'Đang chấm', '0000-00-00 00:00:00', 1),
+(4, 1, 11, 3, 1, 'Chờ chấm', '1000-01-01 00:00:00', 1),
+(500, 2, 500, 500, 1, 'Đang chấm', '2026-02-23 15:34:08', 1),
+(501, 3, 500, 500, 1, 'Đang chấm', '2026-02-23 15:34:08', 1),
 (801, 1, 800, 801, 801, 'Đang chấm', '2026-02-27 13:33:56', 1),
-(991, 901, 999, 999, 999, 'Đã xác nhận', '2026-03-09 10:00:00', 1),
-(992, 902, 999, 999, 999, 'Đã xác nhận', '2026-03-09 10:05:00', 1),
-(993, 903, 999, 999, 999, 'Đã xác nhận', '2026-03-09 10:10:00', 1),
-(994, 2, 11, 3, 1, 'Đã xác nhận', '2026-03-10 11:02:29', 1),
-(995, 4, 500, 500, 1, 'Đã xác nhận', '2026-03-10 11:02:29', 1),
-(996, 4, 500, 500, 1, 'Đã xác nhận', '2026-03-10 11:02:29', 1),
-(997, 3, 800, 801, 801, 'Đã xác nhận', '2026-03-10 11:02:29', 1),
-(998, 1, 999, 999, 999, 'Đã xác nhận', '2026-03-10 11:02:29', 1),
-(999, 4, 999, 999, 999, 'Đã xác nhận', '2026-03-10 13:54:24', 1),
-(1000, 4, 999, 999, 999, 'Đã xác nhận', '2026-03-10 13:54:38', 1),
-(1001, 1, 999, 999, 999, 'Đã xác nhận', '2026-03-10 14:19:00', 1),
-(1002, 2, 999, 999, 999, 'Đã xác nhận', '2026-03-10 16:23:48', 1);
+(991, 901, 999, 999, 999, 'Đang chấm', '2026-03-09 10:00:00', 1),
+(992, 902, 999, 999, 999, 'Đang chấm', '2026-03-09 10:05:00', 1),
+(993, 903, 999, 999, 999, 'Đang chấm', '2026-03-09 10:10:00', 1),
+(994, 2, 11, 3, 1, 'Chờ chấm', '1000-01-01 00:00:00', 1),
+(995, 4, 500, 500, 1, 'Chờ chấm', '1000-01-01 00:00:00', 1),
+(996, 4, 500, 500, 1, 'Chờ chấm', '1000-01-01 00:00:00', 1),
+(997, 3, 800, 801, 801, 'Chờ chấm', '1000-01-01 00:00:00', 1),
+(998, 1, 999, 999, 999, 'Chờ chấm', '1000-01-01 00:00:00', 1),
+(999, 4, 999, 999, 999, 'Chờ chấm', '1000-01-01 00:00:00', 1),
+(1000, 4, 999, 999, 999, 'Chờ chấm', '1000-01-01 00:00:00', 1),
+(1001, 1, 999, 999, 999, 'Chờ chấm', '1000-01-01 00:00:00', 1),
+(1002, 2, 999, 999, 999, 'Chờ chấm', '1000-01-01 00:00:00', 1);
 
 -- --------------------------------------------------------
 
@@ -691,30 +691,32 @@ CREATE TABLE `phancong_doclap` (
   `idSanPham` int NOT NULL,
   `idGV` int NOT NULL,
   `idVongThi` int NOT NULL,
-  `isTrongTai` tinyint NOT NULL DEFAULT '0' COMMENT '0 = Giám khảo chính thức (phan_cong_giam_khao), 1 = Trọng tài phúc khảo (moi_trong_tai)'
+  `isTrongTai` tinyint NOT NULL DEFAULT '0' COMMENT '0 = Giám khảo chính thức (phan_cong_giam_khao), 1 = Trọng tài phúc khảo (moi_trong_tai)',
+  `trangThaiCham` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Chờ chấm' COMMENT 'Chờ chấm / Đang chấm / Đã xác nhận',
+  `ngayNop` datetime DEFAULT NULL COMMENT 'Thời điểm nộp phiếu chấm cho SP này'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `phancong_doclap`
 --
 
-INSERT INTO `phancong_doclap` (`idSanPham`, `idGV`, `idVongThi`, `isTrongTai`) VALUES
-(1, 1, 1, 0),
-(1, 2, 1, 0),
-(1, 3, 1, 0),
-(2, 1, 1, 0),
-(2, 2, 1, 0),
-(6, 1, 3, 0),
-(6, 2, 3, 0),
-(500, 2, 500, 0),
-(500, 3, 500, 0),
-(500, 4, 500, 0),
-(501, 2, 500, 0),
-(501, 3, 500, 0),
-(501, 4, 500, 0),
-(802, 3, 801, 0),
-(991, 2, 999, 1),
-(991, 902, 999, 0);
+INSERT INTO `phancong_doclap` (`idSanPham`, `idGV`, `idVongThi`, `isTrongTai`, `trangThaiCham`, `ngayNop`) VALUES
+(1, 1, 1, 0, 'Chờ chấm', NULL),
+(1, 2, 1, 0, 'Chờ chấm', NULL),
+(1, 3, 1, 0, 'Chờ chấm', NULL),
+(2, 1, 1, 0, 'Chờ chấm', NULL),
+(2, 2, 1, 0, 'Chờ chấm', NULL),
+(6, 1, 3, 0, 'Chờ chấm', NULL),
+(6, 2, 3, 0, 'Chờ chấm', NULL),
+(500, 2, 500, 0, 'Chờ chấm', NULL),
+(500, 3, 500, 0, 'Chờ chấm', NULL),
+(500, 4, 500, 0, 'Chờ chấm', NULL),
+(501, 2, 500, 0, 'Chờ chấm', NULL),
+(501, 3, 500, 0, 'Chờ chấm', NULL),
+(501, 4, 500, 0, 'Chờ chấm', NULL),
+(802, 3, 801, 0, 'Chờ chấm', NULL),
+(991, 2, 999, 1, 'Chờ chấm', NULL),
+(991, 902, 999, 0, 'Chờ chấm', NULL);
 
 -- --------------------------------------------------------
 
@@ -1069,7 +1071,11 @@ INSERT INTO `taikhoan_vaitro_sukien` (`id`, `idTK`, `idSK`, `idVaiTro`, `nguonTa
 (22, 903, 999, 2, 'PHANCONG_CHAM', NULL, '2026-03-09 14:58:02', 1),
 (23, 904, 999, 4, 'DANG_KY', NULL, '2026-03-09 14:58:02', 1),
 (24, 905, 999, 4, 'DANG_KY', NULL, '2026-03-09 14:58:02', 1),
-(25, 2, 999, 1, 'BTC_THEM', NULL, '2026-03-09 15:03:46', 1);
+(25, 2, 999, 1, 'BTC_THEM', NULL, '2026-03-09 15:03:46', 1),
+(26, 3, 11, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1),
+(27, 9, 500, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1),
+(28, 7, 800, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1),
+(29, 3, 999, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1);
 
 -- --------------------------------------------------------
 
@@ -1630,6 +1636,7 @@ ALTER TABLE `cauhinh_tieuchi_sk`
 --
 ALTER TABLE `chamtieuchi`
   ADD PRIMARY KEY (`idChamDiem`),
+  ADD UNIQUE KEY `uq_chamtieuchi_pcc_sp_tc` (`idPhanCongCham`,`idSanPham`,`idTieuChi`),
   ADD KEY `idPhanCongCham` (`idPhanCongCham`),
   ADD KEY `idSanPham` (`idSanPham`),
   ADD KEY `idTieuChi` (`idTieuChi`);
@@ -2209,7 +2216,7 @@ ALTER TABLE `taikhoan`
 -- AUTO_INCREMENT for table `taikhoan_vaitro_sukien`
 --
 ALTER TABLE `taikhoan_vaitro_sukien`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `thongbao`

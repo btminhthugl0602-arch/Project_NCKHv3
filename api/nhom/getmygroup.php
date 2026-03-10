@@ -27,7 +27,7 @@ try {
     $nhom = lay_nhom_cua_toi($conn, $idTK, $idSk);
     echo json_encode([
         'status'  => 'success',
-        'message' => $nhom ? 'Lấy nhóm thành công' : 'Chưa có nhóm',
+        'message' => $nhom ? 'Lấy nhóm thành công' : 'Bạn chưa có nhóm trong sự kiện này',
         'data'    => $nhom,
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {

@@ -1,5 +1,53 @@
 # CHANGELOG
 
+## 2026-03-11 — Refactor Nhóm 4: Nộp sản phẩm (Schema v2)
+
+### Thay đổi nghiệp vụ
+- **Sản phẩm**: Mỗi nhóm chỉ 1 sản phẩm per SK (`UNIQUE KEY uq_nhom_sk`). Tạo mới hoặc cập nhật qua cùng API
+- **Nộp tài liệu**: Theo form động (`form_field`) gắn với vòng thi. Hỗ trợ TEXT/TEXTAREA/URL/FILE/SELECT/CHECKBOX
+- **Quyền**: Chỉ `idTruongNhom` được tạo/cập nhật sản phẩm và nộp tài liệu
+- **Validate file**: Kiểm tra định dạng (`cauHinhJson.accept`) và kích thước (`cauHinhJson.maxSizeKB`)
+- **Nộp lại**: Dùng `ON DUPLICATE KEY UPDATE` trên `(idSanPham, idField)` — không tạo bản ghi trùng
+- **Deadline**: Check `vongthi.thoiGianDongNop > NOW()` trước khi cho nộp
+- **GVHD**: Nếu `sukien.yeuCauCoGVHD = 1`, nhóm phải có GVHD trước khi tạo sản phẩm
+
+### API thay đổi
+- **`api/nhom/san_pham.php`** *(MỚI)*: POST, JSON input `{ id_nhom, ten_san_pham, id_chu_de_sk? }`. Lấy `idSK` từ nhóm
+- **`api/nhom/nop_tai_lieu.php`** *(MỚI)*: POST multipart/form-data. Input: `id_nhom`, `id_vong_thi`, `field_{id}` (text), `file_{id}` (file)
+- **`api/nhom/nop_bai.php`**: Vẫn giữ nguyên (endpoint cũ, sử dụng hàm cũ đã bị thay thế — cần migrate sang `san_pham.php`)
+
+### Business logic (`api/nhom/quan_ly_nhom.php`)
+- Xóa: `nop_bai_nhom()` (dùng schema cũ với `moTa`, `linkTaiLieu`, `TrangThai`, `isActive`)
+- Thêm mới: `tao_hoac_cap_nhat_san_pham()`, `nop_tai_lieu_vong()`, `lay_san_pham_nhom()`, `lay_tai_lieu_da_nop()`, `lay_form_vong_thi()`
+
+---
+
+## 2026-03-10 — Refactor Nhóm 3: Đọc dữ liệu (Schema v2)
+
+### Thay đổi nghiệp vụ
+- **`lay_tat_ca_nhom()`**: Query dùng JOIN + GROUP BY thay vì correlated subquery. Trả thêm `ten_chu_nhom`, `ten_truong_nhom`, `so_thanh_vien_sv`, `so_gvhd`, `soThanhVienToiDa`
+- **`lay_nhom_cua_toi()`**: Dùng UNION để tìm nhóm cho cả SV lẫn GV. Trả tách biệt `thanh_vien_sv` và `gvhd`, kèm `is_chu_nhom`, `is_truong_nhom`
+- **`lay_yeu_cau_cua_toi()`** *(MỚI)*: Thay thế `lay_loi_moi()`. Trả 2 mảng `loi_moi_den` và `yeu_cau_gui_di`
+- **`lay_chi_tiet_nhom()`**: Thêm param `$idTKNguoiXem`, auth check (chủ nhóm/thành viên/GVHD). Trả tách biệt `thanh_vien_sv` và `gvhd`
+- **`kiem_tra_user_co_nhom()`** *(MỚI)*: Kiểm tra cả SV và GV có nhóm, thay thế `kiem_tra_sv_co_nhom()` ở endpoint
+- **`tim_kiem_sinh_vien()`**: Thêm param `$idSK`. Trả thêm `da_dang_ky_sk`, `da_co_nhom`
+- **`tim_kiem_giang_vien()`**: Thêm param `$idSK`. Trả thêm `da_dang_ky_sk`, `so_nhom_dang_huong_dan`
+
+### API thay đổi
+- **`api/nhom/getallnhom.php`**: Response `data` wrap thành `{ nhom: [...], user_has_group: bool }`. Dùng `kiem_tra_user_co_nhom()` cho cả SV/GV
+- **`api/nhom/getmygroup.php`**: Message rõ ràng hơn khi chưa có nhóm
+- **`api/nhom/getchitietnhom.php`**: Bỏ param `id_sk` (lấy từ nhóm). Auth check tích hợp trong `lay_chi_tiet_nhom()`. Trả 403 khi không có quyền xem
+- **`api/nhom/getrequest.php`**: Dùng `lay_yeu_cau_cua_toi()`. Bỏ param `tat_ca`. Response trả `{ loi_moi_den, yeu_cau_gui_di }`
+- **`api/nhom/tim_kiem_user.php`**: Param `q` → `keyword`. Truyền `$idSK` vào hàm tìm kiếm. Dùng `mb_strlen` cho check độ dài
+
+### Business logic (`api/nhom/quan_ly_nhom.php`)
+- Viết lại: `tim_kiem_giang_vien()`, `tim_kiem_sinh_vien()`, `lay_tat_ca_nhom()`, `lay_nhom_cua_toi()`, `lay_chi_tiet_nhom()`
+- Thêm mới: `kiem_tra_user_co_nhom()`, `lay_yeu_cau_cua_toi()`
+- Xóa: `lay_loi_moi()`
+- Bỏ tham chiếu tới: `vaitronhom`, `trangthai`, `laChuNhom`, `idvaitronhom`, `soluongtoida`
+
+---
+
 ## 2026-03-10 — Refactor Nhóm 2: Thành viên (Schema v2)
 
 ### Thay đổi nghiệp vụ
