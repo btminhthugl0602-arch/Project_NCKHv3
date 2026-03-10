@@ -124,7 +124,12 @@ function handleGetRequest($conn) {
  * Xử lý POST request
  */
 function handlePostRequest($conn) {
-    $input = json_decode(file_get_contents('php://input'), true);
+    // Dùng lại body đã parse từ bước xác thực — php://input chỉ đọc được 1 lần.
+    // Nếu auth không cần đọc body (id_sk đến từ GET), parse lần đầu ở đây.
+    $input = isset($_SERVER['_PARSED_INPUT']) ? $_SERVER['_PARSED_INPUT'] : null;
+    if ($input === null) {
+        $input = json_decode(file_get_contents('php://input'), true);
+    }
     
     if (!$input) {
         http_response_code(400);

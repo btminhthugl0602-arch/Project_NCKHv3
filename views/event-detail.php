@@ -185,7 +185,7 @@ ob_start();
 </div>
 
 <?php if ($tab === 'scoring' || $tab === 'scoring-gv'): ?>
-    <script src="<?php echo $basePath; ?>/assets/js/scoring.js"></script>
+    <script src="<?php echo $basePath; ?>/assets/js/scoring.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/scoring.js'); ?>"></script>
 <?php endif; ?>
 <?php if (in_array($tab, ['nhom-my', 'nhom-all', 'nhom-request'])): ?>
     <script src="<?php echo $basePath; ?>/assets/js/nhom_thi.js"></script>
