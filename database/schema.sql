@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Mar 10, 2026 at 04:33 AM
+-- Generation Time: Mar 10, 2026 at 10:10 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.2.30
 
@@ -672,7 +672,11 @@ INSERT INTO `phancongcham` (`idPhanCongCham`, `idGV`, `idSK`, `idVongThi`, `idBo
 (995, 4, 500, 500, 1, 'Đã xác nhận', '2026-03-10 11:02:29', 1),
 (996, 4, 500, 500, 1, 'Đã xác nhận', '2026-03-10 11:02:29', 1),
 (997, 3, 800, 801, 801, 'Đã xác nhận', '2026-03-10 11:02:29', 1),
-(998, 1, 999, 999, 999, 'Đã xác nhận', '2026-03-10 11:02:29', 1);
+(998, 1, 999, 999, 999, 'Đã xác nhận', '2026-03-10 11:02:29', 1),
+(999, 4, 999, 999, 999, 'Đã xác nhận', '2026-03-10 13:54:24', 1),
+(1000, 4, 999, 999, 999, 'Đã xác nhận', '2026-03-10 13:54:38', 1),
+(1001, 1, 999, 999, 999, 'Đã xác nhận', '2026-03-10 14:19:00', 1),
+(1002, 2, 999, 999, 999, 'Đã xác nhận', '2026-03-10 16:23:48', 1);
 
 -- --------------------------------------------------------
 
@@ -709,9 +713,8 @@ INSERT INTO `phancong_doclap` (`idSanPham`, `idGV`, `idVongThi`, `isTrongTai`) V
 (501, 3, 500, 0),
 (501, 4, 500, 0),
 (802, 3, 801, 0),
-(991, 1, 999, 1),
-(991, 902, 999, 0),
-(992, 3, 999, 1);
+(991, 2, 999, 1),
+(991, 902, 999, 0);
 
 -- --------------------------------------------------------
 
@@ -856,7 +859,7 @@ INSERT INTO `sanpham` (`idSanPham`, `idNhom`, `idSK`, `idChuDeSK`, `idloaitailie
 CREATE TABLE `sanpham_vongthi` (
   `idSanPham` int NOT NULL,
   `idVongThi` int NOT NULL,
-  `diemTrungBinh` decimal(5,0) DEFAULT NULL,
+  `diemTrungBinh` decimal(7,2) DEFAULT NULL COMMENT 'Điểm trung bình chốt của vòng thi (2 chữ số thập phân)',
   `xepLoai` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Đạt/Không đạt/Xuất sắc',
   `trangThai` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Chờ chấm/Đã chấm/Bị loại',
   `ngayCapNhat` datetime DEFAULT CURRENT_TIMESTAMP
@@ -867,14 +870,14 @@ CREATE TABLE `sanpham_vongthi` (
 --
 
 INSERT INTO `sanpham_vongthi` (`idSanPham`, `idVongThi`, `diemTrungBinh`, `xepLoai`, `trangThai`, `ngayCapNhat`) VALUES
-(2, 1, '42', NULL, 'Đã duyệt', '2026-02-21 14:51:53'),
-(7, 3, '43', NULL, 'Đã duyệt', '2026-02-21 16:08:46'),
-(500, 500, NULL, NULL, 'Đã phân công', '2026-03-10 09:13:50'),
+(2, 1, '42.00', NULL, 'Đã duyệt', '2026-02-21 14:51:53'),
+(7, 3, '43.00', NULL, 'Đã duyệt', '2026-02-21 16:08:46'),
+(500, 500, '42.50', NULL, NULL, '2026-03-10 16:55:35'),
 (501, 500, NULL, NULL, 'Đã nộp', '2026-02-23 15:34:08'),
 (801, 801, NULL, NULL, 'Đã phân công', '2026-02-27 13:33:56'),
 (802, 801, NULL, NULL, 'Đã phân công', '2026-02-27 13:33:56'),
-(991, 999, NULL, NULL, 'Đã phân công', '2026-03-10 10:34:05'),
-(992, 999, NULL, NULL, 'Đã phân công', '2026-03-10 11:14:59');
+(991, 999, '26.50', NULL, NULL, '2026-03-10 16:27:13'),
+(992, 999, '22.67', NULL, NULL, '2026-03-10 16:27:16');
 
 -- --------------------------------------------------------
 
@@ -961,7 +964,7 @@ CREATE TABLE `taikhoan` (
 --
 
 INSERT INTO `taikhoan` (`idTK`, `tenTK`, `matKhau`, `idLoaiTK`, `isActive`, `ngayTao`) VALUES
-(1, 'admin', '123456', 1, 1, '2026-02-11 22:11:22'),
+(1, 'admin', '$2y$10$i/p0RY22.bBzEF1uXDk8Ou9.0Bqgfq4j92F.V.QY/2y4CsdTEOtoi', 1, 1, '2026-02-11 22:11:22'),
 (2, 'gv_minh', '$2y$10$TBELRXfgWatDkNwclMjpjuwzIhxYomgpQwGQ3Ujc6WJ8YjRnUXrLi', 2, 1, '2026-02-11 22:11:22'),
 (3, 'gv_huong', '123456', 2, 1, '2026-02-11 22:11:22'),
 (4, 'sv_tung', '123456', 3, 1, '2026-02-11 22:11:22'),
@@ -1065,34 +1068,35 @@ CREATE TABLE `thanhviennhom` (
   `idtk` int DEFAULT NULL,
   `idvaitronhom` int DEFAULT NULL,
   `trangthai` tinyint NOT NULL DEFAULT '0' COMMENT '0:chờ duyệt, 1:đã tham gia',
-  `ngaythamgia` datetime DEFAULT CURRENT_TIMESTAMP
+  `ngaythamgia` datetime DEFAULT CURRENT_TIMESTAMP,
+  `laChuNhom` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `thanhviennhom`
 --
 
-INSERT INTO `thanhviennhom` (`idnhom`, `idtk`, `idvaitronhom`, `trangthai`, `ngaythamgia`) VALUES
-(1, 4, 1, 1, '2026-02-11 22:11:23'),
-(1, 5, 2, 1, '2026-02-11 22:11:23'),
-(6, 6, 1, 1, '2026-02-22 17:06:47'),
-(6, 5, 2, 1, '2026-02-23 09:18:51'),
-(500, 4, 1, 1, '2026-02-23 15:34:08'),
-(500, 5, 2, 1, '2026-02-23 15:34:08'),
-(501, 6, 1, 1, '2026-02-23 15:34:08'),
-(501, 8, 2, 1, '2026-02-23 15:34:08'),
-(502, 5, 1, 1, '2026-02-23 17:11:46'),
-(801, 4, 1, 1, '2026-02-27 13:33:56'),
-(801, 5, 2, 0, '2026-02-27 13:33:56'),
-(802, 6, 1, 1, '2026-02-27 13:33:56'),
-(802, 8, 2, 1, '2026-02-27 13:33:56'),
-(803, 8, 1, 1, '2026-02-27 13:40:18'),
-(804, 5, 1, 1, '2026-02-27 15:08:22'),
-(804, 4, 2, 0, '2026-02-27 15:11:10'),
-(804, 8, 2, 1, '2026-02-27 15:12:23'),
-(805, 1, 1, 1, '2026-03-08 14:52:01'),
-(991, 904, 1, 1, '2026-03-09 14:58:02'),
-(992, 905, 1, 1, '2026-03-09 14:58:02');
+INSERT INTO `thanhviennhom` (`idnhom`, `idtk`, `idvaitronhom`, `trangthai`, `ngaythamgia`, `laChuNhom`) VALUES
+(1, 4, 1, 1, '2026-02-11 22:11:23', 1),
+(1, 5, 2, 1, '2026-02-11 22:11:23', 0),
+(6, 6, 1, 1, '2026-02-22 17:06:47', 1),
+(6, 5, 2, 1, '2026-02-23 09:18:51', 0),
+(500, 4, 1, 1, '2026-02-23 15:34:08', 1),
+(500, 5, 2, 1, '2026-02-23 15:34:08', 0),
+(501, 6, 1, 1, '2026-02-23 15:34:08', 1),
+(501, 8, 2, 1, '2026-02-23 15:34:08', 0),
+(502, 5, 1, 1, '2026-02-23 17:11:46', 1),
+(801, 4, 1, 1, '2026-02-27 13:33:56', 1),
+(801, 5, 2, 0, '2026-02-27 13:33:56', 0),
+(802, 6, 1, 1, '2026-02-27 13:33:56', 1),
+(802, 8, 2, 1, '2026-02-27 13:33:56', 0),
+(803, 8, 1, 1, '2026-02-27 13:40:18', 1),
+(804, 5, 1, 1, '2026-02-27 15:08:22', 1),
+(804, 4, 2, 0, '2026-02-27 15:11:10', 0),
+(804, 8, 2, 1, '2026-02-27 15:12:23', 0),
+(805, 1, 1, 1, '2026-03-08 14:52:01', 1),
+(991, 904, 1, 1, '2026-03-09 14:58:02', 1),
+(992, 905, 1, 1, '2026-03-09 14:58:02', 1);
 
 -- --------------------------------------------------------
 
@@ -1528,6 +1532,22 @@ INSERT INTO `vongthi` (`idVongThi`, `idSK`, `tenVongThi`, `moTa`, `thuTu`, `ngay
 -- --------------------------------------------------------
 
 --
+-- Stand-in structure for view `v_giam_khao_san_pham`
+-- (See below for the actual view)
+--
+CREATE TABLE `v_giam_khao_san_pham` (
+`idSanPham` int
+,`idGV` int
+,`idVongThi` int
+,`nguon` varchar(11)
+,`tenGV` varchar(100)
+,`tenTK` varchar(100)
+,`isTrongTai` int
+);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `xacnhan_thamgia`
 --
 
@@ -1570,6 +1590,15 @@ INSERT INTO `yeucau_thamgia` (`idYeuCau`, `idNhom`, `idTK`, `ChieuMoi`, `loiNhan
 (5, 804, 3, 0, '', 0, '2026-02-27 15:09:59', NULL),
 (6, 804, 8, 1, '', 1, '2026-02-27 15:10:44', '2026-02-27 15:12:23'),
 (7, 804, 1, 1, 'hello', 0, '2026-03-07 16:45:56', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `v_giam_khao_san_pham`
+--
+DROP TABLE IF EXISTS `v_giam_khao_san_pham`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_giam_khao_san_pham`  AS SELECT `allgk`.`idSanPham` AS `idSanPham`, `allgk`.`idGV` AS `idGV`, `allgk`.`idVongThi` AS `idVongThi`, `allgk`.`nguon` AS `nguon`, `gv`.`tenGV` AS `tenGV`, `tk`.`tenTK` AS `tenTK`, coalesce(`pd`.`isTrongTai`,0) AS `isTrongTai` FROM ((((select `pd_inner`.`idSanPham` AS `idSanPham`,`pd_inner`.`idGV` AS `idGV`,`pd_inner`.`idVongThi` AS `idVongThi`,'phancong' AS `nguon` from `phancong_doclap` `pd_inner` union select distinct `ct`.`idSanPham` AS `idSanPham`,`pcc`.`idGV` AS `idGV`,`pcc`.`idVongThi` AS `idVongThi`,'chamtieuchi' AS `nguon` from (`chamtieuchi` `ct` join `phancongcham` `pcc` on((`ct`.`idPhanCongCham` = `pcc`.`idPhanCongCham`)))) `allgk` join `giangvien` `gv` on((`gv`.`idGV` = `allgk`.`idGV`))) join `taikhoan` `tk` on((`tk`.`idTK` = `gv`.`idTK`))) left join `phancong_doclap` `pd` on(((`pd`.`idGV` = `allgk`.`idGV`) and (`pd`.`idSanPham` = `allgk`.`idSanPham`) and (`pd`.`idVongThi` = `allgk`.`idVongThi`))))  ;
 
 --
 -- Indexes for dumped tables
@@ -2143,7 +2172,7 @@ ALTER TABLE `nienkhoa`
 -- AUTO_INCREMENT for table `phancongcham`
 --
 ALTER TABLE `phancongcham`
-  MODIFY `idPhanCongCham` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1001;
+  MODIFY `idPhanCongCham` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1003;
 
 --
 -- AUTO_INCREMENT for table `phien_diemdanh`
