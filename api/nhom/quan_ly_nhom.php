@@ -8,164 +8,232 @@ function lay_nhom_theo_id($conn, int $id_nhom): ?array
     return $nhom ?: null;
 }
 
-function la_truong_nhom($conn, int $id_tk, int $id_nhom): bool
+/**
+ * Kiểm tra user có phải chủ nhóm không.
+ * Nguồn sự thật duy nhất: nhom.idChuNhom
+ */
+function la_chu_nhom(PDO $conn, int $idTK, int $idNhom): bool
 {
-    if (!$conn instanceof PDO) return false;
-
-    $stmt = $conn->prepare("
-        SELECT 1
-        FROM thanhviennhom tv
-        JOIN vaitronhom v ON v.id = tv.idvaitronhom
-        WHERE tv.idnhom = :idNhom
-          AND tv.idtk = :idTK
-          AND tv.trangthai = 1
-          AND v.maVaiTroNhom = 'TRUONG_NHOM'
-        LIMIT 1
-    ");
-    $stmt->execute([':idNhom' => $id_nhom, ':idTK' => $id_tk]);
+    $stmt = $conn->prepare(
+        'SELECT 1 FROM nhom WHERE idNhom = :idNhom AND idChuNhom = :idTK AND isActive = 1 LIMIT 1'
+    );
+    $stmt->execute([':idNhom' => $idNhom, ':idTK' => $idTK]);
     return (bool) $stmt->fetchColumn();
 }
 
 /**
- * Kiểm tra user có phải chủ nhóm (laChuNhom = 1) không.
- * Đây là nguồn sự thật duy nhất cho mọi kiểm tra quyền quản lý nhóm.
+ * Kiểm tra user có phải trưởng nhóm không.
+ * Nguồn sự thật duy nhất: nhom.idTruongNhom
  */
-function la_chu_nhom(PDO $conn, int $id_tk, int $id_nhom): bool
+function la_truong_nhom(PDO $conn, int $idTK, int $idNhom): bool
 {
     $stmt = $conn->prepare(
-        'SELECT 1 FROM thanhviennhom
-         WHERE idnhom = :idNhom AND idtk = :idTK AND laChuNhom = 1 AND trangthai = 1
-         LIMIT 1'
+        'SELECT 1 FROM nhom WHERE idNhom = :idNhom AND idTruongNhom = :idTK AND isActive = 1 LIMIT 1'
     );
-    $stmt->execute([':idNhom' => $id_nhom, ':idTK' => $id_tk]);
+    $stmt->execute([':idNhom' => $idNhom, ':idTK' => $idTK]);
     return (bool) $stmt->fetchColumn();
 }
 
-function so_thanh_vien_hien_tai($conn, int $id_nhom): int
+/**
+ * Kiểm tra user có phải thành viên SV của nhóm không.
+ * Check bảng thanhviennhom (chỉ chứa SV đã confirmed).
+ */
+function la_thanh_vien_sv(PDO $conn, int $idTK, int $idNhom): bool
 {
-    if (!$conn instanceof PDO) {
-        return 0;
-    }
+    $stmt = $conn->prepare(
+        'SELECT 1 FROM thanhviennhom WHERE idNhom = :idNhom AND idTK = :idTK LIMIT 1'
+    );
+    $stmt->execute([':idNhom' => $idNhom, ':idTK' => $idTK]);
+    return (bool) $stmt->fetchColumn();
+}
 
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM thanhviennhom WHERE idnhom = :idnhom AND trangthai = 1');
-    $stmt->execute([':idnhom' => $id_nhom]);
+/**
+ * Kiểm tra user có phải GVHD của nhóm không.
+ */
+function la_gvhd_nhom(PDO $conn, int $idTK, int $idNhom): bool
+{
+    $stmt = $conn->prepare(
+        'SELECT 1 FROM nhom_gvhd WHERE idNhom = :idNhom AND idTK = :idTK LIMIT 1'
+    );
+    $stmt->execute([':idNhom' => $idNhom, ':idTK' => $idTK]);
+    return (bool) $stmt->fetchColumn();
+}
+
+/**
+ * Đếm số thành viên SV trong nhóm.
+ */
+function so_thanh_vien_sv(PDO $conn, int $idNhom): int
+{
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM thanhviennhom WHERE idNhom = :idNhom');
+    $stmt->execute([':idNhom' => $idNhom]);
     return (int) $stmt->fetchColumn();
 }
 
-function kiem_tra_sv_co_nhom($conn, $id_tk, $id_sk)
+// Backward-compatible alias cho code cũ chưa migrate
+function so_thanh_vien_hien_tai($conn, int $id_nhom): int
 {
-    $id_tk = (int) $id_tk;
-    $id_sk = (int) $id_sk;
-
-    if (!$conn instanceof PDO) {
-        return false;
-    }
-
-    $sql = 'SELECT 1
-            FROM thanhviennhom tv
-            JOIN nhom n ON n.idnhom = tv.idnhom
-            WHERE tv.idtk = :idtk
-              AND n.idSK = :idSK
-              AND tv.trangthai = 1
-              AND n.isActive = 1
-            LIMIT 1';
-
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([
-        ':idtk' => $id_tk,
-        ':idSK' => $id_sk,
-    ]);
-
-    return (bool) $stmt->fetchColumn();
+    return so_thanh_vien_sv($conn, $id_nhom);
 }
 
-function tao_nhom_moi($conn, $idTK, $idSK, $tenNhom, $moTa, $soLuongToiDa, $dangTuyen = 1)
+/**
+ * Đếm số GVHD trong nhóm.
+ */
+function so_gvhd_nhom(PDO $conn, int $idNhom): int
 {
-    $idTK = (int) $idTK;
-    $idSK = (int) $idSK;
-    $tenNhom = trim((string) $tenNhom);
-    $soLuongToiDa = max(1, (int) $soLuongToiDa);
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM nhom_gvhd WHERE idNhom = :idNhom');
+    $stmt->execute([':idNhom' => $idNhom]);
+    return (int) $stmt->fetchColumn();
+}
 
-    if ($idTK <= 0 || $idSK <= 0 || $tenNhom === '') {
+/**
+ * Kiểm tra SV đã có nhóm trong sự kiện chưa.
+ * Check cả thanhviennhom, idChuNhom, idTruongNhom.
+ */
+function kiem_tra_sv_co_nhom(PDO $conn, int $idTK, int $idSK): bool
+{
+    // Check trong thanhviennhom
+    $stmt = $conn->prepare(
+        'SELECT 1 FROM thanhviennhom tv
+         JOIN nhom n ON n.idNhom = tv.idNhom
+         WHERE tv.idTK = :idTK AND n.idSK = :idSK AND n.isActive = 1
+         LIMIT 1'
+    );
+    $stmt->execute([':idTK' => $idTK, ':idSK' => $idSK]);
+    if ($stmt->fetchColumn()) return true;
+
+    // Check là Chủ nhóm hoặc Trưởng nhóm
+    $stmt2 = $conn->prepare(
+        'SELECT 1 FROM nhom
+         WHERE idSK = :idSK AND isActive = 1
+           AND (idChuNhom = :idTK1 OR idTruongNhom = :idTK2)
+         LIMIT 1'
+    );
+    $stmt2->execute([':idSK' => $idSK, ':idTK1' => $idTK, ':idTK2' => $idTK]);
+    return (bool) $stmt2->fetchColumn();
+}
+
+/**
+ * Đếm số nhóm GV đang hướng dẫn trong SK.
+ * Bao gồm nhóm GV là GVHD (nhom_gvhd) + nhóm GV là Chủ nhóm.
+ */
+function so_nhom_gv_huong_dan(PDO $conn, int $idTK, int $idSK): int
+{
+    // Đếm nhóm GV là GVHD
+    $stmt1 = $conn->prepare(
+        'SELECT COUNT(*) FROM nhom_gvhd g
+         JOIN nhom n ON n.idNhom = g.idNhom
+         WHERE g.idTK = :idTK AND n.idSK = :idSK AND n.isActive = 1'
+    );
+    $stmt1->execute([':idTK' => $idTK, ':idSK' => $idSK]);
+    $count = (int) $stmt1->fetchColumn();
+
+    // Cộng thêm nhóm GV là Chủ nhóm (mà chưa tính ở trên)
+    $stmt2 = $conn->prepare(
+        'SELECT COUNT(*) FROM nhom n
+         WHERE n.idChuNhom = :idTK AND n.idSK = :idSK AND n.isActive = 1
+           AND n.idNhom NOT IN (
+               SELECT g2.idNhom FROM nhom_gvhd g2 WHERE g2.idTK = :idTK2
+           )'
+    );
+    $stmt2->execute([':idTK' => $idTK, ':idSK' => $idSK, ':idTK2' => $idTK]);
+    $count += (int) $stmt2->fetchColumn();
+
+    return $count;
+}
+
+/**
+ * Tạo nhóm mới trong sự kiện.
+ * SV tạo → idChuNhom = idTruongNhom = idTK, INSERT thanhviennhom
+ * GV tạo → idChuNhom = idTK, idTruongNhom = NULL, INSERT nhom_gvhd
+ */
+function tao_nhom_moi(PDO $conn, int $idTK, int $idSK, string $tenNhom, string $moTa): array
+{
+    $tenNhom = trim($tenNhom);
+    $moTa = trim($moTa);
+
+    // 1. Validate input
+    if ($idTK <= 0 || $idSK <= 0) {
         return ['status' => false, 'message' => 'Dữ liệu đầu vào không hợp lệ'];
     }
-
     $tenNhomLen = mb_strlen($tenNhom);
     if ($tenNhomLen < 3 || $tenNhomLen > 100) {
         return ['status' => false, 'message' => 'Tên nhóm phải từ 3 đến 100 ký tự'];
     }
-    $soLuongToiDa = max(2, min(20, $soLuongToiDa));
 
-    if (!_is_exist($conn, 'sukien', 'idSK', $idSK)) {
-        return ['status' => false, 'message' => 'Sự kiện không tồn tại'];
+    // 2. Lấy sự kiện, check active
+    $sukien = truy_van_mot_ban_ghi($conn, 'sukien', 'idSK', $idSK);
+    if (!$sukien || (int)$sukien['isActive'] !== 1 || (int)$sukien['isDeleted'] !== 0) {
+        return ['status' => false, 'message' => 'Sự kiện không tồn tại hoặc đã ngừng hoạt động'];
     }
 
-    $tai_khoan = truy_van_mot_ban_ghi($conn, 'taikhoan', 'idTK', $idTK);
-    if (!$tai_khoan) {
+    // 3. Lấy tài khoản, xác định loại TK
+    $taiKhoan = truy_van_mot_ban_ghi($conn, 'taikhoan', 'idTK', $idTK);
+    if (!$taiKhoan) {
         return ['status' => false, 'message' => 'Tài khoản không tồn tại'];
     }
-    $loai_tk = (int) $tai_khoan['idLoaiTK'];
+    $loaiTK = (int) $taiKhoan['idLoaiTK'];
 
-    if ($loai_tk === 3) {
-        // Sinh viên: chỉ được tham gia 1 nhóm trong sự kiện
-        if (kiem_tra_sv_co_nhom($conn, $idTK, $idSK)) {
-            return ['status' => false, 'message' => 'Bạn đã tham gia một nhóm trong sự kiện này rồi'];
-        }
-    } elseif ($loai_tk === 2) {
-        // Giảng viên: kiểm tra giới hạn số nhóm hướng dẫn
-        if (!$conn instanceof PDO) return ['status' => false, 'message' => 'Kết nối CSDL không hợp lệ'];
-        $sukien = truy_van_mot_ban_ghi($conn, 'sukien', 'idSK', $idSK);
-        $soNhomToiDaGVHD = (int) ($sukien['soNhomToiDaGVHD'] ?? 0);
-        if ($soNhomToiDaGVHD > 0) {
-            $stmtGV = $conn->prepare("
-                SELECT COUNT(*)
-                FROM thanhviennhom tv
-                JOIN nhom n ON n.idnhom = tv.idnhom
-                JOIN vaitronhom vtn ON vtn.id = tv.idvaitronhom
-                WHERE tv.idtk = :idTK
-                  AND n.idSK = :idSK
-                  AND vtn.maVaiTroNhom = 'GVHD'
-                  AND tv.trangthai = 1
-                  AND n.isActive = 1
-            ");
-            $stmtGV->execute([':idTK' => $idTK, ':idSK' => $idSK]);
-            if ((int) $stmtGV->fetchColumn() >= $soNhomToiDaGVHD) {
-                return ['status' => false, 'message' => "Bạn đã đạt giới hạn hướng dẫn {$soNhomToiDaGVHD} nhóm trong sự kiện này"];
-            }
-        }
-    } else {
+    // 4. Chỉ GV (2) hoặc SV (3) mới được tạo nhóm
+    if ($loaiTK !== 2 && $loaiTK !== 3) {
         return ['status' => false, 'message' => 'Loại tài khoản không được phép tạo nhóm'];
     }
 
-    // Kiểm tra tên nhóm unique trong sự kiện
-    if (!$conn instanceof PDO) return ['status' => false, 'message' => 'Kết nối CSDL không hợp lệ'];
-    $stmtUnique = $conn->prepare('
-        SELECT 1 FROM nhom n
-        JOIN thongtinnhom tn ON tn.idnhom = n.idnhom
-        WHERE n.idSK = :idSK AND tn.tennhom = :tenNhom AND n.isActive = 1
-        LIMIT 1
-    ');
-    $stmtUnique->execute([':idSK' => $idSK, ':tenNhom' => $tenNhom]);
+    // 5. Nếu GV: check choPhepGVTaoNhom
+    if ($loaiTK === 2) {
+        if ((int)$sukien['choPhepGVTaoNhom'] !== 1) {
+            return ['status' => false, 'message' => 'Sự kiện không cho phép GV tạo nhóm'];
+        }
+        // 6. Check giới hạn số nhóm GV hướng dẫn
+        $soNhomToiDaGVHD = $sukien['soNhomToiDaGVHD'];
+        if ($soNhomToiDaGVHD !== null && so_nhom_gv_huong_dan($conn, $idTK, $idSK) >= (int)$soNhomToiDaGVHD) {
+            return ['status' => false, 'message' => "Bạn đã đạt giới hạn hướng dẫn {$soNhomToiDaGVHD} nhóm trong sự kiện này"];
+        }
+    }
+
+    // 7. Nếu SV: check đã có nhóm chưa
+    if ($loaiTK === 3) {
+        if (kiem_tra_sv_co_nhom($conn, $idTK, $idSK)) {
+            return ['status' => false, 'message' => 'Bạn đã tham gia một nhóm trong sự kiện này rồi'];
+        }
+    }
+
+    // 8. Check tên nhóm unique trong SK
+    $stmtUnique = $conn->prepare(
+        'SELECT 1 FROM nhom n
+         JOIN thongtinnhom tn ON tn.idnhom = n.idNhom
+         WHERE tn.tennhom = :tenNhom AND n.idSK = :idSK AND n.isActive = 1
+         LIMIT 1'
+    );
+    $stmtUnique->execute([':tenNhom' => $tenNhom, ':idSK' => $idSK]);
     if ($stmtUnique->fetchColumn()) {
         return ['status' => false, 'message' => 'Tên nhóm đã tồn tại trong sự kiện này'];
     }
 
-    $maVaiTro = ($loai_tk === 2) ? 'GVHD' : 'TRUONG_NHOM';
-    $maNhom   = 'GRP_' . $idSK . '_' . substr(uniqid(), -8);
+    // 9. Generate maNhom
+    $maNhom = 'GRP_' . $idSK . '_' . substr(uniqid(), -8);
 
+    // 10. Transaction
     try {
-        if (!$conn instanceof PDO) {
-            return ['status' => false, 'message' => 'Kết nối cơ sở dữ liệu không hợp lệ'];
-        }
-
         $conn->beginTransaction();
 
-        $okNhom = _insert_info(
-            $conn,
-            'nhom',
-            ['idSK', 'idnhomtruong', 'manhom', 'ngaytao', 'isActive'],
-            [$idSK, $idTK, $maNhom, date('Y-m-d H:i:s'), 1]
-        );
+        // INSERT nhom
+        if ($loaiTK === 3) {
+            // SV: idChuNhom = idTruongNhom = idTK
+            $okNhom = _insert_info(
+                $conn,
+                'nhom',
+                ['idSK', 'idChuNhom', 'idTruongNhom', 'maNhom', 'ngayTao', 'isActive'],
+                [$idSK, $idTK, $idTK, $maNhom, date('Y-m-d H:i:s'), 1]
+            );
+        } else {
+            // GV: idChuNhom = idTK, idTruongNhom = NULL
+            $okNhom = _insert_info(
+                $conn,
+                'nhom',
+                ['idSK', 'idChuNhom', 'maNhom', 'ngayTao', 'isActive'],
+                [$idSK, $idTK, $maNhom, date('Y-m-d H:i:s'), 1]
+            );
+        }
 
         if (!$okNhom) {
             $conn->rollBack();
@@ -174,46 +242,48 @@ function tao_nhom_moi($conn, $idTK, $idSK, $tenNhom, $moTa, $soLuongToiDa, $dang
 
         $idNhomMoi = (int) $conn->lastInsertId();
 
+        // INSERT thongtinnhom
         $okThongTin = _insert_info(
             $conn,
             'thongtinnhom',
-            ['idnhom', 'tennhom', 'mota', 'soluongtoida', 'dangtuyen'],
-            [$idNhomMoi, $tenNhom, $moTa, $soLuongToiDa, (int)$dangTuyen]
+            ['idnhom', 'tennhom', 'mota', 'dangTuyen'],
+            [$idNhomMoi, $tenNhom, $moTa, 1]
         );
-
         if (!$okThongTin) {
             $conn->rollBack();
             return ['status' => false, 'message' => 'Lỗi lưu thông tin nhóm'];
         }
 
-        $stmtVT = $conn->prepare('SELECT id FROM vaitronhom WHERE maVaiTroNhom = ? LIMIT 1');
-        $stmtVT->execute([$maVaiTro]);
-        $idVaiTro = (int) $stmtVT->fetchColumn();
-        if ($idVaiTro <= 0) {
-            $conn->rollBack();
-            return ['status' => false, 'message' => 'Không tìm thấy vai trò phù hợp'];
+        // INSERT thành viên tương ứng
+        if ($loaiTK === 3) {
+            // SV → INSERT thanhviennhom
+            $okMember = _insert_info(
+                $conn,
+                'thanhviennhom',
+                ['idNhom', 'idTK', 'ngayThamGia'],
+                [$idNhomMoi, $idTK, date('Y-m-d H:i:s')]
+            );
+        } else {
+            // GV → INSERT nhom_gvhd
+            $okMember = _insert_info(
+                $conn,
+                'nhom_gvhd',
+                ['idNhom', 'idTK', 'ngayThamGia'],
+                [$idNhomMoi, $idTK, date('Y-m-d H:i:s')]
+            );
         }
 
-        $okThanhVien = _insert_info(
-            $conn,
-            'thanhviennhom',
-            ['idnhom', 'idtk', 'idvaitronhom', 'trangthai', 'ngaythamgia', 'laChuNhom'],
-            [$idNhomMoi, $idTK, $idVaiTro, 1, date('Y-m-d H:i:s'), 1]
-        );
-
-        if (!$okThanhVien) {
+        if (!$okMember) {
             $conn->rollBack();
             return ['status' => false, 'message' => 'Lỗi thêm người tạo nhóm'];
         }
 
         $conn->commit();
-
-        return ['status' => true, 'message' => 'Tạo nhóm thành công', 'idnhom' => $idNhomMoi, 'manhom' => $maNhom];
-    } catch (Throwable $exception) {
-        if ($conn instanceof PDO && $conn->inTransaction()) {
+        return ['status' => true, 'idNhom' => $idNhomMoi, 'maNhom' => $maNhom];
+    } catch (Throwable $e) {
+        if ($conn->inTransaction()) {
             $conn->rollBack();
         }
-
         return ['status' => false, 'message' => 'Lỗi hệ thống khi tạo nhóm'];
     }
 }
@@ -760,67 +830,175 @@ function nop_bai_nhom($conn, int $id_tk, int $id_nhom, int $id_sk, string $ten_d
         : ['status' => false, 'message' => 'Lỗi khi lưu bài nộp'];
 }
 /**
- * Kiểm tra user có phải thành viên active của nhóm cụ thể không.
- * Dùng để gate getchitietnhom.
+ * Cập nhật thông tin nhóm. Chỉ Chủ nhóm mới được thực hiện.
  */
-function cap_nhat_thong_tin_nhom($conn, int $id_tk, int $id_nhom, string $ten_nhom, string $mo_ta, int $dang_tuyen): array
+function cap_nhat_thong_tin_nhom(PDO $conn, int $idTK, int $idNhom, string $tenNhom, string $moTa, int $dangTuyen, ?int $isActive = null): array
 {
-    $ten_nhom = trim($ten_nhom);
-    if ($ten_nhom === '') return ['status' => false, 'message' => 'Tên nhóm không được để trống'];
+    // 1. Check quyền chủ nhóm
+    if (!la_chu_nhom($conn, $idTK, $idNhom)) {
+        return ['status' => false, 'message' => 'Chỉ chủ nhóm mới được cập nhật thông tin nhóm'];
+    }
 
-    $tenNhomLen = mb_strlen($ten_nhom);
+    // 2. Lấy nhóm, check active
+    $nhom = lay_nhom_theo_id($conn, $idNhom);
+    if (!$nhom || (int) $nhom['isActive'] !== 1) {
+        return ['status' => false, 'message' => 'Nhóm không tồn tại hoặc đã ngừng hoạt động'];
+    }
+
+    // 3. Validate tên nhóm
+    $tenNhom = trim($tenNhom);
+    $tenNhomLen = mb_strlen($tenNhom);
     if ($tenNhomLen < 3 || $tenNhomLen > 100) {
         return ['status' => false, 'message' => 'Tên nhóm phải từ 3 đến 100 ký tự'];
     }
 
-    if (!la_chu_nhom($conn, $id_tk, $id_nhom)) {
-        return ['status' => false, 'message' => 'Chỉ chủ nhóm mới được cập nhật thông tin nhóm'];
-    }
-
-    // Lấy id_sk để kiểm tra tên unique trong cùng sự kiện (loại trừ chính nhóm này)
-    $nhom = lay_nhom_theo_id($conn, $id_nhom);
-    if (!$nhom || (int) $nhom['isActive'] !== 1) {
-        return ['status' => false, 'message' => 'Nhóm không tồn tại hoặc đã ngừng hoạt động'];
-    }
-    $id_sk = (int) $nhom['idSK'];
-
-    // Kiểm tra tên nhóm unique trong sự kiện (bỏ qua chính nhóm hiện tại)
-    $stmtUnique = $conn->prepare('
-        SELECT 1 FROM nhom n
-        JOIN thongtinnhom tn ON tn.idnhom = n.idnhom
-        WHERE n.idSK = :idSK AND tn.tennhom = :tenNhom AND n.isActive = 1 AND n.idnhom != :idNhom
-        LIMIT 1
-    ');
-    $stmtUnique->execute([':idSK' => $id_sk, ':tenNhom' => $ten_nhom, ':idNhom' => $id_nhom]);
+    // 4. Check tên unique trong SK (loại trừ chính nhóm này)
+    $idSK = (int) $nhom['idSK'];
+    $stmtUnique = $conn->prepare(
+        'SELECT 1 FROM nhom n
+         JOIN thongtinnhom tn ON tn.idnhom = n.idNhom
+         WHERE n.idSK = :idSK AND tn.tennhom = :tenNhom AND n.isActive = 1 AND n.idNhom != :idNhom
+         LIMIT 1'
+    );
+    $stmtUnique->execute([':idSK' => $idSK, ':tenNhom' => $tenNhom, ':idNhom' => $idNhom]);
     if ($stmtUnique->fetchColumn()) {
         return ['status' => false, 'message' => 'Tên nhóm đã tồn tại trong sự kiện này'];
     }
 
+    // 5. UPDATE thongtinnhom
     $ok = _update_info(
         $conn,
         'thongtinnhom',
-        ['tennhom', 'mota', 'dangtuyen'],
-        [$ten_nhom, $mo_ta, $dang_tuyen],
-        ['idnhom', '=', $id_nhom]
+        ['tennhom', 'mota', 'dangTuyen'],
+        [$tenNhom, $moTa, $dangTuyen],
+        ['idnhom' => ['=', $idNhom, '']]
     );
 
-    return $ok
-        ? ['status' => true, 'message' => 'Cập nhật thông tin nhóm thành công']
-        : ['status' => false, 'message' => 'Lỗi khi cập nhật thông tin nhóm'];
+    if (!$ok) {
+        return ['status' => false, 'message' => 'Lỗi khi cập nhật thông tin nhóm'];
+    }
+
+    // 6. Nếu isActive !== null: cập nhật trạng thái nhóm
+    if ($isActive !== null) {
+        $okActive = _update_info(
+            $conn,
+            'nhom',
+            ['isActive'],
+            [(int) $isActive],
+            ['idNhom' => ['=', $idNhom, '']]
+        );
+        if (!$okActive) {
+            return ['status' => false, 'message' => 'Lỗi khi cập nhật trạng thái nhóm'];
+        }
+    }
+
+    return ['status' => true, 'message' => 'Cập nhật thành công'];
 }
 
-function kiem_tra_thanh_vien_nhom($conn, int $idTK, int $idNhom): bool
+/**
+ * Nhượng quyền nhóm: chủ nhóm hoặc trưởng nhóm.
+ * @param string $action 'chu_nhom' | 'truong_nhom'
+ */
+function nhuong_quyen_nhom(PDO $conn, int $idTK, int $idNhom, string $action, int $idNguoiNhan): array
 {
-    if (!$conn instanceof PDO || $idTK <= 0 || $idNhom <= 0) return false;
+    // Validate chung
+    if (!la_chu_nhom($conn, $idTK, $idNhom)) {
+        return ['status' => false, 'message' => 'Chỉ chủ nhóm mới được nhượng quyền'];
+    }
+    if ($idNguoiNhan === $idTK) {
+        return ['status' => false, 'message' => 'Không thể nhượng quyền cho chính mình'];
+    }
 
-    $sql = 'SELECT 1
-            FROM thanhviennhom
-            WHERE idtk   = :idtk
-              AND idnhom  = :idnhom
-              AND trangthai = 1
-            LIMIT 1';
+    $nhom = lay_nhom_theo_id($conn, $idNhom);
+    if (!$nhom || (int) $nhom['isActive'] !== 1) {
+        return ['status' => false, 'message' => 'Nhóm không tồn tại hoặc đã ngừng hoạt động'];
+    }
 
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([':idtk' => $idTK, ':idnhom' => $idNhom]);
-    return (bool) $stmt->fetchColumn();
+    if ($action === 'truong_nhom') {
+        // Trưởng nhóm phải là SV thành viên của nhóm
+        if (!la_thanh_vien_sv($conn, $idNguoiNhan, $idNhom)) {
+            return ['status' => false, 'message' => 'Trưởng nhóm phải là SV thành viên của nhóm'];
+        }
+        $ok = _update_info(
+            $conn,
+            'nhom',
+            ['idTruongNhom'],
+            [$idNguoiNhan],
+            ['idNhom' => ['=', $idNhom, '']]
+        );
+        return $ok
+            ? ['status' => true, 'message' => 'Đã chuyển quyền trưởng nhóm thành công']
+            : ['status' => false, 'message' => 'Lỗi khi chuyển quyền trưởng nhóm'];
+    }
+
+    if ($action === 'chu_nhom') {
+        $taiKhoanNguoiNhan = truy_van_mot_ban_ghi($conn, 'taikhoan', 'idTK', $idNguoiNhan);
+        if (!$taiKhoanNguoiNhan) {
+            return ['status' => false, 'message' => 'Tài khoản người nhận không tồn tại'];
+        }
+        $loaiTKNhan = (int) $taiKhoanNguoiNhan['idLoaiTK'];
+
+        if ($loaiTKNhan === 3) {
+            // SV nhận Chủ nhóm
+            if (!la_thanh_vien_sv($conn, $idNguoiNhan, $idNhom)) {
+                return ['status' => false, 'message' => 'SV phải là thành viên của nhóm để nhận quyền chủ nhóm'];
+            }
+            // Nếu nhóm đang có Trưởng nhóm khác → giữ nguyên idTruongNhom
+            // Nếu không có hoặc Trưởng nhóm chính là người nhận → set idTruongNhom = idNguoiNhan
+            $truongNhomHienTai = $nhom['idTruongNhom'];
+            if ($truongNhomHienTai !== null && (int)$truongNhomHienTai !== $idNguoiNhan) {
+                // Giữ nguyên idTruongNhom, chỉ đổi idChuNhom
+                $ok = _update_info(
+                    $conn,
+                    'nhom',
+                    ['idChuNhom'],
+                    [$idNguoiNhan],
+                    ['idNhom' => ['=', $idNhom, '']]
+                );
+            } else {
+                // SV nhận Chủ nhóm → tự động thành Trưởng nhóm luôn
+                $ok = _update_info(
+                    $conn,
+                    'nhom',
+                    ['idChuNhom', 'idTruongNhom'],
+                    [$idNguoiNhan, $idNguoiNhan],
+                    ['idNhom' => ['=', $idNhom, '']]
+                );
+            }
+            return $ok
+                ? ['status' => true, 'message' => 'Đã chuyển quyền chủ nhóm thành công']
+                : ['status' => false, 'message' => 'Lỗi khi chuyển quyền chủ nhóm'];
+        }
+
+        if ($loaiTKNhan === 2) {
+            // GV nhận Chủ nhóm
+            if (!la_gvhd_nhom($conn, $idNguoiNhan, $idNhom)) {
+                return ['status' => false, 'message' => 'GV phải là GVHD của nhóm trước khi nhận quyền chủ nhóm'];
+            }
+            // Giữ nguyên idTruongNhom
+            $ok = _update_info(
+                $conn,
+                'nhom',
+                ['idChuNhom'],
+                [$idNguoiNhan],
+                ['idNhom' => ['=', $idNhom, '']]
+            );
+            return $ok
+                ? ['status' => true, 'message' => 'Đã chuyển quyền chủ nhóm thành công']
+                : ['status' => false, 'message' => 'Lỗi khi chuyển quyền chủ nhóm'];
+        }
+
+        return ['status' => false, 'message' => 'Loại tài khoản người nhận không hợp lệ'];
+    }
+
+    return ['status' => false, 'message' => 'Action không hợp lệ. Chỉ chấp nhận: chu_nhom, truong_nhom'];
+}
+
+/**
+ * Kiểm tra user có phải thành viên active của nhóm (SV hoặc GVHD).
+ */
+function kiem_tra_thanh_vien_nhom(PDO $conn, int $idTK, int $idNhom): bool
+{
+    if ($idTK <= 0 || $idNhom <= 0) return false;
+    return la_thanh_vien_sv($conn, $idTK, $idNhom) || la_gvhd_nhom($conn, $idTK, $idNhom);
 }

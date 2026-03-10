@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Mar 10, 2026 at 03:49 PM
+-- Generation Time: Mar 10, 2026 at 04:37 PM
 -- Server version: 8.4.3
 -- PHP Version: 8.3.30
 
@@ -1173,7 +1173,6 @@ CREATE TABLE `thongtinnhom` (
   `idnhom` int NOT NULL,
   `tennhom` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `mota` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `soluongtoida` int DEFAULT '5' COMMENT 'soluongtoida>0',
   `dangtuyen` tinyint DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1181,19 +1180,19 @@ CREATE TABLE `thongtinnhom` (
 -- Dumping data for table `thongtinnhom`
 --
 
-INSERT INTO `thongtinnhom` (`idthongtin`, `idnhom`, `tennhom`, `mota`, `soluongtoida`, `dangtuyen`) VALUES
-(1, 1, 'AI Pioneers', 'Nhóm nghiên cứu Computer Vision', 5, 0),
-(2, 6, 'a', 'a', 5, 1),
-(500, 500, 'Bug Busters', 'Đội chuyên fix bug và tạo bug mới', 5, 0),
-(501, 501, 'Cyber Ninjas', 'Đội ninja code dạo đêm khuya', 5, 0),
-(502, 502, 'nhom hihi', '', 5, 1),
-(801, 801, 'VisionARY Group', 'Nhóm chuyên nghiên cứu Computer Vision', 5, 0),
-(802, 802, 'IoT Hardware Lab', 'Nhóm kỹ sư nhúng và IoT', 5, 0),
-(803, 803, 'nhom 8383', '', 5, 1),
-(804, 804, 'nhom sv mai tao', '', 3, 1),
-(805, 805, 'a', 'd', 5, 1),
-(991, 991, 'Đội Test Độ Lệch Số 1', NULL, 5, 1),
-(992, 992, 'Đội Test Độ Lệch Số 2', NULL, 5, 1);
+INSERT INTO `thongtinnhom` (`idthongtin`, `idnhom`, `tennhom`, `mota`, `dangtuyen`) VALUES
+(1, 1, 'AI Pioneers', 'Nhóm nghiên cứu Computer Vision', 0),
+(2, 6, 'a', 'a', 1),
+(500, 500, 'Bug Busters', 'Đội chuyên fix bug và tạo bug mới', 0),
+(501, 501, 'Cyber Ninjas', 'Đội ninja code dạo đêm khuya', 0),
+(502, 502, 'nhom hihi', '', 1),
+(801, 801, 'VisionARY Group', 'Nhóm chuyên nghiên cứu Computer Vision', 0),
+(802, 802, 'IoT Hardware Lab', 'Nhóm kỹ sư nhúng và IoT', 0),
+(803, 803, 'nhom 8383', '', 1),
+(804, 804, 'nhom sv mai tao', '', 1),
+(805, 805, 'a', 'd', 1),
+(991, 991, 'Đội Test Độ Lệch Số 1', NULL, 1),
+(992, 992, 'Đội Test Độ Lệch Số 2', NULL, 1);
 
 -- --------------------------------------------------------
 

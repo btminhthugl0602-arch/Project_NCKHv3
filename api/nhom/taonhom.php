@@ -12,12 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$input     = json_decode(file_get_contents('php://input'), true) ?? [];
-$idSk      = (int)    ($input['id_sk']          ?? 0);
-$tenNhom   = trim((string) ($input['ten_nhom']   ?? ''));
-$moTa      = trim((string) ($input['mo_ta']      ?? ''));
-$soLuong   = (int)    ($input['so_luong_toi_da'] ?? 5);
-$dangTuyen = isset($input['dang_tuyen']) ? ((int)$input['dang_tuyen'] === 1 ? 1 : 0) : 1;
+$input   = json_decode(file_get_contents('php://input'), true) ?? [];
+$idSk    = (int)    ($input['id_sk']    ?? 0);
+$tenNhom = trim((string) ($input['ten_nhom'] ?? ''));
+$moTa    = trim((string) ($input['mo_ta']    ?? ''));
 
 if ($idSk <= 0 || $tenNhom === '') {
     http_response_code(400);
@@ -30,13 +28,13 @@ $actor = auth_require_quyen_nhom($idSk, 'tao_nhom');
 $idTK  = $actor['idTK'];
 
 try {
-    $result = tao_nhom_moi($conn, $idTK, $idSk, $tenNhom, $moTa, $soLuong, $dangTuyen);
+    $result = tao_nhom_moi($conn, $idTK, $idSk, $tenNhom, $moTa);
 
     if ($result['status'] === true) {
         echo json_encode([
             'status'  => 'success',
-            'message' => $result['message'],
-            'data'    => ['idnhom' => $result['idnhom'], 'manhom' => $result['manhom']],
+            'message' => 'Tạo nhóm thành công',
+            'data'    => ['idNhom' => $result['idNhom'], 'maNhom' => $result['maNhom']],
         ], JSON_UNESCAPED_UNICODE);
     } else {
         http_response_code(400);

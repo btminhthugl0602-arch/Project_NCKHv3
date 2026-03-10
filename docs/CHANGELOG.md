@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## 2026-03-10 — Refactor Nhóm 1: Khởi tạo nhóm (Schema v2)
+
+### Thay đổi nghiệp vụ
+- **Chủ nhóm** (`nhom.idChuNhom`) và **Trưởng nhóm** (`nhom.idTruongNhom`) tách biệt hoàn toàn
+- SV tạo nhóm → tự động là Chủ nhóm + Trưởng nhóm
+- GV tạo nhóm → là Chủ nhóm, Trưởng nhóm = NULL (chỉ định sau)
+- GVHD lưu riêng ở bảng `nhom_gvhd`, không tính vào `soThanhVienToiDa`
+- `soThanhVienToiDa` lấy từ cấu hình sự kiện, bỏ cột `thongtinnhom.soluongtoida`
+
+### API thay đổi
+- **`api/nhom/taonhom.php`**: Bỏ param `so_luong_toi_da`, `dang_tuyen`. Response trả `idNhom`, `maNhom`
+- **`api/nhom/cap_nhat_nhom.php`**: Bỏ param `id_sk` (lấy từ DB). Thêm param `is_active` (optional)
+- **`api/nhom/nhuong_quyen.php`** *(MỚI)*: Nhượng quyền Chủ nhóm hoặc Trưởng nhóm. Input: `id_nhom`, `action` (`chu_nhom`|`truong_nhom`), `id_nguoi_nhan`
+
+### Business logic (`api/nhom/quan_ly_nhom.php`)
+- Viết lại: `la_chu_nhom()`, `la_truong_nhom()`, `kiem_tra_sv_co_nhom()`, `tao_nhom_moi()`, `cap_nhat_thong_tin_nhom()`, `kiem_tra_thanh_vien_nhom()`
+- Thêm mới: `la_thanh_vien_sv()`, `la_gvhd_nhom()`, `so_thanh_vien_sv()`, `so_gvhd_nhom()`, `so_nhom_gv_huong_dan()`, `nhuong_quyen_nhom()`
+
+### Migration
+- `database/migrations/2026_03_10_drop_soluongtoida_thongtinnhom.sql`: Drop cột `soluongtoida` khỏi `thongtinnhom`
+
+---
+
 ## 2026-03-10 (Phase 5 — Feature Completion)
 
 ### Tính năng & Sửa lỗi cuối cùng

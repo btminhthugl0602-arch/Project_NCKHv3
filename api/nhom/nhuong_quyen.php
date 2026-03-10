@@ -12,22 +12,21 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$input     = json_decode(file_get_contents('php://input'), true) ?? [];
-$idNhom    = (int)    ($input['id_nhom']      ?? 0);
-$tenNhom   = trim((string) ($input['ten_nhom'] ?? ''));
-$moTa      = trim((string) ($input['mo_ta']    ?? ''));
-$dangTuyen = isset($input['dang_tuyen']) ? ((int) $input['dang_tuyen'] === 1 ? 1 : 0) : 1;
-$isActive  = isset($input['is_active']) ? (int) $input['is_active'] : null;
+$input       = json_decode(file_get_contents('php://input'), true) ?? [];
+$idNhom      = (int)    ($input['id_nhom']       ?? 0);
+$action      = trim((string) ($input['action']   ?? ''));
+$idNguoiNhan = (int)    ($input['id_nguoi_nhan'] ?? 0);
 
-if ($idNhom <= 0) {
+// Validate input
+if ($idNhom <= 0 || $idNguoiNhan <= 0) {
     http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Thiếu id_nhom', 'data' => null], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['status' => 'error', 'message' => 'Thiếu id_nhom hoặc id_nguoi_nhan', 'data' => null], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-if ($tenNhom === '') {
+if (!in_array($action, ['chu_nhom', 'truong_nhom'], true)) {
     http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Vui lòng nhập tên nhóm', 'data' => null], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['status' => 'error', 'message' => 'Action không hợp lệ. Chỉ chấp nhận: chu_nhom, truong_nhom', 'data' => null], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -45,7 +44,7 @@ $actor = auth_require_quyen_nhom($idSk, 'xem_nhom');
 $idTK  = $actor['idTK'];
 
 try {
-    $result = cap_nhat_thong_tin_nhom($conn, $idTK, $idNhom, $tenNhom, $moTa, $dangTuyen, $isActive);
+    $result = nhuong_quyen_nhom($conn, $idTK, $idNhom, $action, $idNguoiNhan);
 
     if ($result['status'] === true) {
         echo json_encode(['status' => 'success', 'message' => $result['message'], 'data' => null], JSON_UNESCAPED_UNICODE);
