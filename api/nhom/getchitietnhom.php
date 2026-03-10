@@ -29,8 +29,8 @@ if (!$nhomCheck) {
 }
 $idSk = (int) $nhomCheck['idSK'];
 
-// ── Auth: có quyền xem_nhom trong sự kiện ───────────
-$actor = auth_require_quyen_nhom($idSk, 'xem_nhom');
+// ── Auth: chỉ yêu cầu đăng nhập ───────────
+$actor = auth_require_login();
 $idTK  = $actor['idTK'];
 
 try {

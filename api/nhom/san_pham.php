@@ -35,7 +35,8 @@ if (!$nhomCheck) {
 $idSk = (int) $nhomCheck['idSK'];
 
 // ── Auth ──────────────────────────────────────────────────
-$actor = auth_require_quyen_nhom($idSk, 'xem_nhom');
+// Chỉ yêu cầu đăng nhập (quyền đã được gán qua role)
+$actor = auth_require_login();
 $idTK  = $actor['idTK'];
 
 try {

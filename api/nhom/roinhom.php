@@ -31,7 +31,8 @@ if (!$nhomCheck) {
 $idSk = (int) $nhomCheck['idSK'];
 
 // ── Auth ──────────────────────────────────────────────────
-$actor       = auth_require_quyen_nhom($idSk, 'xem_nhom');
+// Chỉ yêu cầu đăng nhập (quyền đã được gán qua role)
+$actor       = auth_require_login();
 $idTKSession = $actor['idTK'];
 
 // Không truyền id_tk_bi_xoa = tự rời, truyền thì chủ nhóm đang kick

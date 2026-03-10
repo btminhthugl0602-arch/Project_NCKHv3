@@ -12,7 +12,7 @@ require_once __DIR__ . '/quan_ly_nhom.php';
 header('Content-Type: application/json; charset=utf-8');
 
 $idSk    = isset($_GET['id_sk'])   ? (int) $_GET['id_sk'] : 0;
-$keyword = trim((string) ($_GET['keyword'] ?? ''));
+$keyword = trim((string) ($_GET['keyword'] ?? $_GET['q'] ?? ''));
 $loai    = trim((string) ($_GET['loai']    ?? ''));
 
 if ($idSk <= 0) {
@@ -22,7 +22,9 @@ if ($idSk <= 0) {
 }
 
 // ── Auth ──────────────────────────────────────────────────
-$actor = auth_require_quyen_nhom($idSk, 'xem_nhom');
+// Chỉ yêu cầu đăng nhập (quyền đã được gán qua role)
+$actor = auth_require_login();
+$idTK  = $actor['idTK'];
 
 if (!in_array($loai, ['sv', 'gv'], true)) {
     http_response_code(400);

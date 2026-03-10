@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Quản lý chấm điểm - Logic xử lý nghiệp vụ
  *
@@ -34,7 +35,8 @@ require_once __DIR__ . '/modules/warning_system.php';
  * - phancong_doclap: Phân công chính thức
  * - chamtieuchi: Giám khảo đã chấm điểm (bao gồm cả legacy data)
  */
-function cham_diem_lay_danh_sach_san_pham($conn, $idSK, $idVongThi) {
+function cham_diem_lay_danh_sach_san_pham($conn, $idSK, $idVongThi)
+{
     $sql = "SELECT 
                 sp.idSanPham,
                 sp.tensanpham,
@@ -74,14 +76,14 @@ function cham_diem_lay_danh_sach_san_pham($conn, $idSK, $idVongThi) {
             FROM sanpham sp
             INNER JOIN nhom n ON sp.idNhom = n.idnhom
             LEFT JOIN thongtinnhom ttn ON n.idnhom = ttn.idnhom
-            LEFT JOIN taikhoan tkNT ON n.idnhomtruong = tkNT.idTK
+            LEFT JOIN taikhoan tkNT ON n.idTruongNhom = tkNT.idTK
             LEFT JOIN sinhvien sv ON tkNT.idTK = sv.idTK
             LEFT JOIN giangvien gv ON tkNT.idTK = gv.idTK
             LEFT JOIN sanpham_vongthi spv ON sp.idSanPham = spv.idSanPham AND spv.idVongThi = :idVongThi3
             WHERE sp.idSK = :idSK2 
-              AND sp.isActive = 1
+              AND sp.trangThai != 'BI_LOAI'
             ORDER BY sp.idSanPham ASC";
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->execute([
         ':idSK1'       => $idSK,
@@ -91,14 +93,15 @@ function cham_diem_lay_danh_sach_san_pham($conn, $idSK, $idVongThi) {
         ':idVongThi2'  => $idVongThi,
         ':idVongThi3'  => $idVongThi,
     ]);
-    
+
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 /**
  * Lấy danh sách giảng viên có thể phân công chấm
  */
-function cham_diem_lay_danh_sach_giang_vien($conn, $idSK = null) {
+function cham_diem_lay_danh_sach_giang_vien($conn, $idSK = null)
+{
     $sql = "SELECT 
                 gv.idGV,
                 gv.tenGV,
@@ -110,10 +113,10 @@ function cham_diem_lay_danh_sach_giang_vien($conn, $idSK = null) {
             LEFT JOIN khoa k ON gv.idKhoa = k.idKhoa
             WHERE tk.isActive = 1
             ORDER BY gv.tenGV ASC";
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->execute();
-    
+
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
@@ -121,7 +124,8 @@ function cham_diem_lay_danh_sach_giang_vien($conn, $idSK = null) {
  * Lấy danh sách giám khảo đã phân công cho một sản phẩm
  * Sử dụng VIEW v_giam_khao_san_pham — thay thế UNION inline cũ (LOGIC-5)
  */
-function cham_diem_lay_giam_khao_san_pham($conn, $idSanPham, $idVongThi) {
+function cham_diem_lay_giam_khao_san_pham($conn, $idSanPham, $idVongThi)
+{
     $sql = "SELECT
                 v.idGV,
                 v.tenGV,
@@ -146,9 +150,12 @@ function cham_diem_lay_giam_khao_san_pham($conn, $idSanPham, $idVongThi) {
 
     $stmt = $conn->prepare($sql);
     $stmt->execute([
-        ':idSanPham1' => $idSanPham, ':idVongThi1' => $idVongThi,
-        ':idSanPham2' => $idSanPham, ':idVongThi2' => $idVongThi,
-        ':idSanPham3' => $idSanPham, ':idVongThi3' => $idVongThi,
+        ':idSanPham1' => $idSanPham,
+        ':idVongThi1' => $idVongThi,
+        ':idSanPham2' => $idSanPham,
+        ':idVongThi2' => $idVongThi,
+        ':idSanPham3' => $idSanPham,
+        ':idVongThi3' => $idVongThi,
     ]);
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -157,22 +164,23 @@ function cham_diem_lay_giam_khao_san_pham($conn, $idSanPham, $idVongThi) {
 /**
  * Phân công giám khảo chấm độc lập
  */
-function cham_diem_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi) {
+function cham_diem_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi)
+{
     try {
         // Kiểm tra xem đã phân công chưa
         $sqlCheck = "SELECT 1 FROM phancong_doclap WHERE idSanPham = :idSanPham AND idGV = :idGV AND idVongThi = :idVongThi";
         $stmtCheck = $conn->prepare($sqlCheck);
         $stmtCheck->execute([':idSanPham' => $idSanPham, ':idGV' => $idGV, ':idVongThi' => $idVongThi]);
-        
+
         if ($stmtCheck->fetch()) {
             return ['success' => false, 'message' => 'Giám khảo này đã được phân công cho bài thi'];
         }
-        
+
         // INSERT IGNORE để tránh lỗi nếu vô tình bấm 2 lần. isTrongTai=0 = giám khảo chính
         $sql = "INSERT IGNORE INTO phancong_doclap (idSanPham, idGV, idVongThi, isTrongTai) VALUES (:idSanPham, :idGV, :idVongThi, 0)";
         $stmt = $conn->prepare($sql);
         $result = $stmt->execute([':idSanPham' => $idSanPham, ':idGV' => $idGV, ':idVongThi' => $idVongThi]);
-        
+
         if ($result) {
             // Cập nhật trạng thái sản phẩm vòng thi nếu chưa có
             $sqlUpdateSPV = "INSERT INTO sanpham_vongthi (idSanPham, idVongThi, trangThai, ngayCapNhat) 
@@ -180,10 +188,10 @@ function cham_diem_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi) {
                              ON DUPLICATE KEY UPDATE trangThai = IF(trangThai = 'Đã nộp' OR trangThai IS NULL, 'Đã phân công', trangThai), ngayCapNhat = NOW()";
             $stmtSPV = $conn->prepare($sqlUpdateSPV);
             $stmtSPV->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
-            
+
             return ['success' => true, 'message' => 'Phân công giám khảo thành công'];
         }
-        
+
         return ['success' => false, 'message' => 'Không thể phân công giám khảo'];
     } catch (Throwable $e) {
         error_log('Error in cham_diem_phan_cong_giam_khao: ' . $e->getMessage());
@@ -194,7 +202,8 @@ function cham_diem_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi) {
 /**
  * Gỡ phân công giám khảo
  */
-function cham_diem_go_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi) {
+function cham_diem_go_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi)
+{
     try {
         // Kiểm tra xem giám khảo đã chấm điểm chưa
         $sqlCheck = "SELECT 1 FROM chamtieuchi ct 
@@ -202,32 +211,32 @@ function cham_diem_go_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi) 
                      WHERE ct.idSanPham = :idSanPham AND pcc.idGV = :idGV AND pcc.idVongThi = :idVongThi";
         $stmtCheck = $conn->prepare($sqlCheck);
         $stmtCheck->execute([':idSanPham' => $idSanPham, ':idGV' => $idGV, ':idVongThi' => $idVongThi]);
-        
+
         if ($stmtCheck->fetch()) {
             return ['success' => false, 'message' => 'Không thể gỡ phân công vì giám khảo đã chấm điểm'];
         }
-        
+
         $sql = "DELETE FROM phancong_doclap WHERE idSanPham = :idSanPham AND idGV = :idGV AND idVongThi = :idVongThi";
         $stmt = $conn->prepare($sql);
         $result = $stmt->execute([':idSanPham' => $idSanPham, ':idGV' => $idGV, ':idVongThi' => $idVongThi]);
-        
+
         if ($result && $stmt->rowCount() > 0) {
             // Kiểm tra nếu không còn ai phân công thì đổi trạng thái về chờ
             $sqlCountPC = "SELECT COUNT(*) as count FROM phancong_doclap WHERE idSanPham = :idSanPham AND idVongThi = :idVongThi";
             $stmtCount = $conn->prepare($sqlCountPC);
             $stmtCount->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
             $count = $stmtCount->fetch(PDO::FETCH_ASSOC)['count'];
-            
+
             if ($count == 0) {
                 $sqlUpdateSPV = "UPDATE sanpham_vongthi SET trangThai = 'Đã nộp', ngayCapNhat = NOW() 
                                  WHERE idSanPham = :idSanPham AND idVongThi = :idVongThi";
                 $stmtSPV = $conn->prepare($sqlUpdateSPV);
                 $stmtSPV->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
             }
-            
+
             return ['success' => true, 'message' => 'Gỡ phân công thành công'];
         }
-        
+
         return ['success' => false, 'message' => 'Không tìm thấy phân công để gỡ'];
     } catch (Throwable $e) {
         error_log('Error in cham_diem_go_phan_cong_giam_khao: ' . $e->getMessage());
@@ -238,7 +247,8 @@ function cham_diem_go_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi) 
 /**
  * Mời giám khảo thứ 3 (Trọng tài phúc khảo)
  */
-function cham_diem_moi_trong_tai($conn, $idSanPham, $idGV, $idVongThi) {
+function cham_diem_moi_trong_tai($conn, $idSanPham, $idGV, $idVongThi)
+{
     try {
         // Kiểm tra: GV này đang là GK chính của bài thi không? Không thể kiêm nhiệm 2 vai trò.
         $sqlCheckMain = "SELECT 1 FROM phancong_doclap
@@ -326,13 +336,14 @@ function cham_diem_moi_trong_tai($conn, $idSanPham, $idGV, $idVongThi) {
 /**
  * Lấy thống kê tiến độ chấm điểm của vòng thi
  */
-function cham_diem_lay_thong_ke_tien_do($conn, $idSK, $idVongThi) {
-    // Tổng số sản phẩm cần chấm
-    $sqlTotal = "SELECT COUNT(*) as total FROM sanpham WHERE idSK = :idSK AND isActive = 1";
+function cham_diem_lay_thong_ke_tien_do($conn, $idSK, $idVongThi)
+{
+    // Tổng số sản phẩm cần chấm (loại trừ bị loại)
+    $sqlTotal = "SELECT COUNT(*) as total FROM sanpham WHERE idSK = :idSK AND trangThai != 'BI_LOAI'";
     $stmtTotal = $conn->prepare($sqlTotal);
     $stmtTotal->execute([':idSK' => $idSK]);
     $tongSanPham = $stmtTotal->fetch(PDO::FETCH_ASSOC)['total'];
-    
+
     // Số sản phẩm có ít nhất 1 GK chính (isTrongTai=0) được phân công
     $sqlAssigned = "SELECT COUNT(DISTINCT pd.idSanPham) as total
                     FROM phancong_doclap pd
@@ -341,7 +352,7 @@ function cham_diem_lay_thong_ke_tien_do($conn, $idSK, $idVongThi) {
     $stmtAssigned = $conn->prepare($sqlAssigned);
     $stmtAssigned->execute([':idSK1' => $idSK, ':idVongThi1' => $idVongThi]);
     $daPhanCong = $stmtAssigned->fetch(PDO::FETCH_ASSOC)['total'];
-    
+
     // Số sản phẩm đã chấm xong (tất cả GK CHÍNH đã chấm — không chờ trọng tài)
     $sqlDone = "SELECT COUNT(*) as total FROM (
                     SELECT sp.idSanPham,
@@ -356,13 +367,13 @@ function cham_diem_lay_thong_ke_tien_do($conn, $idSK, $idVongThi) {
                             WHERE pcc.idVongThi = :idVongThi2
                            ) as soGKChinhDaCham
                     FROM sanpham sp
-                    WHERE sp.idSK = :idSK AND sp.isActive = 1
+                    WHERE sp.idSK = :idSK AND sp.trangThai != 'BI_LOAI'
                     HAVING soGKChinh > 0 AND soGKChinh = soGKChinhDaCham
                 ) as sub";
     $stmtDone = $conn->prepare($sqlDone);
     $stmtDone->execute([':idSK' => $idSK, ':idVongThi1' => $idVongThi, ':idVongThi2' => $idVongThi]);
     $daChamXong = $stmtDone->fetch(PDO::FETCH_ASSOC)['total'];
-    
+
     // Số sản phẩm đã duyệt
     $sqlApproved = "SELECT COUNT(*) as total FROM sanpham_vongthi spv
                     INNER JOIN sanpham sp ON spv.idSanPham = sp.idSanPham
@@ -370,7 +381,7 @@ function cham_diem_lay_thong_ke_tien_do($conn, $idSK, $idVongThi) {
     $stmtApproved = $conn->prepare($sqlApproved);
     $stmtApproved->execute([':idSK' => $idSK, ':idVongThi' => $idVongThi]);
     $daDuyet = $stmtApproved->fetch(PDO::FETCH_ASSOC)['total'];
-    
+
     return [
         'tongSanPham' => (int) $tongSanPham,
         'daPhanCong' => (int) $daPhanCong,
@@ -385,7 +396,8 @@ function cham_diem_lay_thong_ke_tien_do($conn, $idSK, $idVongThi) {
 /**
  * Lấy chi tiết điểm chấm của sản phẩm theo từng giám khảo
  */
-function cham_diem_lay_chi_tiet_diem($conn, $idSanPham, $idVongThi) {
+function cham_diem_lay_chi_tiet_diem($conn, $idSanPham, $idVongThi)
+{
     // JOIN với phancong_doclap để lấy cờ isTrongTai chính xác từ DB
     // isTrongTai=0: giám khảo chính (từ cham_diem_phan_cong_giam_khao)
     // isTrongTai=1: trọng tài phúc khảo (từ cham_diem_moi_trong_tai)
@@ -407,12 +419,12 @@ function cham_diem_lay_chi_tiet_diem($conn, $idSanPham, $idVongThi) {
             LEFT JOIN phancong_doclap pd ON pd.idGV = pcc.idGV AND pd.idVongThi = pcc.idVongThi AND pd.idSanPham = ct.idSanPham
             WHERE ct.idSanPham = :idSanPham AND pcc.idVongThi = :idVongThi
             ORDER BY isTrongTai ASC, gv.tenGV, tc.idTieuChi";
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
-    
+
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Tổ chức dữ liệu theo giám khảo
     $byJudge = [];
     foreach ($results as $row) {
@@ -435,7 +447,7 @@ function cham_diem_lay_chi_tiet_diem($conn, $idSanPham, $idVongThi) {
         ];
         $byJudge[$idGV]['tongDiem'] += (float) $row['diem'];
     }
-    
+
     return array_values($byJudge);
 }
 
@@ -443,7 +455,8 @@ function cham_diem_lay_chi_tiet_diem($conn, $idSanPham, $idVongThi) {
  * Lấy danh sách trọng tài đã được phân công cho một sản phẩm
  * (kể cả chưa chấm điểm – chỉ cần có trong phancong_doclap với isTrongTai=1)
  */
-function cham_diem_lay_trong_tai_phan_cong($conn, $idSanPham, $idVongThi) {
+function cham_diem_lay_trong_tai_phan_cong($conn, $idSanPham, $idVongThi)
+{
     $sql = "SELECT pd.idGV, gv.tenGV, pd.isTrongTai
             FROM phancong_doclap pd
             INNER JOIN giangvien gv ON gv.idGV = pd.idGV
@@ -463,14 +476,16 @@ function cham_diem_lay_trong_tai_phan_cong($conn, $idSanPham, $idVongThi) {
  * @param array $diemTheoGK Mảng điểm theo giám khảo: [[tc1,tc2,...], ...]
  * @return array Kết quả phân tích IRR
  */
-function cham_diem_tinh_irr($diemTheoGK) {
+function cham_diem_tinh_irr($diemTheoGK)
+{
     return stat_test_irr($diemTheoGK);
 }
 
 /**
  * Paired T-test – wrapper gọi Module 2
  */
-function cham_diem_paired_ttest($group1, $group2) {
+function cham_diem_paired_ttest($group1, $group2)
+{
     return stat_test_paired_ttest(
         array_map('floatval', $group1),
         array_map('floatval', $group2)
@@ -480,14 +495,16 @@ function cham_diem_paired_ttest($group1, $group2) {
 /**
  * One-way ANOVA – wrapper gọi Module 2
  */
-function cham_diem_one_way_anova($groups) {
+function cham_diem_one_way_anova($groups)
+{
     return stat_test_one_way_anova($groups);
 }
 
 /**
  * t → p-value – wrapper gọi Module 2
  */
-function cham_diem_t_to_p($t, $df) {
+function cham_diem_t_to_p($t, $df)
+{
     return stat_test_t_to_p((float) $t, (int) $df);
 }
 
@@ -496,7 +513,8 @@ function cham_diem_t_to_p($t, $df) {
  * (kept for backward compatibility; the old inline code is replaced below)
  */
 // NOTE: cham_diem_f_to_p is now supplied by stat_test_f_to_p through a shim
-function cham_diem_f_to_p($f, $df1, $df2) {
+function cham_diem_f_to_p($f, $df1, $df2)
+{
     return stat_test_f_to_p((float) $f, (int) $df1, (int) $df2);
 }
 
@@ -504,7 +522,8 @@ function cham_diem_f_to_p($f, $df1, $df2) {
  * Batch-fetch toàn bộ điểm chấm của tất cả SP trong 1 vòng thi (1 query thay vì N)
  * Trả về: [ idSanPham => [ [...judge], ... ], ... ]
  */
-function cham_diem_lay_chi_tiet_diem_batch($conn, $idSK, $idVongThi) {
+function cham_diem_lay_chi_tiet_diem_batch($conn, $idSK, $idVongThi)
+{
     $sql = "SELECT
                 ct.idSanPham,
                 pcc.idGV,
@@ -574,7 +593,8 @@ function cham_diem_lay_chi_tiet_diem_batch($conn, $idSK, $idVongThi) {
  * Lấy danh sách bài thi có cảnh báo độ lệch điểm
  * Sử dụng batch query (2 queries tổng cộng) — thay thế vòng lặp N+1 cũ (LOGIC-1)
  */
-function cham_diem_lay_danh_sach_canh_bao($conn, $idSK, $idVongThi) {
+function cham_diem_lay_danh_sach_canh_bao($conn, $idSK, $idVongThi)
+{
     $sanPhamList = cham_diem_lay_danh_sach_san_pham($conn, $idSK, $idVongThi);
 
     // 1 query lấy toàn bộ điểm cho cả vòng thi
@@ -624,7 +644,8 @@ function cham_diem_lay_danh_sach_canh_bao($conn, $idSK, $idVongThi) {
 /**
  * Tính điểm trung bình của sản phẩm từ tất cả giám khảo
  */
-function cham_diem_tinh_diem_trung_binh($conn, $idSanPham, $idVongThi) {
+function cham_diem_tinh_diem_trung_binh($conn, $idSanPham, $idVongThi)
+{
     // Chỉ tính TB từ GK chính (isTrongTai=0) — không trộn điểm trọng tài phúc khảo
     $sql = "SELECT AVG(sub.tongDiem) as diemTB FROM (
                 SELECT pcc.idGV, SUM(ct.diem) as tongDiem
@@ -637,18 +658,19 @@ function cham_diem_tinh_diem_trung_binh($conn, $idSanPham, $idVongThi) {
                 WHERE ct.idSanPham = :idSanPham AND pcc.idVongThi = :idVongThi
                 GROUP BY pcc.idGV
             ) as sub";
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     return $result['diemTB'] !== null ? round((float) $result['diemTB'], 2) : null;
 }
 
 /**
  * Duyệt và chốt điểm sản phẩm
  */
-function cham_diem_duyet_diem($conn, $idSanPham, $idVongThi, $diemChot, $trangThai = 'Đang xét') {
+function cham_diem_duyet_diem($conn, $idSanPham, $idVongThi, $diemChot, $trangThai = 'Đang xét')
+{
     try {
         $sql = "INSERT INTO sanpham_vongthi (idSanPham, idVongThi, diemTrungBinh, trangThai, ngayCapNhat)
                 VALUES (:idSanPham, :idVongThi, :diemChot, :trangThai, NOW())
@@ -656,7 +678,7 @@ function cham_diem_duyet_diem($conn, $idSanPham, $idVongThi, $diemChot, $trangTh
                     diemTrungBinh = :diemChot2, 
                     trangThai = :trangThai2, 
                     ngayCapNhat = NOW()";
-        
+
         $stmt = $conn->prepare($sql);
         $result = $stmt->execute([
             ':idSanPham' => $idSanPham,
@@ -666,7 +688,7 @@ function cham_diem_duyet_diem($conn, $idSanPham, $idVongThi, $diemChot, $trangTh
             ':diemChot2' => $diemChot,
             ':trangThai2' => $trangThai
         ]);
-        
+
         return $result;
     } catch (Throwable $e) {
         error_log('Error in cham_diem_duyet_diem: ' . $e->getMessage());
@@ -677,19 +699,20 @@ function cham_diem_duyet_diem($conn, $idSanPham, $idVongThi, $diemChot, $trangTh
 /**
  * Duyệt điểm với kiểm tra quy chế
  */
-function cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemChot, $idSK) {
+function cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemChot, $idSK)
+{
     try {
         $conn->beginTransaction();
-        
+
         // 1. Lưu điểm chốt với trạng thái tạm thời
         cham_diem_duyet_diem($conn, $idSanPham, $idVongThi, $diemChot, 'Đang xét');
-        
+
         // 2. Kiểm tra quy chế vòng thi (nếu có)
         $datQuyChe = cham_diem_kiem_tra_quy_che($conn, $idSanPham, $idVongThi, $idSK);
-        
+
         // 3. Cập nhật trạng thái cuối
         $trangThaiCuoi = $datQuyChe ? 'Đã duyệt' : 'Bị loại';
-        
+
         $sqlUpdate = "UPDATE sanpham_vongthi SET trangThai = :trangThai, ngayCapNhat = NOW()
                       WHERE idSanPham = :idSanPham AND idVongThi = :idVongThi";
         $stmtUpdate = $conn->prepare($sqlUpdate);
@@ -698,9 +721,9 @@ function cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemCho
             ':idSanPham' => $idSanPham,
             ':idVongThi' => $idVongThi
         ]);
-        
+
         $conn->commit();
-        
+
         return [
             'success' => true,
             'trangThai' => $trangThaiCuoi,
@@ -717,7 +740,8 @@ function cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemCho
  * Lấy dữ liệu sản phẩm & vòng thi để đánh giá quy chế
  * Trả về mảng [tenTruongDL => giaTriThucTe] cho tất cả thuộc tính VONGTHI
  */
-function dk_lay_du_lieu_spv($conn, $idSanPham, $idVongThi) {
+function dk_lay_du_lieu_spv($conn, $idSanPham, $idVongThi)
+{
     $sql = "SELECT spv.diemTrungBinh, spv.xepLoai, spv.trangThai
             FROM sanpham_vongthi spv
             WHERE spv.idSanPham = :idSanPham AND spv.idVongThi = :idVongThi
@@ -735,7 +759,8 @@ function dk_lay_du_lieu_spv($conn, $idSanPham, $idVongThi) {
  * @param array $spvData      Dữ liệu từ dk_lay_du_lieu_spv()
  * @param int   $depth        Độ sâu đệ quy (tránh vòng lặp vô hạn, max 20)
  */
-function dk_evaluate($conn, $idDieuKien, $spvData, $depth = 0) {
+function dk_evaluate($conn, $idDieuKien, $spvData, $depth = 0)
+{
     if ($depth > 20) return false; // bảo vệ khỏi đệ quy vô hạn nếu dữ liệu lỗi
 
     $sqlDK = "SELECT loaiDieuKien FROM dieukien WHERE idDieuKien = :id LIMIT 1";
@@ -770,14 +795,19 @@ function dk_evaluate($conn, $idDieuKien, $spvData, $depth = 0) {
         }
 
         switch ($operator) {
-            case '=':  return $actualVal == $threshold;
-            case '>':  return $actualVal >  $threshold;
-            case '<':  return $actualVal <  $threshold;
-            case '>=': return $actualVal >= $threshold;
-            case '<=': return $actualVal <= $threshold;
-            default:   return false;
+            case '=':
+                return $actualVal == $threshold;
+            case '>':
+                return $actualVal >  $threshold;
+            case '<':
+                return $actualVal <  $threshold;
+            case '>=':
+                return $actualVal >= $threshold;
+            case '<=':
+                return $actualVal <= $threshold;
+            default:
+                return false;
         }
-
     } elseif ($node['loaiDieuKien'] === 'TOHOP') {
         // Lấy 2 nhánh con và toán tử logic (AND/OR)
         $sqlTohop = "SELECT td.idDieuKienTrai, td.idDieuKienPhai, tt.kyHieu
@@ -805,7 +835,8 @@ function dk_evaluate($conn, $idDieuKien, $spvData, $depth = 0) {
  * Sử dụng động cơ điều kiện đệ quy để đánh giá toàn bộ cây quy chế.
  * Trả về true nếu sản phẩm đạt tất cả quy chế, false nếu vi phạm bất kỳ quy chế nào.
  */
-function cham_diem_kiem_tra_quy_che($conn, $idSanPham, $idVongThi, $idSK) {
+function cham_diem_kiem_tra_quy_che($conn, $idSanPham, $idVongThi, $idSK)
+{
     // Lấy tất cả quy chế loại VONGTHI của sự kiện
     $sqlQC = "SELECT qc.idQuyChe
               FROM quyche qc
@@ -851,20 +882,21 @@ function cham_diem_kiem_tra_quy_che($conn, $idSanPham, $idVongThi, $idSK) {
 /**
  * Đánh rớt bài thi thủ công
  */
-function cham_diem_danh_rot_thu_cong($conn, $idSanPham, $idVongThi, $diemChot = null) {
+function cham_diem_danh_rot_thu_cong($conn, $idSanPham, $idVongThi, $diemChot = null)
+{
     try {
         // Nếu không có điểm chốt, tính điểm trung bình
         if ($diemChot === null) {
             $diemChot = cham_diem_tinh_diem_trung_binh($conn, $idSanPham, $idVongThi);
         }
-        
+
         $sql = "INSERT INTO sanpham_vongthi (idSanPham, idVongThi, diemTrungBinh, trangThai, ngayCapNhat)
                 VALUES (:idSanPham, :idVongThi, :diemChot, 'Bị loại', NOW())
                 ON DUPLICATE KEY UPDATE 
                     diemTrungBinh = :diemChot2, 
                     trangThai = 'Bị loại', 
                     ngayCapNhat = NOW()";
-        
+
         $stmt = $conn->prepare($sql);
         $result = $stmt->execute([
             ':idSanPham' => $idSanPham,
@@ -872,7 +904,7 @@ function cham_diem_danh_rot_thu_cong($conn, $idSanPham, $idVongThi, $diemChot = 
             ':diemChot' => $diemChot,
             ':diemChot2' => $diemChot
         ]);
-        
+
         return ['success' => $result, 'message' => $result ? 'Đã đánh rớt bài thi thủ công' : 'Lỗi khi đánh rớt'];
     } catch (Throwable $e) {
         error_log('Error in cham_diem_danh_rot_thu_cong: ' . $e->getMessage());
@@ -883,7 +915,8 @@ function cham_diem_danh_rot_thu_cong($conn, $idSanPham, $idVongThi, $diemChot = 
 /**
  * Hủy duyệt / Hủy loại — reset trangThai về NULL (trạng thái chờ xét lại)
  */
-function cham_diem_huy_duyet($conn, $idSanPham, $idVongThi) {
+function cham_diem_huy_duyet($conn, $idSanPham, $idVongThi)
+{
     try {
         $sql = "UPDATE sanpham_vongthi 
                 SET trangThai = NULL, ngayCapNhat = NOW()
@@ -899,7 +932,8 @@ function cham_diem_huy_duyet($conn, $idSanPham, $idVongThi) {
 /**
  * Lấy bảng xếp hạng (Bảng vàng)
  */
-function cham_diem_lay_bang_xep_hang($conn, $idSK, $idVongThi) {
+function cham_diem_lay_bang_xep_hang($conn, $idSK, $idVongThi)
+{
     $sql = "SELECT 
                 sp.idSanPham,
                 sp.tensanpham,
@@ -922,12 +956,12 @@ function cham_diem_lay_bang_xep_hang($conn, $idSK, $idVongThi) {
               AND spv.trangThai = 'Đã duyệt'
               AND spv.diemTrungBinh IS NOT NULL
             ORDER BY spv.diemTrungBinh DESC";
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->execute([':idSK' => $idSK, ':idVongThi' => $idVongThi]);
-    
+
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Gán xếp hạng theo chuẩn Competition Ranking (standard)
     // Bài cùng điểm được cùng hạng, hạng tiếp theo bị nhảy
     // Ví dụ: 3 bài cùng #1 → hạng tiếp là #4 (không phải #2)
@@ -954,7 +988,8 @@ function cham_diem_lay_bang_xep_hang($conn, $idSK, $idVongThi) {
 /**
  * Lấy tất cả bài thi với trạng thái chi tiết
  */
-function cham_diem_lay_tat_ca_bai_thi($conn, $idSK, $idVongThi) {
+function cham_diem_lay_tat_ca_bai_thi($conn, $idSK, $idVongThi)
+{
     $sql = "SELECT 
                 sp.idSanPham,
                 sp.tensanpham,
@@ -995,7 +1030,7 @@ function cham_diem_lay_tat_ca_bai_thi($conn, $idSK, $idVongThi) {
             INNER JOIN nhom n ON sp.idNhom = n.idnhom
             LEFT JOIN thongtinnhom ttn ON n.idnhom = ttn.idnhom
             LEFT JOIN sanpham_vongthi spv ON sp.idSanPham = spv.idSanPham AND spv.idVongThi = :idVongThi3
-            WHERE sp.idSK = :idSK AND sp.isActive = 1
+            WHERE sp.idSK = :idSK AND sp.trangThai != 'BI_LOAI'
             ORDER BY 
                 CASE spv.trangThai
                     WHEN 'Đã duyệt' THEN 1
@@ -1005,7 +1040,7 @@ function cham_diem_lay_tat_ca_bai_thi($conn, $idSK, $idVongThi) {
                 END,
                 spv.diemTrungBinh DESC,
                 sp.tensanpham ASC";
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->execute([
         ':idSK' => $idSK,
@@ -1015,6 +1050,6 @@ function cham_diem_lay_tat_ca_bai_thi($conn, $idSK, $idVongThi) {
         ':idVongThi2' => $idVongThi,
         ':idVongThi3' => $idVongThi
     ]);
-    
+
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }

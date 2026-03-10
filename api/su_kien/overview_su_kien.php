@@ -144,8 +144,6 @@ try {
                 'ngayDongDangKy'    => $suKien['ngayDongDangKy'],
                 'ngayBatDau'        => $suKien['ngayBatDau'],
                 'ngayKetThuc'       => $suKien['ngayKetThuc'],
-                'cheDoDangKySV'     => $suKien['cheDoDangKySV'],
-                'cheDoDangKyGV'     => $suKien['cheDoDangKyGV'],
                 'isActive'          => (int) $suKien['isActive'],
             ],
             'trang_thai'     => [

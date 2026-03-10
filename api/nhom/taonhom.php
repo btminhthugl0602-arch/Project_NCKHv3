@@ -24,7 +24,8 @@ if ($idSk <= 0 || $tenNhom === '') {
 }
 
 // ── Auth ──────────────────────────────────────────────────
-$actor = auth_require_quyen_nhom($idSk, 'tao_nhom');
+// Chỉ yêu cầu đăng nhập (quyền đã được gán qua role)
+$actor = auth_require_login();
 $idTK  = $actor['idTK'];
 
 try {

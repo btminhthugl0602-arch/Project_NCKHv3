@@ -343,42 +343,19 @@ function _gui_thong_bao_su_kien_moi($conn, int $id_sk, string $ten_su_kien, int 
     $created = _insert_info(
         $conn,
         'thongbao',
-        ['idSK', 'tieuDe', 'noiDung', 'loaiThongBao', 'nguoiGui', 'isPublic'],
+        ['idSK', 'tieuDe', 'noiDung', 'loaiThongBao', 'phamVi', 'nguoiGui'],
         [
             $id_sk,
             'Sự kiện mới: ' . $ten_su_kien,
             'Sự kiện "' . $ten_su_kien . '" vừa được công bố. Hãy xem chi tiết và đăng ký tham gia!',
-            'su_kien_moi',
+            'SU_KIEN',
+            'TAT_CA',
             $id_nguoi_tao,
-            1,
         ]
     );
 
     if (!$created) {
         return;
-    }
-
-    $id_thong_bao = (int) $conn->lastInsertId();
-
-    $stmt = $conn->prepare(
-        'SELECT idTK FROM taikhoan WHERE isActive = 1 AND idLoaiTK IN (2, 3) AND idTK != :idNguoiTao'
-    );
-    $stmt->execute([':idNguoiTao' => $id_nguoi_tao]);
-    $nguoi_nhan = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-    if (empty($nguoi_nhan)) {
-        return;
-    }
-
-    $insertStmt = $conn->prepare(
-        'INSERT INTO thongbao_nguoinhan (idThongBao, idTK, daDoc) VALUES (:idThongBao, :idTK, 0)'
-    );
-
-    foreach ($nguoi_nhan as $id_tk) {
-        $insertStmt->execute([
-            ':idThongBao' => $id_thong_bao,
-            ':idTK' => (int) $id_tk,
-        ]);
     }
 }
 
@@ -545,8 +522,8 @@ function lay_thong_ke_su_kien($conn, int $id_su_kien): array
     $stmt->execute([$id_su_kien]);
     $stats['so_nhom'] = (int) $stmt->fetchColumn();
 
-    // Đếm số bài nộp — bảng `sanpham`, cột `idSK`
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM sanpham WHERE idSK = ? AND isActive = 1');
+    // Đếm số bài nộp — bảng `sanpham`, cột `idSK` (loại trừ bị loại)
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM sanpham WHERE idSK = ? AND trangThai != 'BI_LOAI'");
     $stmt->execute([$id_su_kien]);
     $stats['so_bai_nop'] = (int) $stmt->fetchColumn();
 

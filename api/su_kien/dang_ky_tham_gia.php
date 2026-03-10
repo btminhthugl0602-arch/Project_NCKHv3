@@ -39,7 +39,7 @@ if ($idSk <= 0) {
 try {
     // ── 1. Lấy thông tin sự kiện ──────────────────────────
     $stmt = $conn->prepare("
-        SELECT idSK, isActive, ngayMoDangKy, ngayDongDangKy, cheDoDangKySV, cheDoDangKyGV
+        SELECT idSK, isActive, ngayMoDangKy, ngayDongDangKy
         FROM sukien
         WHERE idSK = ? AND isDeleted = 0
         LIMIT 1
@@ -70,19 +70,7 @@ try {
         exit;
     }
 
-    // ── 3. Kiểm tra chế độ đăng ký theo loại tài khoản ──
-    if ($idLoaiTK === 3 && $sk['cheDoDangKySV'] !== 'MO') {
-        http_response_code(403);
-        echo json_encode(['status' => 'error', 'message' => 'Sự kiện không mở đăng ký tự do cho sinh viên', 'data' => null], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    if ($idLoaiTK === 2 && $sk['cheDoDangKyGV'] !== 'MO') {
-        http_response_code(403);
-        echo json_encode(['status' => 'error', 'message' => 'Sự kiện không mở đăng ký tự do cho giảng viên', 'data' => null], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
+    // ── 3. Kiểm tra loại tài khoản hợp lệ ──────────────
     if (!in_array($idLoaiTK, [2, 3], true)) {
         http_response_code(403);
         echo json_encode(['status' => 'error', 'message' => 'Loại tài khoản không được phép đăng ký', 'data' => null], JSON_UNESCAPED_UNICODE);

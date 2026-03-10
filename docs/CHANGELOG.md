@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## 2026-03-11 — Sửa lỗi đồng bộ Code ↔ Database Schema
+
+### Bug fixes
+- **`api/su_kien/dang_ky_tham_gia.php`**: Xóa tham chiếu đến cột `cheDoDangKySV` và `cheDoDangKyGV` không tồn tại trong bảng `sukien` — nguyên nhân gây lỗi "Lỗi hệ thống" khi sinh viên đăng ký tham gia sự kiện
+- **`api/nhom/nop_bai.php`**: Thay thế lời gọi hàm `nop_bai_nhom()` (không tồn tại) bằng `tao_hoac_cap_nhat_san_pham()` — nguyên nhân gây Fatal Error khi nộp bài
+- **`api/su_kien/quan_ly_su_kien.php`**: Sửa hàm `_gui_thong_bao_su_kien_moi()`:
+  - Xóa cột `isPublic` không tồn tại trong bảng `thongbao`
+  - Thêm cột `phamVi` = `'TAT_CA'` theo schema mới
+  - Đổi `loaiThongBao` từ `'su_kien_moi'` (invalid ENUM) thành `'SU_KIEN'`
+  - Xóa INSERT vào bảng `thongbao_nguoinhan` (không tồn tại), dùng `phamVi='TAT_CA'` thay thế
+- **`api/cham_diem/quan_ly_cham_diem.php`**:
+  - Thay `sp.isActive = 1` bằng `sp.trangThai != 'BI_LOAI'` (bảng `sanpham` không có cột `isActive`, dùng ENUM `trangThai`)
+  - Sửa `n.idnhomtruong` thành `n.idTruongNhom` (tên cột đúng trong bảng `nhom`)
+- **`api/nhom/quan_ly_nhom.php`**: Thêm hàm `_merge_thanh_vien()` và gộp `thanh_vien_sv` + `gvhd` thành mảng `thanh_vien` thống nhất với các key `idtk`, `idvaitronhom`, `msv_ma` — khớp với cấu trúc dữ liệu frontend cần
+- **`api/nhom/tim_kiem_user.php`**: Sửa đọc query parameter — API đọc `keyword` nhưng frontend gửi `q`, giờ hỗ trợ cả hai
+
+---
+
 ## 2026-03-11 — Refactor Nhóm 4: Nộp sản phẩm (Schema v2)
 
 ### Thay đổi nghiệp vụ

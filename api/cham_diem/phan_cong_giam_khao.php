@@ -1,4 +1,5 @@
 <?php
+
 /**
  * API Phân công giám khảo chấm điểm
  * 
@@ -53,12 +54,13 @@ try {
 /**
  * Xử lý GET request
  */
-function handleGetRequest($conn) {
+function handleGetRequest($conn)
+{
     $action = $_GET['action'] ?? 'list_san_pham';
     $idSK = isset($_GET['id_sk']) ? (int) $_GET['id_sk'] : 0;
     $idVongThi = isset($_GET['id_vong_thi']) ? (int) $_GET['id_vong_thi'] : 0;
     $idSanPham = isset($_GET['id_san_pham']) ? (int) $_GET['id_san_pham'] : 0;
-    
+
     switch ($action) {
         case 'list_san_pham':
             // Lấy danh sách sản phẩm cần chấm
@@ -71,7 +73,7 @@ function handleGetRequest($conn) {
                 ], JSON_UNESCAPED_UNICODE);
                 return;
             }
-            
+
             $data = cham_diem_lay_danh_sach_san_pham($conn, $idSK, $idVongThi);
             echo json_encode([
                 'status' => 'success',
@@ -79,7 +81,7 @@ function handleGetRequest($conn) {
                 'data' => $data
             ], JSON_UNESCAPED_UNICODE);
             break;
-            
+
         case 'list_giang_vien':
             // Lấy danh sách giảng viên có thể phân công
             $data = cham_diem_lay_danh_sach_giang_vien($conn, $idSK);
@@ -89,7 +91,7 @@ function handleGetRequest($conn) {
                 'data' => $data
             ], JSON_UNESCAPED_UNICODE);
             break;
-            
+
         case 'giam_khao_san_pham':
             // Lấy danh sách giám khảo đã phân công cho sản phẩm
             if ($idSanPham <= 0 || $idVongThi <= 0) {
@@ -101,7 +103,7 @@ function handleGetRequest($conn) {
                 ], JSON_UNESCAPED_UNICODE);
                 return;
             }
-            
+
             $data = cham_diem_lay_giam_khao_san_pham($conn, $idSanPham, $idVongThi);
             echo json_encode([
                 'status' => 'success',
@@ -109,7 +111,7 @@ function handleGetRequest($conn) {
                 'data' => $data
             ], JSON_UNESCAPED_UNICODE);
             break;
-            
+
         default:
             http_response_code(400);
             echo json_encode([
@@ -123,14 +125,15 @@ function handleGetRequest($conn) {
 /**
  * Xử lý POST request
  */
-function handlePostRequest($conn) {
+function handlePostRequest($conn)
+{
     // Dùng lại body đã parse từ bước xác thực — php://input chỉ đọc được 1 lần.
     // Nếu auth không cần đọc body (id_sk đến từ GET), parse lần đầu ở đây.
     $input = isset($_SERVER['_PARSED_INPUT']) ? $_SERVER['_PARSED_INPUT'] : null;
     if ($input === null) {
         $input = json_decode(file_get_contents('php://input'), true);
     }
-    
+
     if (!$input) {
         http_response_code(400);
         echo json_encode([
@@ -140,12 +143,12 @@ function handlePostRequest($conn) {
         ], JSON_UNESCAPED_UNICODE);
         return;
     }
-    
+
     $action = $input['action'] ?? '';
     $idSanPham = isset($input['id_san_pham']) ? (int) $input['id_san_pham'] : 0;
     $idGV = isset($input['id_gv']) ? (int) $input['id_gv'] : 0;
     $idVongThi = isset($input['id_vong_thi']) ? (int) $input['id_vong_thi'] : 0;
-    
+
     // Validate common params
     if (in_array($action, ['assign_doclap', 'remove_doclap', 'add_3rd_judge']) && ($idSanPham <= 0 || $idGV <= 0 || $idVongThi <= 0)) {
         http_response_code(400);
@@ -156,7 +159,7 @@ function handlePostRequest($conn) {
         ], JSON_UNESCAPED_UNICODE);
         return;
     }
-    
+
     switch ($action) {
         case 'assign_doclap':
             // Phân công giám khảo chấm độc lập
@@ -167,7 +170,7 @@ function handlePostRequest($conn) {
                 'data' => null
             ], JSON_UNESCAPED_UNICODE);
             break;
-            
+
         case 'remove_doclap':
             // Gỡ phân công giám khảo
             $result = cham_diem_go_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi);
@@ -177,7 +180,7 @@ function handlePostRequest($conn) {
                 'data' => null
             ], JSON_UNESCAPED_UNICODE);
             break;
-            
+
         case 'add_3rd_judge':
             // Mời giám khảo thứ 3 (Trọng tài phúc khảo)
             $result = cham_diem_moi_trong_tai($conn, $idSanPham, $idGV, $idVongThi);
@@ -187,7 +190,7 @@ function handlePostRequest($conn) {
                 'data' => null
             ], JSON_UNESCAPED_UNICODE);
             break;
-            
+
         case 'assign_multiple':
             // Phân công nhiều giám khảo cho một sản phẩm
             $dsGV = $input['ds_gv'] ?? [];
@@ -200,7 +203,7 @@ function handlePostRequest($conn) {
                 ], JSON_UNESCAPED_UNICODE);
                 return;
             }
-            
+
             $successCount = 0;
             $errors = [];
             foreach ($dsGV as $gvId) {
@@ -211,14 +214,14 @@ function handlePostRequest($conn) {
                     $errors[] = "GV $gvId: " . $result['message'];
                 }
             }
-            
+
             echo json_encode([
                 'status' => $successCount > 0 ? 'success' : 'error',
                 'message' => "Đã phân công $successCount/" . count($dsGV) . " giám khảo" . (count($errors) > 0 ? ". Lỗi: " . implode(', ', $errors) : ''),
                 'data' => ['successCount' => $successCount, 'totalCount' => count($dsGV)]
             ], JSON_UNESCAPED_UNICODE);
             break;
-            
+
         default:
             http_response_code(400);
             echo json_encode([

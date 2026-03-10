@@ -20,19 +20,18 @@ if ($idSk <= 0) {
 }
 
 // ── Auth ──────────────────────────────────────────────────
-$actor = auth_require_quyen_nhom($idSk, 'xem_nhom');
+// Chỉ yêu cầu đăng nhập (không cần quyền sự kiện cụ thể)
+$actor = auth_require_login();
 $idTK  = $actor['idTK'];
 
 try {
     $nhoms        = lay_tat_ca_nhom($conn, $idSk);
     $userHasGroup = kiem_tra_user_co_nhom($conn, $idTK, $idSk);
     echo json_encode([
-        'status'  => 'success',
-        'message' => 'Lấy danh sách nhóm thành công',
-        'data'    => [
-            'nhom'           => $nhoms,
-            'user_has_group' => $userHasGroup,
-        ],
+        'status'         => 'success',
+        'message'        => 'Lấy danh sách nhóm thành công',
+        'data'           => $nhoms,
+        'user_has_group' => $userHasGroup,
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     http_response_code(500);

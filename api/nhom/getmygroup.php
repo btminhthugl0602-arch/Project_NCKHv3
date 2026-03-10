@@ -20,7 +20,8 @@ if ($idSk <= 0) {
 }
 
 // ── Auth ──────────────────────────────────────────────────
-$actor = auth_require_quyen_nhom($idSk, 'xem_nhom');
+// Chỉ yêu cầu đăng nhập (không cần quyền sự kiện cụ thể)
+$actor = auth_require_login();
 $idTK  = $actor['idTK'];
 
 try {

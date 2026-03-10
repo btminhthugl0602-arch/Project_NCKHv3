@@ -4,7 +4,7 @@ require_once __DIR__ . '/../core/base.php';
 
 function lay_nhom_theo_id($conn, int $id_nhom): ?array
 {
-    $nhom = truy_van_mot_ban_ghi($conn, 'nhom', 'idnhom', $id_nhom);
+    $nhom = truy_van_mot_ban_ghi($conn, 'nhom', 'idNhom', $id_nhom);
     return $nhom ?: null;
 }
 
@@ -843,14 +843,20 @@ function lay_tat_ca_nhom(PDO $conn, int $idSK): array
 {
     $stmt = $conn->prepare(
         "SELECT
-            n.idNhom, n.maNhom, n.ngayTao, n.isActive,
-            n.idChuNhom, n.idTruongNhom,
-            tn.tennhom, tn.mota, tn.dangTuyen,
-            sk.soThanhVienToiDa,
+            n.idNhom as idnhom,
+            n.maNhom as manhom,
+            n.ngayTao,
+            n.isActive,
+            n.idChuNhom,
+            n.idTruongNhom,
+            tn.tennhom,
+            tn.mota,
+            tn.dangtuyen,
+            sk.soThanhVienToiDa as soluongtoida,
             CASE WHEN tk_chu.idLoaiTK = 3 THEN sv_chu.tenSV
                  WHEN tk_chu.idLoaiTK = 2 THEN gv_chu.tenGV END AS ten_chu_nhom,
             CASE WHEN tk_truong.idLoaiTK = 3 THEN sv_truong.tenSV END AS ten_truong_nhom,
-            COUNT(DISTINCT tv.idTK) AS so_thanh_vien_sv,
+            COUNT(DISTINCT tv.idTK) AS so_thanh_vien,
             COUNT(DISTINCT gvhd.idTK) AS so_gvhd
         FROM nhom n
         LEFT JOIN thongtinnhom tn        ON tn.idnhom = n.idNhom
@@ -965,6 +971,13 @@ function lay_nhom_cua_toi(PDO $conn, int $idTK, int $idSK): ?array
         $nhom['yeu_cau_cho'] = $stmtYC->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Gộp thanh_vien_sv + gvhd thành mảng thống nhất cho frontend
+    $nhom['thanh_vien'] = _merge_thanh_vien(
+        $nhom['thanh_vien_sv'],
+        $nhom['gvhd'],
+        $nhom['idTruongNhom'] !== null ? (int) $nhom['idTruongNhom'] : null
+    );
+
     return $nhom;
 }
 
@@ -1072,12 +1085,50 @@ function lay_chi_tiet_nhom(PDO $conn, int $idNhom, int $idTKNguoiXem): ?array
     $stmtGV->execute([':idNhom' => $idNhom]);
     $data['gvhd'] = $stmtGV->fetchAll(PDO::FETCH_ASSOC);
 
+    // Gộp thanh_vien_sv + gvhd thành mảng thống nhất cho frontend
+    $data['thanh_vien'] = _merge_thanh_vien(
+        $data['thanh_vien_sv'],
+        $data['gvhd'],
+        $data['idTruongNhom'] !== null ? (int) $data['idTruongNhom'] : null
+    );
+
     return $data;
 }
 
 // ==========================================
 // HÀM SẢN PHẨM & NỘP TÀI LIỆU
 // ==========================================
+
+/**
+ * Gộp thanh_vien_sv + gvhd thành mảng thống nhất `thanh_vien`
+ * với các key frontend cần: idtk, ten, msv_ma, idvaitronhom
+ *   idvaitronhom: 1 = Trưởng nhóm, 2 = Thành viên, 3 = GVHD
+ */
+function _merge_thanh_vien(array $svList, array $gvhdList, ?int $idTruongNhom): array
+{
+    $result = [];
+    foreach ($svList as $sv) {
+        $idTK = (int) $sv['idTK'];
+        $result[] = [
+            'idtk'          => $idTK,
+            'ten'           => $sv['ten'],
+            'msv_ma'        => $sv['MSV'] ?? null,
+            'tenLop'        => $sv['tenLop'] ?? null,
+            'ngayThamGia'   => $sv['ngayThamGia'] ?? null,
+            'idvaitronhom'  => ($idTruongNhom !== null && $idTK === $idTruongNhom) ? 1 : 2,
+        ];
+    }
+    foreach ($gvhdList as $gv) {
+        $result[] = [
+            'idtk'          => (int) $gv['idTK'],
+            'ten'           => $gv['ten'],
+            'msv_ma'        => null,
+            'ngayThamGia'   => $gv['ngayThamGia'] ?? null,
+            'idvaitronhom'  => 3,
+        ];
+    }
+    return $result;
+}
 
 /**
  * Tạo hoặc cập nhật sản phẩm của nhóm trong SK.
