@@ -1,5 +1,65 @@
 # CHANGELOG
 
+## 2026-03-09
+
+### Feature - Gỡ bộ tiêu chí khỏi vòng thi (Ungap Criteria from Round)
+
+#### Tính năng
+- Cho phép BTC gỡ liên kết giữa bộ tiêu chí và một vòng thi cụ thể trực tiếp từ panel bên phải tab Config Criteria
+- Mỗi badge "Đang dùng" trên vòng thi nay có nút ✕ inline để gỡ ngay
+- Cảnh báo nếu đã có dữ liệu chấm điểm liên quan (không xóa dữ liệu chấm)
+
+#### Files thay đổi
+
+##### `api/su_kien/quan_ly_bo_tieu_chi.php`
+- `lay_ban_do_su_dung_bo_tieu_chi`: Thêm `c.idVongThi` vào SELECT query vòng thi; thêm `'idVongThi'` vào mỗi item trong usage map
+- Thêm hàm mới `go_bo_tieu_chi_khoi_vong($conn, $id_nguoi, $id_sk, $id_bo, $id_vong_thi)`: kiểm tra quyền, cảnh báo nếu có chấm điểm, xóa bản ghi `cauhinh_tieuchi_sk`
+
+##### `api/su_kien/go_bo_tieu_chi.php` *(file mới)*
+- Endpoint POST nhận `id_sk`, `id_bo`, `id_vong_thi`
+- Gọi `go_bo_tieu_chi_khoi_vong()` và trả về JSON chuẩn
+
+##### `assets/js/event-detail.js`
+- Thêm hàm `goBoTieuChiKhoiVong(idBo, idVongThi)` fetch tới `go_bo_tieu_chi.php`
+- `renderCriteriaSetList`: Mỗi badge vòng thi (`bg-emerald-100`) nay có nút X (`criteria-ungap-btn`) với `data-id-bo` và `data-id-vong`
+- `criteriaSetList` click handler: Thêm nhánh xử lý `.criteria-ungap-btn` — xác nhận SweetAlert → gọi API → reload panel
+
+---
+
+## 2026-03-05
+
+### Fixed - Lỗi Tạo Vòng thi (Không khởi tạo được, báo lỗi hệ thống)
+
+#### Nguyên nhân gốc rễ (Root causes)
+1. **`kiem_tra_trung_ten_vong_thi`** — Query dùng `AND isActive = 1` nhưng bảng `vongthi` không có cột này (đã đổi thành `dongNopThuCong`). PDO ở chế độ `ERRMODE_EXCEPTION` → throw exception → hàm `tao_vong_thi()` bắt lỗi và trả về "Lỗi hệ thống".
+2. **Session key không khớp** — `tao_vong_thi.php` đọc `$_SESSION['user_id']` nhưng `dang_nhap.php` lưu vào `$_SESSION['idTK']` → luôn nhận được `idNguoiTao = 0` → trả về 401 "Chưa đăng nhập".
+3. **Bảng không tồn tại trong schema** — `vong_thi_co_du_lieu_lien_quan()` và `lay_thong_ke_vong_thi()` tham chiếu `bainop`, `phancong_chamthi`, `ketqua_chamthi` → không có trong `schema.sql`.
+4. **Thiếu `define('_AUTHEN', true)`** — `cap_nhat_vong_thi.php`, `toggle_vong_thi.php`, `xoa_vong_thi.php`, `sap_xep_vong_thi.php` không khai báo hằng guard trước khi require `base.php` → PHP die ngay khi gọi API.
+5. **Require file không tồn tại** — `toggle_vong_thi.php`, `xoa_vong_thi.php`, `sap_xep_vong_thi.php`, `cap_nhat_vong_thi.php` đều require `api/core/session_helper.php` không tồn tại.
+
+#### Files đã sửa
+
+##### `api/su_kien/quan_ly_vong_thi.php`
+- `kiem_tra_trung_ten_vong_thi`: Xóa `AND isActive = 1` khỏi query
+- `vong_thi_co_du_lieu_lien_quan`: Đổi bảng sai → `sanpham_vongthi`, `phancong_doclap`, `phancongcham`
+- `lay_thong_ke_vong_thi`: Đổi bảng sai → `sanpham_vongthi`, `phancong_doclap`, `phancongcham`
+
+##### `api/su_kien/tao_vong_thi.php`
+- Đổi `$_SESSION['user_id']` → `$_SESSION['idTK']`
+
+##### `api/su_kien/cap_nhat_vong_thi.php`
+- Thêm `define('_AUTHEN', true)`
+- Xóa require `session_helper.php`, đổi sang đọc trực tiếp `$_SESSION['idTK']`
+
+##### `api/su_kien/toggle_vong_thi.php`, `xoa_vong_thi.php`, `sap_xep_vong_thi.php`
+- Thêm `define('_AUTHEN', true)` vào đầu mỗi file
+- Xóa require `session_helper.php`, đổi sang đọc trực tiếp `$_SESSION['idTK']`
+
+##### `api/su_kien/danh_sach_vong_thi.php`, `cap_nhat_su_kien.php`, `luu_quy_che.php`, `luu_bo_tieu_chi.php`, `du_lieu_bo_tieu_chi.php`, `chi_tiet_quy_che.php`, `chi_tiet_bo_tieu_chi.php`
+- Đổi toàn bộ `$_SESSION['user_id']` → `$_SESSION['idTK']` để đồng nhất với session key của `dang_nhap.php`
+
+---
+
 ## 2026-03-04.2
 
 ### Fixed - API Path Issues trong Event Detail Modules

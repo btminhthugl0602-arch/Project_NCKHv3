@@ -367,18 +367,30 @@ function lay_ngan_hang_tieu_chi($conn, int $id_nguoi_thuc_hien, int $id_su_kien 
     ];
 }
 
-function lay_danh_sach_bo_tieu_chi($conn, int $id_nguoi_thuc_hien, int $id_su_kien = 0): array
+function lay_danh_sach_bo_tieu_chi($conn, int $id_nguoi_thuc_hien, int $id_su_kien = 0, bool $chi_theo_su_kien = false): array
 {
     if (!xac_thuc_quyen_bo_tieu_chi($conn, $id_nguoi_thuc_hien, $id_su_kien)) {
         return ['status' => false, 'message' => 'Không có quyền xem danh sách bộ tiêu chí'];
     }
 
-    $stmt = $conn->prepare(
-        'SELECT idBoTieuChi, tenBoTieuChi, moTa
-         FROM botieuchi
-         ORDER BY idBoTieuChi DESC'
-    );
-    $stmt->execute();
+    // Khi $chi_theo_su_kien = true: chỉ lấy bộ tiêu chí đã được gán vào vòng thi của sự kiện này
+    if ($chi_theo_su_kien && $id_su_kien > 0) {
+        $stmt = $conn->prepare(
+            'SELECT DISTINCT b.idBoTieuChi, b.tenBoTieuChi, b.moTa
+             FROM botieuchi b
+             JOIN cauhinh_tieuchi_sk c ON b.idBoTieuChi = c.idBoTieuChi
+             WHERE c.idSK = :idSK
+             ORDER BY b.idBoTieuChi DESC'
+        );
+        $stmt->execute([':idSK' => $id_su_kien]);
+    } else {
+        $stmt = $conn->prepare(
+            'SELECT idBoTieuChi, tenBoTieuChi, moTa
+             FROM botieuchi
+             ORDER BY idBoTieuChi DESC'
+        );
+        $stmt->execute();
+    }
 
     return [
         'status' => true,
@@ -396,7 +408,7 @@ function lay_ban_do_su_dung_bo_tieu_chi($conn, int $id_nguoi_thuc_hien, int $id_
     $usageMap = [];
 
     $stmtVong = $conn->prepare(
-        "SELECT c.idBoTieuChi, CONCAT('Dùng chung cho: ', v.tenVongThi) AS noiDung, 'vong' AS loai
+        "SELECT c.idBoTieuChi, c.idVongThi, CONCAT('Dùng chung cho: ', v.tenVongThi) AS noiDung, 'vong' AS loai
          FROM cauhinh_tieuchi_sk c
          JOIN vongthi v ON c.idVongThi = v.idVongThi
          WHERE c.idSK = :idSK"
@@ -410,8 +422,9 @@ function lay_ban_do_su_dung_bo_tieu_chi($conn, int $id_nguoi_thuc_hien, int $id_
             continue;
         }
         $usageMap[$idBo][] = [
-            'text' => $row['noiDung'] ?? '',
-            'loai' => $row['loai'] ?? 'vong',
+            'text'       => $row['noiDung'] ?? '',
+            'loai'       => $row['loai'] ?? 'vong',
+            'idVongThi'  => (int) ($row['idVongThi'] ?? 0),
         ];
     }
 
@@ -638,6 +651,57 @@ function luu_bo_tieu_chi_theo_su_kien($conn, int $id_nguoi_thuc_hien, int $id_su
  * - Nếu đang sử dụng, không cho xóa
  * - Nếu không, xóa bản ghi trong botieuchi_tieuchi trước, rồi xóa bộ tiêu chí
  */
+/**
+ * Gỡ bộ tiêu chí khỏi một vòng thi (xóa bản ghi cauhinh_tieuchi_sk)
+ * Cảnh báo nếu đã có dữ liệu chấm nhưng vẫn cho phép gỡ
+ */
+function go_bo_tieu_chi_khoi_vong($conn, int $id_nguoi_thuc_hien, int $id_su_kien, int $id_bo, int $id_vong_thi): array
+{
+    if (!xac_thuc_quyen_bo_tieu_chi($conn, $id_nguoi_thuc_hien, $id_su_kien)) {
+        return ['status' => false, 'message' => 'Không có quyền gỡ bộ tiêu chí'];
+    }
+
+    if ($id_bo <= 0 || $id_vong_thi <= 0) {
+        return ['status' => false, 'message' => 'Thiếu thông tin hợp lệ'];
+    }
+
+    // Kiểm tra bản ghi tồn tại
+    $stmtCheck = $conn->prepare(
+        'SELECT COUNT(*) FROM cauhinh_tieuchi_sk WHERE idSK = :idSK AND idVongThi = :idVT AND idBoTieuChi = :idBo'
+    );
+    $stmtCheck->execute([':idSK' => $id_su_kien, ':idVT' => $id_vong_thi, ':idBo' => $id_bo]);
+    if ((int) $stmtCheck->fetchColumn() === 0) {
+        return ['status' => false, 'message' => 'Không tìm thấy cấu hình để gỡ'];
+    }
+
+    // Cảnh báo nếu đã có phân công chấm / chấm điểm liên quan
+    $stmtCham = $conn->prepare(
+        'SELECT COUNT(*) FROM chamtieuchi ct
+         JOIN botieuchi_tieuchi bt ON ct.idTieuChi = bt.idTieuChi
+         JOIN phancongcham pc ON ct.idPhanCongCham = pc.idPhanCongCham
+         WHERE bt.idBoTieuChi = :idBo AND pc.idVongThi = :idVT AND pc.idSK = :idSK'
+    );
+    $stmtCham->execute([':idBo' => $id_bo, ':idVT' => $id_vong_thi, ':idSK' => $id_su_kien]);
+    $soCham = (int) $stmtCham->fetchColumn();
+
+    // Thực hiện gỡ
+    $stmtDel = $conn->prepare(
+        'DELETE FROM cauhinh_tieuchi_sk WHERE idSK = :idSK AND idVongThi = :idVT AND idBoTieuChi = :idBo'
+    );
+    $stmtDel->execute([':idSK' => $id_su_kien, ':idVT' => $id_vong_thi, ':idBo' => $id_bo]);
+
+    $warnings = [];
+    if ($soCham > 0) {
+        $warnings[] = "Có {$soCham} lượt chấm điểm liên quan đã tồn tại. Dữ liệu chấm điểm không bị xóa.";
+    }
+
+    return [
+        'status'   => true,
+        'message'  => 'Gỡ bộ tiêu chí khỏi vòng thi thành công',
+        'warnings' => $warnings,
+    ];
+}
+
 function xoa_bo_tieu_chi($conn, int $id_nguoi_thuc_hien, int $id_su_kien, int $id_bo): array
 {
     if (!xac_thuc_quyen_bo_tieu_chi($conn, $id_nguoi_thuc_hien, $id_su_kien)) {
@@ -646,6 +710,24 @@ function xoa_bo_tieu_chi($conn, int $id_nguoi_thuc_hien, int $id_su_kien, int $i
 
     if ($id_bo <= 0 || !_is_exist($conn, 'botieuchi', 'idBoTieuChi', $id_bo)) {
         return ['status' => false, 'message' => 'Bộ tiêu chí không tồn tại'];
+    }
+
+    // BTC chỉ được xóa bộ tiêu chí thuộc sự kiện của mình (có trong cauhinh_tieuchi_sk của sự kiện này)
+    // Admin hệ thống (admin_criteria / admin_events) mới được xóa bộ bất kỳ
+    $isAdmin = kiem_tra_quyen_he_thong($conn, $id_nguoi_thuc_hien, 'admin_criteria')
+        || kiem_tra_quyen_he_thong($conn, $id_nguoi_thuc_hien, 'admin_events');
+
+    if (!$isAdmin) {
+        if ($id_su_kien <= 0) {
+            return ['status' => false, 'message' => 'Thiếu thông tin sự kiện để xác minh quyền xóa'];
+        }
+        $stmtOwn = $conn->prepare(
+            'SELECT COUNT(*) FROM cauhinh_tieuchi_sk WHERE idBoTieuChi = :idBo AND idSK = :idSK'
+        );
+        $stmtOwn->execute([':idBo' => $id_bo, ':idSK' => $id_su_kien]);
+        if ((int) $stmtOwn->fetchColumn() === 0) {
+            return ['status' => false, 'message' => 'Bạn chỉ có thể xóa bộ tiêu chí thuộc sự kiện của mình'];
+        }
     }
 
     // Kiểm tra bộ tiêu chí có đang được sử dụng trong cauhinh_tieuchi_sk không

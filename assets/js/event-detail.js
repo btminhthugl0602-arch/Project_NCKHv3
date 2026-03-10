@@ -335,6 +335,20 @@ document.addEventListener('DOMContentLoaded', function () {
         return data.data || {};
     }
 
+    async function goBoTieuChiKhoiVong(idBo, idVongThi) {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/go_bo_tieu_chi.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ id_sk: idSk, id_bo: idBo, id_vong_thi: idVongThi }),
+        });
+        const data = await response.json();
+        if (data.status !== 'success') {
+            throw new Error(data.message || 'Không thể gỡ bộ tiêu chí');
+        }
+        return data;
+    }
+
     function addCriteriaRow(noiDung = '', diemToiDa = '', tyTrong = '1') {
         if (!criteriaTableBody) {
             return;
@@ -445,7 +459,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (!Array.isArray(sets) || sets.length === 0) {
-            criteriaSetList.innerHTML = '<div class="px-3 py-2 border rounded-lg border-slate-200 bg-slate-50 text-slate-500">Chưa có bộ tiêu chí nào. Tạo mới ở form bên trái.</div>';
+            criteriaSetList.innerHTML = '<div class="px-3 py-2 border rounded-lg border-slate-200 bg-slate-50 text-slate-500">Chưa có bộ tiêu chí nào được gán cho sự kiện này. Tạo mới hoặc nhân bản và gán vào vòng thi ở form bên trái.</div>';
             return;
         }
 
@@ -463,8 +477,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 usageHtml = '<div class="flex flex-wrap gap-1">';
                 vongThiUsage.forEach((item) => {
                     usageHtml += `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         ${item.text || ''}
+                        <button type="button" class="criteria-ungap-btn ml-0.5 hover:text-rose-600 focus:outline-none" data-id-bo="${idBo}" data-id-vong="${item.idVongThi || 0}" title="Gỡ khỏi vòng thi này">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
                     </span>`;
                 });
                 tieubanUsage.forEach((item) => {
@@ -593,17 +610,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     .join('');
             }
 
-            // Populate dropdown bộ tiêu chí có sẵn
-            const sets = Array.isArray(data.bo_tieu_chi) ? data.bo_tieu_chi : [];
-            console.log('Danh sách bộ tiêu chí:', sets);
+            // Dropdown nhân bản: toàn bộ ngân hàng
+            const setsAll = Array.isArray(data.bo_tieu_chi_all) ? data.bo_tieu_chi_all : [];
             if (criteriaReuseSetDropdown) {
-                criteriaReuseSetDropdown.innerHTML = '<option value="">-- Chọn bộ tiêu chí để nhân bản --</option>' + sets
+                criteriaReuseSetDropdown.innerHTML = '<option value="">-- Chọn bộ tiêu chí để nhân bản --</option>' + setsAll
                     .map((item) => `<option value="${item.idBoTieuChi}">${item.tenBoTieuChi}</option>`)
                     .join('');
             }
 
+            // Panel bên phải: chỉ bộ tiêu chí đã gán cho sự kiện này
+            const setsSuKien = Array.isArray(data.bo_tieu_chi) ? data.bo_tieu_chi : [];
             criteriaUsageMap = data.usage_map || {};
-            renderCriteriaSetList(sets);
+            renderCriteriaSetList(setsSuKien);
             resetCriteriaForm();
         } catch (error) {
             console.error('Lỗi khi tải dữ liệu bộ tiêu chí:', error);
@@ -2302,6 +2320,43 @@ document.addEventListener('DOMContentLoaded', function () {
             const cloneBtn = event.target.closest('.criteria-clone-btn');
             const editBtn = event.target.closest('.criteria-edit-btn');
             const deleteBtn = event.target.closest('.criteria-delete-btn');
+            const ungapBtn = event.target.closest('.criteria-ungap-btn');
+
+            if (ungapBtn) {
+                const idBo = Number(ungapBtn.dataset.idBo || 0);
+                const idVongThi = Number(ungapBtn.dataset.idVong || 0);
+                if (idBo <= 0 || idVongThi <= 0) return;
+
+                const confirmed = await Swal.fire({
+                    title: 'Gỡ bộ tiêu chí khỏi vòng thi?',
+                    html: `Bộ tiêu chí <strong>#${idBo}</strong> sẽ bị gỡ khỏi vòng thi này.<br><small class="text-slate-500">Dữ liệu chấm điểm đã có (nếu có) sẽ không bị xóa.</small>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Gỡ',
+                    cancelButtonText: 'Huỷ',
+                    confirmButtonColor: '#ef4444',
+                });
+                if (!confirmed.isConfirmed) return;
+
+                try {
+                    const result = await goBoTieuChiKhoiVong(idBo, idVongThi);
+                    await khoiTaoTabConfigCriteria();
+                    const warningsHtml =
+                        Array.isArray(result.warnings) && result.warnings.length > 0
+                            ? `<br><small class="text-amber-600">${result.warnings.join('<br>')}</small>`
+                            : '';
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Đã gỡ',
+                        html: `Bộ tiêu chí đã được gỡ khỏi vòng thi thành công.${warningsHtml}`,
+                        timer: 2500,
+                        showConfirmButton: false,
+                    });
+                } catch (error) {
+                    Swal.fire({ icon: 'error', title: 'Không thể gỡ', text: error.message || 'Vui lòng thử lại.' });
+                }
+                return;
+            }
 
             if (cloneBtn) {
                 const idBo = Number(cloneBtn.dataset.criteriaClone || 0);

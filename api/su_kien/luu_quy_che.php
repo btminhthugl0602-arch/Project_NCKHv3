@@ -26,13 +26,9 @@ if (!is_array($input)) {
 
 $idSk = isset($input['id_sk']) ? (int) $input['id_sk'] : 0;
 
-// ── Auth ──────────────────────────────────────────────────
+// ── Auth ──────────────────────────────────────────────────────────
 $actor = auth_require_cauhinh_su_kien($idSk);
-
-$idUser = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
-if ($idUser <= 0 && isset($input['id_nguoi_thuc_hien'])) {
-    $idUser = (int) $input['id_nguoi_thuc_hien'];
-}
+$idUser = $actor['idTK'];
 $tenQuyChe = trim((string) ($input['ten_quy_che'] ?? ''));
 $loaiQuyCheRaw = strtoupper(trim((string) ($input['loai_quy_che'] ?? '')));
 $moTa = trim((string) ($input['mo_ta'] ?? ''));

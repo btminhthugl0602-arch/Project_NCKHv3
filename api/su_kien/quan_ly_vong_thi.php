@@ -161,22 +161,22 @@ function vong_thi_co_du_lieu_lien_quan($conn, int $id_vong_thi): array
         return $has_data;
     }
 
-    // Kiểm tra bài nộp
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM bainop WHERE idVongThi = ?');
+    // Kiểm tra sản phẩm đã tham gia vòng thi
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM sanpham_vongthi WHERE idVongThi = ?');
     $stmt->execute([$id_vong_thi]);
     if ((int) $stmt->fetchColumn() > 0) {
-        $has_data[] = 'bài nộp';
+        $has_data[] = 'sản phẩm đã nộp';
     }
 
-    // Kiểm tra phân công chấm
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM phancong_chamthi WHERE idVongThi = ?');
+    // Kiểm tra phân công chấm độc lập
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM phancong_doclap WHERE idVongThi = ?');
     $stmt->execute([$id_vong_thi]);
     if ((int) $stmt->fetchColumn() > 0) {
         $has_data[] = 'phân công chấm';
     }
 
-    // Kiểm tra kết quả chấm
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM ketqua_chamthi WHERE idVongThi = ?');
+    // Kiểm tra phân công chấm theo bộ tiêu chí
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM phancongcham WHERE idVongThi = ?');
     $stmt->execute([$id_vong_thi]);
     if ((int) $stmt->fetchColumn() > 0) {
         $has_data[] = 'kết quả chấm';
@@ -574,18 +574,18 @@ function lay_thong_ke_vong_thi($conn, int $id_vong_thi): array
 
     $stats = [];
 
-    // Đếm số bài nộp
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM bainop WHERE idVongThi = ?');
+    // Đếm số sản phẩm tham gia vòng thi
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM sanpham_vongthi WHERE idVongThi = ?');
     $stmt->execute([$id_vong_thi]);
     $stats['soBaiNop'] = (int) $stmt->fetchColumn();
 
-    // Đếm phân công chấm
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM phancong_chamthi WHERE idVongThi = ?');
+    // Đếm phân công chấm độc lập
+    $stmt = $conn->prepare('SELECT COUNT(DISTINCT idSanPham) FROM phancong_doclap WHERE idVongThi = ?');
     $stmt->execute([$id_vong_thi]);
     $stats['soPhanCong'] = (int) $stmt->fetchColumn();
 
-    // Đếm kết quả chấm
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM ketqua_chamthi WHERE idVongThi = ?');
+    // Đếm phân công chấm theo bộ tiêu chí
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM phancongcham WHERE idVongThi = ?');
     $stmt->execute([$id_vong_thi]);
     $stats['soKetQuaCham'] = (int) $stmt->fetchColumn();
 
