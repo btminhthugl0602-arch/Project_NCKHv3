@@ -688,7 +688,9 @@ CREATE TABLE `phancong_doclap` (
   `idSanPham` int NOT NULL,
   `idGV` int NOT NULL,
   `idVongThi` int NOT NULL,
-  `isTrongTai` tinyint NOT NULL DEFAULT '0' COMMENT '0 = Giám khảo chính thức (phan_cong_giam_khao), 1 = Trọng tài phúc khảo (moi_trong_tai)'
+  `isTrongTai` tinyint NOT NULL DEFAULT '0' COMMENT '0 = Giám khảo chính thức (phan_cong_giam_khao), 1 = Trọng tài phúc khảo (moi_trong_tai)',
+  `trangThaiCham` varchar(20) NOT NULL DEFAULT 'Chờ chấm' COMMENT 'Chờ chấm / Đang chấm / Đã xác nhận',
+  `ngayNop` datetime DEFAULT NULL COMMENT 'Thời điểm nộp phiếu chấm cho SP này'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --

@@ -1,6 +1,107 @@
 # CHANGELOG
 
-## 2026-03-10 (Phase 5 — Feature Completion)
+## 2026-04 — Vai trò Trọng tài Phúc khảo (Arbitrator Flow)
+
+### Feature: UI và logic riêng cho Trọng tài khi phúc khảo bài có IRR cao
+
+**Vấn đề cũ:** GV có `isTrongTai=1` được hiển thị form chấm điểm giống hệt GK chính (blank form). Điểm TT không được tính vào kết quả cuối. `sanpham_vongthi` không cập nhật sau khi TT nộp.
+
+**Giải pháp:**
+- API trả thêm `bongTranh` (ma trận điểm GK×tiêu chí) + `maTranCanhBao` (avg + deviation%) khi `isTrongTai=1`.
+- TT tự nhập điểm phán quyết. Khi nộp → ghi vào `sanpham_vongthi` với `trangThai='Đã phúc khảo'` (binding, override AVG).
+- `cham_diem_tinh_diem_trung_binh()` ưu tiên điểm TT nếu đã xác nhận.
+
+**`api/cham_diem/nhap_diem.php`**
+- `nhapDiem_layChiTiet()`: khi `isTrongTai=1` thêm `bongTranh` (điểm từng GK chính) và `maTranCanhBao` (deviation per criterion) vào response.
+- Thêm `nhapDiem_layBongTranhGiamKhao()`: query điểm tất cả GK chính (isTrongTai=0) cho SP đó.
+- Thêm `nhapDiem_tinhMaTranCanhBao()`: tính avg + deviationPct per criterion, flag `isHighDeviation` khi >30%.
+- `nhapDiem_nopPhieu()`: sau khi TT nộp → tính tổng điểm TT → INSERT/UPDATE `sanpham_vongthi` `trangThai='Đã phúc khảo'`; trả `diemPhanQuyet`.
+- `nhapDiem_layDanhSach()`: SELECT thêm `pd.isTrongTai` và trả về trong `dsSanPham`.
+- Controller `nop_phieu` case: trả `data.diemPhanQuyet` trong response.
+
+**`api/cham_diem/quan_ly_cham_diem.php`**
+- `cham_diem_tinh_diem_trung_binh()`: kiểm tra TT đã xác nhận → nếu có dùng SUM(TT) làm điểm cuối; fallback về AVG GK thường.
+
+**`views/partials/event-detail/tab-scoring-gv.php`**
+- Thêm `#gvPhieuTrongTai` div: banner vai trò TT, header, tóm tắt điểm GK, bảng phán quyết động, buttons "Lưu nháp" + "Xác nhận phán quyết".
+
+**`assets/js/scoring_gv.js`**
+- `state.isTrongTai`: flag mới.
+- `cacheElements()`: thêm refs đến tất cả elements TT.
+- `bindEvents()`: bind TT buttons.
+- `renderPhieuCham()`: phân nhánh `isTrongTai` → `renderPhieuTrongTai()`.
+- Thêm `renderPhieuTrongTai()`: render toàn bộ phiếu phúc khảo (GK summary, dynamic table header, rows với highlight cam cho hàng lệch cao, input score pre-filled với avg).
+- Thêm `renderTTGKSummary()`, `buildTTTableHeader()`, `renderTTTableBody()`, `calcTTTongDiem()`.
+- Thêm `updateTTChamStatusBadge()`, `lockCurrentTTPhieu()`, `escHtml()`.
+- `buildSpItem()` / `renderSpBadge()`: badge ⚖️ TT cam khi `isTrongTai=true`.
+- `collectDiemFromForm()`: branch TT — thu thập từ `.gv-tt-input` / `.gv-tt-nhan-xet`.
+- `handleNopPhieu()`: validation TT (lý do bắt buộc cho hàng lệch cao), confirm dialog riêng với text cảnh báo "điểm cuối cùng không thể hoàn tác".
+- `showLuuStatus()`, `showPhieuLoading()`, `hidePhieu()`: xử lý cả 2 div (GK + TT).
+
+---
+
+## 2026-03 — Phiếu chấm độc lập theo từng bài
+
+### Fix: Mỗi bài có phiếu chấm riêng, nộp/giữ nháp độc lập
+
+**Vấn đề cũ:** `trangThaiXacNhan` lưu ở `phancongcham` (1 bản ghi cho toàn bộ bài của GV trong vòng) → nộp phiếu hoặc chốt điểm tác động lên tất cả bài cùng lúc.
+
+**Giải pháp:** Thêm `trangThaiCham` + `ngayNop` vào `phancong_doclap` (1 bản ghi per GV×SP×vòng) → mỗi bài có trạng thái và thời điểm nộp riêng biệt.
+
+**Migration cần chạy:** `database/migrations/2026_03_add_per_sp_status_to_phancong_doclap.sql`
+
+**`api/cham_diem/nhap_diem.php`**
+- `nhapDiem_layDanhSach()`: SELECT thêm `pd.trangThaiCham` per SP.
+- `nhapDiem_layChiTiet()`: trả về `trangThaiChamSP` (từ `phancong_doclap`) + `ngayNop`.
+- `nhapDiem_luuDiem()`: lock check chuyển sang `phancong_doclap.trangThaiCham` cho SP đang lưu; cập nhật `'Đang chấm'` trên PD (không ảnh hưởng SP khác).
+- `nhapDiem_nopPhieu()`: nộp từng bài riêng (`UPDATE phancong_doclap SET trangThaiCham = 'Đã xác nhận'`); cập nhật `phancongcham` aggregate chỉ khi tất cả SP đã nộp.
+
+**`assets/js/scoring_gv.js`**
+- `renderPhieuCham()`: `isSubmitted` dùng `trangThaiChamSP === 'Đã xác nhận'` (per-SP).
+- `buildSpItem()` + `renderSpBadge()`: badge dựa trên `trangThaiCham` per SP.
+- `handleNopPhieu()`: sau nộp thành công chỉ lock form hiện tại + cập nhật badge SP đó, không reload toàn danh sách.
+- Thêm `updateSpItemStatus()`, `lockCurrentPhieu()`.
+
+**`database/schema.sql`**: cập nhật `phancong_doclap` với 2 cột mới.
+
+---
+
+## 2025-07 (Sprint 1 — Unblock Scoring Pipeline)
+
+### B1.1 — Fix `cham_diem_phan_cong_giam_khao()` — gắn bộ tiêu chí vào phân công
+**`api/cham_diem/quan_ly_cham_diem.php`**
+- **Lỗi cũ**: hàm chỉ INSERT vào `phancong_doclap`, không đọc `cauhinh_tieuchi_sk`, không ghi `phancongcham` → giảng viên không có bộ tiêu chí để chấm.
+- **Fix**:
+  - Thêm bước kiểm tra `cauhinh_tieuchi_sk(idSK, idVongThi)` → trả lỗi rõ ràng nếu BTC chưa cấu hình bộ tiêu chí.
+  - `idSK` được lấy tự động từ `sanpham.idSK` thay vì yêu cầu tham số ngoài.
+  - Sau khi INSERT `phancong_doclap`, INSERT vào `phancongcham(idGV, idSK, idVongThi, idBoTieuChi, 'Đã xác nhận')` nếu chưa tồn tại.
+  - Bọc toàn bộ trong transaction có `rollBack()` khi gặp lỗi.
+
+### B1.2 — Tạo `api/cham_diem/nhap_diem.php` *(file mới)*
+- `GET ?action=lay_phieu_cham&id_sk=&id_vong_thi=` → danh sách sản phẩm GV được phân công + tiến độ chấm.
+- `GET ?action=chi_tiet_san_pham&id_sk=&id_vong_thi=&id_san_pham=` → bộ tiêu chí + điểm đã nhập.
+- `POST {action:'luu_diem', ...}` → lưu / cập nhật điểm từng tiêu chí (SELECT+UPDATE/INSERT an toàn, không dùng `ON DUPLICATE KEY` do chưa có unique constraint).
+- `POST {action:'nop_phieu', ...}` → kiểm tra đủ tiêu chí → đánh dấu `phancongcham.trangThaiXacNhan = 'Đã chấm'`.
+- Auth: `auth_require_quyen_su_kien($idSK, 'nhap_diem')` + lookup `idGV` từ `giangvien.idTK`.
+
+### B1.3 — Tạo `views/partials/event-detail/tab-scoring-gv.php` *(file mới)*
+- Giao diện nhập điểm cho Giảng viên / Giám khảo.
+- Layout 2 cột: danh sách bài (trái) | phiếu chấm theo tiêu chí (phải).
+- Selector vòng thi, thống kê 3 ô (Tổng / Đã chấm / Chưa chấm), thanh tiến độ từng bài.
+- Template HTML (`<template>`) cho item bài và hàng tiêu chí.
+
+### B1.4 — Tạo `assets/js/scoring_gv.js` + sửa `views/event-detail.php` *(file mới + sửa)*
+- `scoring_gv.js`: IIFE module với guard `if (window.EVENT_DETAIL_TAB !== 'scoring-gv') return`.
+  - `loadVongThi()`, `loadDanhSachBai()`, `loadPhieuCham()`, `luuDiem()` (auto-save 2 s debounce), `handleNopPhieu()`.
+  - Export `window.scoringGVModule`.
+- `event-detail.php`: tách điều kiện load JS — `scoring` tab → `scoring.js`, `scoring-gv` tab → `scoring_gv.js` (trước đây cả 2 tab cùng load `scoring.js`).
+
+### DB Migration — `chamtieuchi` unique constraint
+- Tạo `database/migrations/2025_07_add_unique_constraint_chamtieuchi.sql`:
+  `UNIQUE (idPhanCongCham, idSanPham, idTieuChi)`
+- ⚠️ Cần thực thi thủ công sau khi kiểm tra dữ liệu trùng lặp.
+
+
 
 ### Tính năng & Sửa lỗi cuối cùng
 
