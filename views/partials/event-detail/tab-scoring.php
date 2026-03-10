@@ -105,53 +105,42 @@
 
 <!-- Sub-tab 2: Tiến độ & Kiểm định IRR -->
 <div id="subtab-tien-do" class="scoring-subtab-content hidden">
-    <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div class="xl:col-span-2 p-4 border rounded-xl border-slate-200 bg-white">
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-                <div>
-                    <p class="mb-0 text-sm font-bold text-slate-700">
-                        <i class="fas fa-exclamation-triangle mr-2 text-amber-500"></i>Bài cần xem xét (Độ lệch điểm)
-                    </p>
-                    <p class="mb-0 text-xs text-slate-500">Các bài có cảnh báo độ lệch điểm giữa các giám khảo > 30%</p>
-                </div>
+    <div class="p-4 border rounded-xl border-slate-200 bg-white">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+                <p class="mb-0 text-sm font-bold text-slate-700">
+                    <i class="fas fa-tasks mr-2 text-slate-400"></i>Quản lý Tiến độ chấm
+                </p>
+                <p class="mb-0 text-xs text-slate-500">Nhấn <strong>Chi tiết</strong> để xem phân tích độ lệch; nhấn <strong>Quyết định</strong> để duyệt/loại kết quả</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="warningCountBadge" class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">
+                    <i class="fas fa-info-circle mr-1"></i>Chưa tải
+                </span>
+                <span class="text-xs text-slate-400">
+                    <i class="fas fa-exclamation-triangle text-amber-400 mr-1"></i>Lệch &gt; 30% giữa các GK
+                </span>
                 <button id="btnRefreshCanhBao"
                     class="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
                     <i class="fas fa-sync-alt mr-1"></i>Làm mới
                 </button>
-            </div>
-            <div id="listCanhBaoIRR" class="space-y-2 max-h-[400px] overflow-y-auto">
-                <div class="px-4 py-8 text-center text-slate-400">
-                    <i class="fas fa-check-circle text-2xl mb-2 text-emerald-400"></i>
-                    <p class="text-sm">Chưa có dữ liệu cảnh báo</p>
-                </div>
-            </div>
-        </div>
-        <div class="p-4 border rounded-xl border-slate-200 bg-white">
-            <p class="mb-3 text-sm font-bold text-slate-700">
-                <i class="fas fa-chart-bar mr-2 text-slate-400"></i>Phân tích IRR
-            </p>
-            <div id="panelIRRDetail" class="space-y-3">
-                <div class="px-4 py-8 text-center text-slate-400 border rounded-lg border-dashed border-slate-300">
-                    <i class="fas fa-chart-pie text-2xl mb-2"></i>
-                    <p class="text-sm">Chọn bài để xem phân tích IRR</p>
-                </div>
+                <button id="btnGuiNhacNho"
+                    class="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                    title="Gửi thông báo nhắc nhở tới các giám khảo chưa hoàn thành chấm điểm">
+                    <i class="fas fa-bell mr-1"></i>Nhắc nhở GK
+                </button>
             </div>
         </div>
-    </div>
-    <div class="mt-4 p-4 border rounded-xl border-slate-200 bg-white">
-        <p class="mb-3 text-sm font-bold text-slate-700">
-            <i class="fas fa-tasks mr-2 text-slate-400"></i>Tiến độ chấm điểm chi tiết
-        </p>
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm" id="tableTienDoCham">
-                <thead class="bg-slate-50">
+                <thead class="bg-slate-50 border-b border-slate-200">
                     <tr>
-                        <th class="px-3 py-2 text-left text-xs font-bold uppercase text-slate-500">Bài nộp</th>
-                        <th class="px-3 py-2 text-left text-xs font-bold uppercase text-slate-500">Nhóm</th>
-                        <th class="px-3 py-2 text-center text-xs font-bold uppercase text-slate-500">GK phân công</th>
-                        <th class="px-3 py-2 text-center text-xs font-bold uppercase text-slate-500">Đã chấm</th>
-                        <th class="px-3 py-2 text-center text-xs font-bold uppercase text-slate-500">Tiến độ</th>
-                        <th class="px-3 py-2 text-center text-xs font-bold uppercase text-slate-500">Trạng thái</th>
+                        <th class="px-3 py-2.5 text-left text-xs font-bold uppercase text-slate-500 w-28">Nhóm</th>
+                        <th class="px-3 py-2.5 text-left text-xs font-bold uppercase text-slate-500">Đề tài</th>
+                        <th class="px-3 py-2.5 text-center text-xs font-bold uppercase text-slate-500 w-44">Tiến độ</th>
+                        <th class="px-3 py-2.5 text-center text-xs font-bold uppercase text-slate-500 w-28">Điểm TB</th>
+                        <th class="px-3 py-2.5 text-center text-xs font-bold uppercase text-slate-500 w-28">Phân tích</th>
+                        <th class="px-3 py-2.5 text-center text-xs font-bold uppercase text-slate-500 w-44">Xét duyệt</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyTienDoCham">
@@ -221,6 +210,40 @@
                     <i class="fas fa-medal text-3xl mb-2"></i>
                     <p class="text-sm">Chưa có bài nào được duyệt</p>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Phân tích điểm & Quyết định -->
+<div id="modalPhanTichDiem" class="hidden fixed inset-0 z-[9999] overflow-y-auto" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" id="modalPhanTichOverlay" onclick="scoringModule.closeIRRModal()"></div>
+    <div class="relative min-h-screen flex items-start justify-center p-4 pt-8 pb-8">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-2xl">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-list-check text-lg"></i>
+                    <span class="font-bold text-base" id="modalPhanTichTitle">Phân tích điểm</span>
+                </div>
+                <button onclick="scoringModule.closeIRRModal()"
+                    class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            <!-- Modal Body (scrollable) -->
+            <div class="p-6 max-h-[75vh] overflow-y-auto" id="modalPhanTichBody">
+                <div class="flex items-center justify-center py-16 text-slate-400">
+                    <i class="fas fa-spinner fa-spin text-2xl mr-3"></i>
+                    <span>Đang tải...</span>
+                </div>
+            </div>
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-slate-100 flex justify-end bg-slate-50 rounded-b-2xl">
+                <button onclick="scoringModule.closeIRRModal()"
+                    class="px-6 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors shadow-sm">
+                    <i class="fas fa-times mr-2"></i>Đóng
+                </button>
             </div>
         </div>
     </div>

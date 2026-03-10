@@ -162,6 +162,46 @@ function handleGetRequest($conn) {
                 ]
             ], JSON_UNESCAPED_UNICODE);
             break;
+        
+        case 'export_ranking':
+            // Xuất bảng xếp hạng ra file CSV
+            if ($idSK <= 0 || $idVongThi <= 0) {
+                http_response_code(400);
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Thiếu tham số id_sk hoặc id_vong_thi',
+                    'data' => null
+                ], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            $data = cham_diem_lay_bang_xep_hang($conn, $idSK, $idVongThi);
+            $tenFile = 'bang-xep-hang-sk' . $idSK . '-vt' . $idVongThi . '.csv';
+
+            // Override content type — phải gọi trước khi có output
+            header('Content-Type: text/csv; charset=UTF-8');
+            header('Content-Disposition: attachment; filename="' . $tenFile . '"');
+            header('Cache-Control: no-cache, no-store, must-revalidate');
+            header('Pragma: no-cache');
+            header('Expires: 0');
+
+            $out = fopen('php://output', 'w');
+            // UTF-8 BOM để Excel nhận diện đúng tiếng Việt
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['Hạng', 'Tên sản phẩm', 'Mã nhóm', 'Tên nhóm', 'Điểm TB', 'Xếp loại', 'Thành viên']);
+            foreach ($data as $row) {
+                fputcsv($out, [
+                    $row['xepHang'],
+                    $row['tensanpham'],
+                    $row['manhom'],
+                    $row['tennhom'] ?? '',
+                    $row['diemTrungBinh'] !== null ? number_format((float)$row['diemTrungBinh'], 2) : '',
+                    $row['xepLoai'] ?? '',
+                    $row['thanhVien'] ?? ''
+                ]);
+            }
+            fclose($out);
+            return;
             
         default:
             http_response_code(400);
@@ -196,7 +236,7 @@ function handlePostRequest($conn) {
     $diemChot = isset($input['diem_chot']) ? (float) $input['diem_chot'] : null;
     
     // Validate common params
-    if (in_array($action, ['approve_score_manual', 'approve_score_auto', 'reject_score']) && ($idSanPham <= 0 || $idVongThi <= 0)) {
+    if (in_array($action, ['approve_score_manual', 'approve_score_auto', 'reject_score', 'cancel_approval']) && ($idSanPham <= 0 || $idVongThi <= 0)) {
         http_response_code(400);
         echo json_encode([
             'status' => 'error',
@@ -277,9 +317,21 @@ function handlePostRequest($conn) {
             ], JSON_UNESCAPED_UNICODE);
             break;
             
+        case 'cancel_approval':
+            // Hủy duyệt / hủy loại — reset trangThai về NULL
+            $result = cham_diem_huy_duyet($conn, $idSanPham, $idVongThi);
+            echo json_encode([
+                'status' => $result ? 'success' : 'error',
+                'message' => $result ? 'Đã hủy duyệt thành công' : 'Lỗi hủy duyệt',
+                'data' => null
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+
         case 'approve_multiple':
             // Duyệt nhiều bài thi cùng lúc
-            $dsSanPham = $input['ds_san_pham'] ?? [];
+            // skip_warned=true: bỏ qua bài có cảnh báo IRR thay vì duyệt hết
+            $dsSanPham  = $input['ds_san_pham'] ?? [];
+            $skipWarned = !empty($input['skip_warned']);
             if (empty($dsSanPham) || $idVongThi <= 0) {
                 http_response_code(400);
                 echo json_encode([
@@ -289,13 +341,30 @@ function handlePostRequest($conn) {
                 ], JSON_UNESCAPED_UNICODE);
                 return;
             }
-            
+
             $successCount = 0;
+            $skippedCount = 0;
             $errors = [];
             foreach ($dsSanPham as $spId) {
-                $diemTB = cham_diem_tinh_diem_trung_binh($conn, (int) $spId, $idVongThi);
+                $spId = (int) $spId;
+
+                // Khi skip_warned=true: kiểm tra IRR trước khi duyệt
+                if ($skipWarned) {
+                    $chiTietDiem = cham_diem_lay_chi_tiet_diem($conn, $spId, $idVongThi);
+                    $chiTietChinh = array_values(array_filter($chiTietDiem, fn($gk) => empty($gk['isTrongTai'])));
+                    if (count($chiTietChinh) >= 2) {
+                        $diemTheoGK = array_map(fn($gk) => array_column($gk['chiTiet'], 'diem'), $chiTietChinh);
+                        $irr = cham_diem_tinh_irr($diemTheoGK);
+                        if (!empty($irr['canhBao'])) {
+                            $skippedCount++;
+                            continue; // Bỏ qua bài có cảnh báo
+                        }
+                    }
+                }
+
+                $diemTB = cham_diem_tinh_diem_trung_binh($conn, $spId, $idVongThi);
                 if ($diemTB !== null) {
-                    $result = cham_diem_duyet_diem($conn, (int) $spId, $idVongThi, $diemTB, 'Đã duyệt');
+                    $result = cham_diem_duyet_diem($conn, $spId, $idVongThi, $diemTB, 'Đã duyệt');
                     if ($result) {
                         $successCount++;
                     } else {
@@ -305,11 +374,18 @@ function handlePostRequest($conn) {
                     $errors[] = "SP $spId: Chưa có điểm";
                 }
             }
-            
+
+            $msg = "Đã duyệt $successCount/" . count($dsSanPham) . " bài thi";
+            if ($skippedCount > 0) {
+                $msg .= ". Bỏ qua $skippedCount bài có cảnh báo IRR";
+            }
+            if (count($errors) > 0) {
+                $msg .= ". Lỗi: " . implode(', ', $errors);
+            }
             echo json_encode([
                 'status' => $successCount > 0 ? 'success' : 'error',
-                'message' => "Đã duyệt $successCount/" . count($dsSanPham) . " bài thi" . (count($errors) > 0 ? ". Lỗi: " . implode(', ', $errors) : ''),
-                'data' => ['successCount' => $successCount, 'totalCount' => count($dsSanPham)]
+                'message' => $msg,
+                'data' => ['successCount' => $successCount, 'skippedCount' => $skippedCount, 'totalCount' => count($dsSanPham)]
             ], JSON_UNESCAPED_UNICODE);
             break;
             
