@@ -9,9 +9,6 @@ require_once __DIR__ . '/quan_ly_vong_thi.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-// ── Auth ──────────────────────────────────────────────────
-$actor = auth_require_login();
-
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
     echo json_encode([
@@ -22,31 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
+// Đọc idSk trước để truyền vào auth guard
 $idSk = isset($_GET['id_sk']) ? (int) $_GET['id_sk'] : 0;
-if ($idSk <= 0) {
-    http_response_code(400);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Thiếu hoặc sai tham số id_sk',
-        'data' => null,
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
-}
 
-$idNguoiThucHien = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
-if ($idNguoiThucHien <= 0 && isset($_GET['id_nguoi_thuc_hien'])) {
-    $idNguoiThucHien = (int) $_GET['id_nguoi_thuc_hien'];
-}
-
-if ($idNguoiThucHien > 0 && !co_quyen_quan_ly_vong_thi($conn, $idNguoiThucHien, $idSk)) {
-    http_response_code(403);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Không có quyền xem cấu hình vòng thi của sự kiện',
-        'data' => null,
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
-}
+// ── Auth: cho phép BTC và các vai trò liên quan chấm điểm xem danh sách vòng thi ──
+$actor = auth_require_bat_ky_quyen_su_kien($idSk, [
+    'cauhinh_sukien', 'cauhinh_vongthi', 'phan_cong_cham', 'duyet_diem', 'nhap_diem',
+]);
 
 try {
     $rows = lay_ds_vong_thi($conn, $idSk);

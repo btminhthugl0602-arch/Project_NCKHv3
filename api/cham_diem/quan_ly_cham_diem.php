@@ -586,9 +586,12 @@ function cham_diem_t_to_p($t, $df) {
     ];
     
     $absT = abs($t);
-    $dfKey = min(array_keys($criticalValues), function($a, $b) use ($df) {
+    // Tìm key gần nhất với $df
+    $keys = array_keys($criticalValues);
+    usort($keys, function($a, $b) use ($df) {
         return abs($a - $df) - abs($b - $df);
     });
+    $dfKey = $keys[0];
     
     if ($absT < $criticalValues[$dfKey][0]) return 0.20;
     if ($absT < $criticalValues[$dfKey][1]) return 0.10;

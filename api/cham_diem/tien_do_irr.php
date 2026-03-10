@@ -14,8 +14,9 @@ require_once __DIR__ . '/quan_ly_cham_diem.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-// ── Auth ──────────────────────────────────────────────────
-$actor = auth_require_login();
+// ── Auth: yêu cầu quyền BTC hoặc phân công chấm trong sự kiện ──
+$idSK_auth = isset($_GET['id_sk']) ? (int) $_GET['id_sk'] : 0;
+$actor = auth_require_bat_ky_quyen_su_kien($idSK_auth, ['phan_cong_cham', 'cauhinh_sukien', 'duyet_diem']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 

@@ -15,8 +15,9 @@ require_once __DIR__ . '/quan_ly_cham_diem.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-// ── Auth ──────────────────────────────────────────────────
-$actor = auth_require_login();
+// ── Auth: chỉ BTC (cauhinh_sukien) mới được duyệt/loại kết quả ──
+$idSK_auth = isset($_GET['id_sk']) ? (int) $_GET['id_sk'] : 0;
+$actor = auth_require_bat_ky_quyen_su_kien($idSK_auth, ['cauhinh_sukien', 'duyet_diem']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 

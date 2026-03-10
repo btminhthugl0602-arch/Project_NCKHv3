@@ -66,6 +66,10 @@ if ($method !== 'POST') {
 // ============================================================
 
 $redirect = trim($_POST['redirect'] ?? '/dashboard');
+// Chỉ cho phép redirect nội bộ (bắt đầu bằng / nhưng không phải //)
+if (!preg_match('#^/[^/]#', $redirect)) {
+    $redirect = '/dashboard';
+}
 
 // --- Nhánh khách ---
 if (!empty($_POST['guest'])) {
@@ -147,7 +151,6 @@ if ((int) $taiKhoan['isActive'] !== 1) {
 }
 
 // --- Bước 5: Xác minh mật khẩu ---
-// Hỗ trợ cả password_hash (production) lẫn plain text (seed data / dev)
 $isValidHash  = password_verify($matKhau, $taiKhoan['matKhau']);
 $isValidPlain = !$isValidHash && ($matKhau === $taiKhoan['matKhau']);
 
@@ -159,6 +162,17 @@ if (!$isValidHash && !$isValidPlain) {
         'data'    => null,
     ], JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+// Tự động hash mật khẩu plain text — lazy migration
+if ($isValidPlain) {
+    try {
+        $newHash = password_hash($matKhau, PASSWORD_DEFAULT);
+        $stmtHash = $conn->prepare('UPDATE taikhoan SET matKhau = ? WHERE idTK = ?');
+        $stmtHash->execute([$newHash, $taiKhoan['idTK']]);
+    } catch (Throwable $e) {
+        error_log('Auto-hash migration failed for idTK=' . $taiKhoan['idTK'] . ': ' . $e->getMessage());
+    }
 }
 
 // --- Bước 6: Lấy họ tên từ profile ---

@@ -141,7 +141,7 @@
      */
     async function loadGiangVien() {
         try {
-            const response = await fetch(`${API.phanCong}?action=list_giang_vien`);
+            const response = await fetch(`${API.phanCong}?action=list_giang_vien&id_sk=${state.idSK}`);
             const result = await response.json();
 
             if (result.status === 'success' && result.data) {
@@ -163,6 +163,12 @@
             html += `<option value="${vt.idVongThi}">${vt.tenVongThi}</option>`;
         });
         elements.vongThiSelect.innerHTML = html;
+
+        // Tự động chọn vòng thi đầu tiên để tải dữ liệu ngay
+        if (state.dsVongThi.length > 0 && state.idVongThi <= 0) {
+            elements.vongThiSelect.value = state.dsVongThi[0].idVongThi;
+            elements.vongThiSelect.dispatchEvent(new Event('change'));
+        }
     }
 
     /**
@@ -480,7 +486,7 @@
         }
 
         try {
-            const response = await fetch(API.phanCong, {
+            const response = await fetch(`${API.phanCong}?id_sk=${state.idSK}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -511,10 +517,19 @@
      * Gỡ phân công giám khảo
      */
     async function goPhanCong(idSanPham, idGV) {
-        if (!confirm('Bạn có chắc muốn gỡ phân công giám khảo này?')) return;
+        const confirm = await Swal.fire({
+            title: 'Gỡ phân công?',
+            text: 'Bạn có chắc muốn gỡ giám khảo này khỏi bài thi?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Gỡ',
+            cancelButtonText: 'Hủy'
+        });
+        if (!confirm.isConfirmed) return;
 
         try {
-            const response = await fetch(API.phanCong, {
+            const response = await fetch(`${API.phanCong}?id_sk=${state.idSK}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -817,7 +832,7 @@
 
         if (result.isConfirmed && result.value) {
             try {
-                const response = await fetch(API.phanCong, {
+                const response = await fetch(`${API.phanCong}?id_sk=${state.idSK}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -990,7 +1005,7 @@
      */
     async function duyetDiem(idSanPham) {
         try {
-            const response = await fetch(API.xetKetQua, {
+            const response = await fetch(`${API.xetKetQua}?id_sk=${state.idSK}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1021,10 +1036,19 @@
      * Loại bài thi
      */
     async function loaiDiem(idSanPham) {
-        if (!confirm('Bạn có chắc muốn đánh rớt bài thi này?')) return;
+        const confirm = await Swal.fire({
+            title: 'Đánh rớt bài thi?',
+            text: 'Hành động này sẽ chuyển trạng thái bài thi thành "Bị loại".',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Xác nhận loại',
+            cancelButtonText: 'Hủy'
+        });
+        if (!confirm.isConfirmed) return;
 
         try {
-            const response = await fetch(API.xetKetQua, {
+            const response = await fetch(`${API.xetKetQua}?id_sk=${state.idSK}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1054,7 +1078,16 @@
      * Duyệt tất cả bài chờ duyệt
      */
     async function handleDuyetTatCa() {
-        if (!confirm('Bạn có chắc muốn duyệt tất cả bài đang chờ?')) return;
+        const confirm = await Swal.fire({
+            title: 'Duyệt tất cả?',
+            text: 'Tất cả bài đang chờ sẽ được duyệt điểm và vào Bảng vàng.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            confirmButtonText: 'Duyệt tất cả',
+            cancelButtonText: 'Hủy'
+        });
+        if (!confirm.isConfirmed) return;
 
         try {
             // Get list of items to approve
@@ -1066,7 +1099,7 @@
                 return;
             }
 
-            const response = await fetch(API.xetKetQua, {
+            const response = await fetch(`${API.xetKetQua}?id_sk=${state.idSK}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
