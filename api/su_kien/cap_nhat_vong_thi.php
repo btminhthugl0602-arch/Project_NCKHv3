@@ -20,7 +20,25 @@ require_once __DIR__ . '/quan_ly_vong_thi.php';
 header('Content-Type: application/json; charset=utf-8');
 
 // ── Auth ──────────────────────────────────────────────────────────
-$actor = auth_require_quyen_he_thong('tao_su_kien');
+$_raw_body = file_get_contents('php://input');
+$input = json_decode($_raw_body, true);
+if (!is_array($input)) {
+    $input = $_POST;
+}
+
+$id_vong_thi = isset($input['id_vong_thi']) ? (int) $input['id_vong_thi'] : 0;
+if ($id_vong_thi <= 0) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'ID vòng thi không hợp lệ']);
+    exit;
+}
+$_vong_thi_auth = lay_chi_tiet_vong_thi($conn, $id_vong_thi);
+if (!$_vong_thi_auth) {
+    http_response_code(404);
+    echo json_encode(['status' => 'error', 'message' => 'Vòng thi không tồn tại']);
+    exit;
+}
+$actor = auth_require_quyen_su_kien((int)$_vong_thi_auth['idSK'], 'cauhinh_sukien');
 
 // Chỉ chấp nhận PUT hoặc POST
 if (!in_array($_SERVER['REQUEST_METHOD'], ['PUT', 'POST'])) {
@@ -35,25 +53,7 @@ if (!in_array($_SERVER['REQUEST_METHOD'], ['PUT', 'POST'])) {
 try {
     $id_nguoi_thuc_hien = $actor['idTK'];
 
-    // Parse request body
-    $input = json_decode(file_get_contents('php://input'), true);
-    if (!is_array($input)) {
-        $input = $_POST;
-    }
-
-    // Validate required fields
-    $id_vong_thi = isset($input['id_vong_thi']) ? (int) $input['id_vong_thi'] : 0;
     $ten_vong = isset($input['ten_vong']) ? trim($input['ten_vong']) : '';
-
-    if ($id_vong_thi <= 0) {
-        http_response_code(400);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'ID vòng thi không hợp lệ',
-        ]);
-        exit;
-    }
-
     if ($ten_vong === '') {
         http_response_code(400);
         echo json_encode([

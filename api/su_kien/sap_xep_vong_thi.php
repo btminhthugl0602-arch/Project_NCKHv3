@@ -17,7 +17,13 @@ require_once __DIR__ . '/quan_ly_vong_thi.php';
 header('Content-Type: application/json; charset=utf-8');
 
 // ── Auth ──────────────────────────────────────────────────────────
-$actor = auth_require_quyen_he_thong('tao_su_kien');
+$_raw_body = file_get_contents('php://input');
+$input = json_decode($_raw_body, true);
+if (!is_array($input)) {
+    $input = $_POST;
+}
+$idSk = isset($input['id_su_kien']) ? (int) $input['id_su_kien'] : 0;
+$actor = auth_require_quyen_su_kien($idSk, 'cauhinh_sukien');
 
 // Chỉ chấp nhận PUT hoặc POST
 if (!in_array($_SERVER['REQUEST_METHOD'], ['PUT', 'POST'])) {
@@ -31,12 +37,6 @@ if (!in_array($_SERVER['REQUEST_METHOD'], ['PUT', 'POST'])) {
 
 try {
     $id_nguoi_thuc_hien = $actor['idTK'];
-
-    // Parse request body
-    $input = json_decode(file_get_contents('php://input'), true);
-    if (!is_array($input)) {
-        $input = $_POST;
-    }
 
     // Validate required fields
     $id_su_kien = isset($input['id_su_kien']) ? (int) $input['id_su_kien'] : 0;

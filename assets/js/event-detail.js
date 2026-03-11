@@ -24,21 +24,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const subtitleEl = document.getElementById('eventSubtitle');
     const sidebarEventNameEl = document.getElementById('sidebarEventName');
 
-    const detailMoTa = document.getElementById('detailMoTa');
-    const detailCap = document.getElementById('detailCap');
-    const detailTrangThai = document.getElementById('detailTrangThai');
-    const detailNgayMoDK = document.getElementById('detailNgayMoDK');
-    const detailNgayDongDK = document.getElementById('detailNgayDongDK');
-    const detailNgayBatDau = document.getElementById('detailNgayBatDau');
-    const detailNgayKetThuc = document.getElementById('detailNgayKetThuc');
-    const detailCheDoSV = document.getElementById('detailCheDoSV');
-    const detailCheDoGV = document.getElementById('detailCheDoGV');
-
-    const configTenSuKien = document.getElementById('configTenSuKien');
-    const configCapToChuc = document.getElementById('configCapToChuc');
-    const configCheDoSV = document.getElementById('configCheDoSV');
-    const configCheDoGV = document.getElementById('configCheDoGV');
-
     const basicTenSuKien = document.getElementById('basicTenSuKien');
     const basicMoTa = document.getElementById('basicMoTa');
     const basicIdCap = document.getElementById('basicIdCap');
@@ -51,6 +36,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnToggleEventStatus = document.getElementById('btnToggleEventStatus');
     const btnCreateRound = document.getElementById('btnCreateRound');
     const basicRoundList = document.getElementById('basicRoundList');
+
+    // Cấu hình nhóm thi
+    const basicSoTVToiThieu = document.getElementById('basicSoTVToiThieu');
+    const basicSoTVToiDa = document.getElementById('basicSoTVToiDa');
+    const basicSoGVHDToiDa = document.getElementById('basicSoGVHDToiDa');
+    const basicSoGVHDKhongGioiHan = document.getElementById('basicSoGVHDKhongGioiHan');
+    const basicSoNhomToiDaGVHD = document.getElementById('basicSoNhomToiDaGVHD');
+    const basicSoNhomGVHDKhongGioiHan = document.getElementById('basicSoNhomGVHDKhongGioiHan');
+    const basicYeuCauCoGVHD = document.getElementById('basicYeuCauCoGVHD');
+    const basicChoPhepGVTaoNhom = document.getElementById('basicChoPhepGVTaoNhom');
 
     const ruleInputThuocTinh = document.getElementById('ruleInputThuocTinh');
     const ruleInputToanTu = document.getElementById('ruleInputToanTu');
@@ -1786,6 +1781,41 @@ document.addEventListener('DOMContentLoaded', function () {
         if (basicNgayBatDau) basicNgayBatDau.value = toDatetimeLocal(detail.ngayBatDau);
         if (basicNgayKetThuc) basicNgayKetThuc.value = toDatetimeLocal(detail.ngayKetThuc);
         if (basicTrangThaiText) basicTrangThaiText.textContent = Number(detail.isActive || 0) === 1 ? 'Đang mở' : 'Đang đóng';
+
+        // Cấu hình nhóm thi
+        if (basicSoTVToiThieu) basicSoTVToiThieu.value = detail.soThanhVienToiThieu ?? 1;
+        if (basicSoTVToiDa) basicSoTVToiDa.value = detail.soThanhVienToiDa ?? 5;
+
+        const soGVHDNull = detail.soGVHDToiDa === null || detail.soGVHDToiDa === undefined;
+        if (basicSoGVHDKhongGioiHan) basicSoGVHDKhongGioiHan.checked = soGVHDNull;
+        if (basicSoGVHDToiDa) {
+            basicSoGVHDToiDa.disabled = soGVHDNull;
+            basicSoGVHDToiDa.value = soGVHDNull ? '' : detail.soGVHDToiDa;
+        }
+
+        const soNhomNull = detail.soNhomToiDaGVHD === null || detail.soNhomToiDaGVHD === undefined;
+        if (basicSoNhomGVHDKhongGioiHan) basicSoNhomGVHDKhongGioiHan.checked = soNhomNull;
+        if (basicSoNhomToiDaGVHD) {
+            basicSoNhomToiDaGVHD.disabled = soNhomNull;
+            basicSoNhomToiDaGVHD.value = soNhomNull ? '' : detail.soNhomToiDaGVHD;
+        }
+
+        if (basicYeuCauCoGVHD) basicYeuCauCoGVHD.checked = Number(detail.yeuCauCoGVHD) === 1;
+        if (basicChoPhepGVTaoNhom) basicChoPhepGVTaoNhom.checked = Number(detail.choPhepGVTaoNhom) === 1;
+    }
+
+    // Toggle disable/enable input khi check "Không giới hạn"
+    if (basicSoGVHDKhongGioiHan && basicSoGVHDToiDa) {
+        basicSoGVHDKhongGioiHan.addEventListener('change', function () {
+            basicSoGVHDToiDa.disabled = this.checked;
+            if (this.checked) basicSoGVHDToiDa.value = '';
+        });
+    }
+    if (basicSoNhomGVHDKhongGioiHan && basicSoNhomToiDaGVHD) {
+        basicSoNhomGVHDKhongGioiHan.addEventListener('change', function () {
+            basicSoNhomToiDaGVHD.disabled = this.checked;
+            if (this.checked) basicSoNhomToiDaGVHD.value = '';
+        });
     }
 
     function hienThiLoi(message) {
@@ -1812,21 +1842,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (titleEl) titleEl.textContent = detail.tenSK || 'Chi tiết sự kiện';
             if (subtitleEl) subtitleEl.textContent = `Mã sự kiện: #${detail.idSK || idSk}`;
             if (sidebarEventNameEl) sidebarEventNameEl.textContent = detail.tenSK || `Sự kiện #${idSk}`;
-
-            if (detailMoTa) detailMoTa.textContent = detail.moTa || '--';
-            if (detailCap) detailCap.textContent = capText(detail);
-            if (detailTrangThai) detailTrangThai.textContent = trangThai;
-            if (detailNgayMoDK) detailNgayMoDK.textContent = formatDateTime(detail.ngayMoDangKy);
-            if (detailNgayDongDK) detailNgayDongDK.textContent = formatDateTime(detail.ngayDongDangKy);
-            if (detailNgayBatDau) detailNgayBatDau.textContent = formatDateTime(detail.ngayBatDau);
-            if (detailNgayKetThuc) detailNgayKetThuc.textContent = formatDateTime(detail.ngayKetThuc);
-            if (detailCheDoSV) detailCheDoSV.textContent = detail.cheDoDangKySV || '--';
-            if (detailCheDoGV) detailCheDoGV.textContent = detail.cheDoDangKyGV || '--';
-
-            if (configTenSuKien) configTenSuKien.textContent = detail.tenSK || '--';
-            if (configCapToChuc) configCapToChuc.textContent = capText(detail);
-            if (configCheDoSV) configCheDoSV.textContent = detail.cheDoDangKySV || '--';
-            if (configCheDoGV) configCheDoGV.textContent = detail.cheDoDangKyGV || '--';
 
             if (currentTab === 'config-basic') {
                 doDuLieuVaoBasicForm(detail);
@@ -1891,6 +1906,73 @@ document.addEventListener('DOMContentLoaded', function () {
                     icon: 'success',
                     title: 'Đã lưu',
                     text: 'Cập nhật thông tin sự kiện thành công.',
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Không thể lưu',
+                    text: error.message || 'Vui lòng thử lại.',
+                });
+            }
+        });
+    }
+
+    // ── Lưu cấu hình nhóm thi ────────────────────────────────────────
+    const btnSaveNhomConfig = document.getElementById('btnSaveNhomConfig');
+    if (btnSaveNhomConfig) {
+        btnSaveNhomConfig.addEventListener('click', async function () {
+            if (!eventDetailCache) return;
+
+            // Client-side validation
+            const toiThieu = basicSoTVToiThieu ? (parseInt(basicSoTVToiThieu.value) || 0) : 0;
+            const toiDa = basicSoTVToiDa ? (parseInt(basicSoTVToiDa.value) || 0) : 0;
+            if (toiThieu < 1) {
+                return Swal.fire({ icon: 'warning', title: 'Dữ liệu không hợp lệ', text: 'Số thành viên tối thiểu phải >= 1.' });
+            }
+            if (toiDa < 1) {
+                return Swal.fire({ icon: 'warning', title: 'Dữ liệu không hợp lệ', text: 'Số thành viên tối đa phải >= 1.' });
+            }
+            if (toiThieu > toiDa) {
+                return Swal.fire({ icon: 'warning', title: 'Dữ liệu không hợp lệ', text: 'Số thành viên tối thiểu không được lớn hơn tối đa.' });
+            }
+
+            const soGVHDNull = basicSoGVHDKhongGioiHan && basicSoGVHDKhongGioiHan.checked;
+            const soNhomNull = basicSoNhomGVHDKhongGioiHan && basicSoNhomGVHDKhongGioiHan.checked;
+
+            const payload = {
+                id_su_kien: idSk,
+                // Bắt buộc để pass server validation — lấy từ cache, không thay đổi
+                ten_su_kien: eventDetailCache.tenSK || '',
+                mo_ta: eventDetailCache.moTa || '',
+                id_cap: eventDetailCache.idCap || null,
+                ngay_mo_dk: eventDetailCache.ngayMoDangKy || null,
+                ngay_dong_dk: eventDetailCache.ngayDongDangKy || null,
+                ngay_bat_dau: eventDetailCache.ngayBatDau || null,
+                ngay_ket_thuc: eventDetailCache.ngayKetThuc || null,
+                is_active: eventDetailCache.isActive ?? 1,
+                // 6 fields nhóm
+                so_thanh_vien_toi_thieu: toiThieu,
+                so_thanh_vien_toi_da: toiDa,
+                so_gvhd_toi_da: soGVHDNull ? null : (basicSoGVHDToiDa ? (parseInt(basicSoGVHDToiDa.value) || null) : null),
+                so_nhom_toi_da_gvhd: soNhomNull ? null : (basicSoNhomToiDaGVHD ? (parseInt(basicSoNhomToiDaGVHD.value) || null) : null),
+                yeu_cau_co_gvhd: basicYeuCauCoGVHD ? (basicYeuCauCoGVHD.checked ? 1 : 0) : 0,
+                cho_phep_gv_tao_nhom: basicChoPhepGVTaoNhom ? (basicChoPhepGVTaoNhom.checked ? 1 : 0) : 1,
+            };
+
+            try {
+                await capNhatSuKien(payload);
+
+                eventDetailCache.soThanhVienToiThieu = payload.so_thanh_vien_toi_thieu;
+                eventDetailCache.soThanhVienToiDa = payload.so_thanh_vien_toi_da;
+                eventDetailCache.soGVHDToiDa = payload.so_gvhd_toi_da;
+                eventDetailCache.soNhomToiDaGVHD = payload.so_nhom_toi_da_gvhd;
+                eventDetailCache.yeuCauCoGVHD = payload.yeu_cau_co_gvhd;
+                eventDetailCache.choPhepGVTaoNhom = payload.cho_phep_gv_tao_nhom;
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Đã lưu',
+                    text: 'Cập nhật cấu hình nhóm thi thành công.',
                 });
             } catch (error) {
                 Swal.fire({

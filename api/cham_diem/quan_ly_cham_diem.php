@@ -39,9 +39,9 @@ function cham_diem_lay_danh_sach_san_pham($conn, $idSK, $idVongThi)
 {
     $sql = "SELECT 
                 sp.idSanPham,
-                sp.tensanpham,
-                sp.TrangThai,
-                n.manhom,
+                sp.tenSanPham AS tensanpham,
+                sp.trangThai,
+                n.maNhom AS manhom,
                 ttn.tennhom,
                 tkNT.tenTK as tenNhomTruong,
                 CASE WHEN sv.tenSV IS NOT NULL THEN sv.tenSV ELSE gv.tenGV END as hoTenNhomTruong,
@@ -162,38 +162,123 @@ function cham_diem_lay_giam_khao_san_pham($conn, $idSanPham, $idVongThi)
 }
 
 /**
- * Phân công giám khảo chấm độc lập
+ * Phân công giám khảo chấm độc lập.
+ *
+ * Luồng đầy đủ (Sprint-1 fix):
+ *  1. Kiểm tra đã phân công chưa
+ *  2. Lấy idSK từ sanpham
+ *  3. Lấy idBoTieuChi từ cauhinh_tieuchi_sk — báo lỗi nếu chưa cấu hình
+ *  4. INSERT phancong_doclap  (theo dõi SP ↔ GV)
+ *  5. INSERT phancongcham     (cấp quyền chấm + gắn bộ tiêu chí)
+ *  6. Cập nhật sanpham_vongthi
  */
 function cham_diem_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi)
 {
     try {
-        // Kiểm tra xem đã phân công chưa
-        $sqlCheck = "SELECT 1 FROM phancong_doclap WHERE idSanPham = :idSanPham AND idGV = :idGV AND idVongThi = :idVongThi";
+        // 1. Kiểm tra trùng
+        $sqlCheck = "SELECT 1 FROM phancong_doclap
+                     WHERE idSanPham = :idSanPham AND idGV = :idGV AND idVongThi = :idVongThi";
         $stmtCheck = $conn->prepare($sqlCheck);
         $stmtCheck->execute([':idSanPham' => $idSanPham, ':idGV' => $idGV, ':idVongThi' => $idVongThi]);
-
         if ($stmtCheck->fetch()) {
             return ['success' => false, 'message' => 'Giám khảo này đã được phân công cho bài thi'];
         }
 
-        // INSERT IGNORE để tránh lỗi nếu vô tình bấm 2 lần. isTrongTai=0 = giám khảo chính
-        $sql = "INSERT IGNORE INTO phancong_doclap (idSanPham, idGV, idVongThi, isTrongTai) VALUES (:idSanPham, :idGV, :idVongThi, 0)";
-        $stmt = $conn->prepare($sql);
-        $result = $stmt->execute([':idSanPham' => $idSanPham, ':idGV' => $idGV, ':idVongThi' => $idVongThi]);
+        // 2. Lấy idSK từ sản phẩm
+        $stmtSP = $conn->prepare("SELECT idSK FROM sanpham WHERE idSanPham = :idSanPham AND isActive = 1 LIMIT 1");
+        $stmtSP->execute([':idSanPham' => $idSanPham]);
+        $spRow = $stmtSP->fetch(PDO::FETCH_ASSOC);
+        if (!$spRow) {
+            return ['success' => false, 'message' => 'Sản phẩm không tồn tại hoặc đã bị xóa'];
+        }
+        $idSK = (int) $spRow['idSK'];
 
-        if ($result) {
-            // Cập nhật trạng thái sản phẩm vòng thi nếu chưa có
-            $sqlUpdateSPV = "INSERT INTO sanpham_vongthi (idSanPham, idVongThi, trangThai, ngayCapNhat) 
-                             VALUES (:idSanPham, :idVongThi, 'Đã phân công', NOW())
-                             ON DUPLICATE KEY UPDATE trangThai = IF(trangThai = 'Đã nộp' OR trangThai IS NULL, 'Đã phân công', trangThai), ngayCapNhat = NOW()";
-            $stmtSPV = $conn->prepare($sqlUpdateSPV);
-            $stmtSPV->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
+        // 3. Lấy bộ tiêu chí cấu hình cho vòng thi này
+        $stmtBTC = $conn->prepare(
+            "SELECT idBoTieuChi FROM cauhinh_tieuchi_sk
+             WHERE idSK = :idSK AND idVongThi = :idVongThi LIMIT 1"
+        );
+        $stmtBTC->execute([':idSK' => $idSK, ':idVongThi' => $idVongThi]);
+        $btcRow = $stmtBTC->fetch(PDO::FETCH_ASSOC);
+        if (!$btcRow) {
+            return [
+                'success' => false,
+                'message' => 'Vòng thi chưa được cấu hình bộ tiêu chí. '
+                    . 'Vui lòng vào tab "Thiết lập bộ tiêu chí" để gán bộ tiêu chí cho vòng trước khi phân công.',
+            ];
+        }
+        $idBoTieuChi = (int) $btcRow['idBoTieuChi'];
 
-            return ['success' => true, 'message' => 'Phân công giám khảo thành công'];
+        $conn->beginTransaction();
+
+        // 4. Ghi nhận phân công độc lập (SP ↔ GV)
+        $sqlPD = "INSERT IGNORE INTO phancong_doclap (idSanPham, idGV, idVongThi, isTrongTai)
+                  VALUES (:idSanPham, :idGV, :idVongThi, 0)";
+        $stmtPD = $conn->prepare($sqlPD);
+        $stmtPD->execute([':idSanPham' => $idSanPham, ':idGV' => $idGV, ':idVongThi' => $idVongThi]);
+
+        // 4.5. Cấp vai trò GV_PHAN_BIEN (idVaiTro=2) trong sự kiện → bật tab scoring-gv
+        //       Chỉ insert nếu chưa có record active để tránh duplicate.
+        $stmtLookupTK = $conn->prepare("SELECT idTK FROM giangvien WHERE idGV = :idGV LIMIT 1");
+        $stmtLookupTK->execute([':idGV' => $idGV]);
+        $gvTKRow = $stmtLookupTK->fetch(PDO::FETCH_ASSOC);
+        if ($gvTKRow) {
+            $stmtTVS = $conn->prepare(
+                "INSERT INTO taikhoan_vaitro_sukien (idTK, idSK, idVaiTro, nguonTao, isActive)
+                 SELECT :idTK, :idSK, 2, 'PHANCONG_CHAM', 1
+                 WHERE NOT EXISTS (
+                     SELECT 1 FROM taikhoan_vaitro_sukien
+                     WHERE idTK = :idTK2 AND idSK = :idSK2 AND idVaiTro = 2 AND isActive = 1
+                 )"
+            );
+            $stmtTVS->execute([
+                ':idTK'  => $gvTKRow['idTK'],
+                ':idSK'  => $idSK,
+                ':idTK2' => $gvTKRow['idTK'],
+                ':idSK2' => $idSK,
+            ]);
         }
 
-        return ['success' => false, 'message' => 'Không thể phân công giám khảo'];
+        // 5. Cấp quyền chấm điểm — INSERT vào phancongcham nếu chưa có
+        //    (GV có thể được phân công nhiều SP trong cùng vòng, nhưng chỉ cần 1 phancongcham/vòng)
+        $stmtCheckPCC = $conn->prepare(
+            "SELECT idPhanCongCham FROM phancongcham
+             WHERE idGV = :idGV AND idSK = :idSK AND idVongThi = :idVongThi AND idBoTieuChi = :idBoTieuChi
+             LIMIT 1"
+        );
+        $stmtCheckPCC->execute([
+            ':idGV'        => $idGV,
+            ':idSK'        => $idSK,
+            ':idVongThi'   => $idVongThi,
+            ':idBoTieuChi' => $idBoTieuChi,
+        ]);
+        if (!$stmtCheckPCC->fetch()) {
+            $sqlPCC = "INSERT INTO phancongcham
+                           (idGV, idSK, idVongThi, idBoTieuChi, trangThaiXacNhan, ngayXacNhan, isActive)
+                       VALUES
+                           (:idGV, :idSK, :idVongThi, :idBoTieuChi, 'Chờ chấm', '1000-01-01 00:00:00', 1)";
+            $stmtPCC = $conn->prepare($sqlPCC);
+            $stmtPCC->execute([
+                ':idGV'        => $idGV,
+                ':idSK'        => $idSK,
+                ':idVongThi'   => $idVongThi,
+                ':idBoTieuChi' => $idBoTieuChi,
+            ]);
+        }
+
+        // 6. Cập nhật trạng thái sản phẩm vòng thi
+        $sqlUpdateSPV = "INSERT INTO sanpham_vongthi (idSanPham, idVongThi, trangThai, ngayCapNhat)
+                         VALUES (:idSanPham, :idVongThi, 'Đã phân công', NOW())
+                         ON DUPLICATE KEY UPDATE
+                             trangThai    = IF(trangThai IS NULL OR trangThai = 'Đã nộp', 'Đã phân công', trangThai),
+                             ngayCapNhat  = NOW()";
+        $stmtSPV = $conn->prepare($sqlUpdateSPV);
+        $stmtSPV->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
+
+        $conn->commit();
+        return ['success' => true, 'message' => 'Phân công giám khảo thành công'];
     } catch (Throwable $e) {
+        if ($conn->inTransaction()) $conn->rollBack();
         error_log('Error in cham_diem_phan_cong_giam_khao: ' . $e->getMessage());
         return ['success' => false, 'message' => 'Lỗi hệ thống khi phân công'];
     }
@@ -228,12 +313,38 @@ function cham_diem_go_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi)
             $count = $stmtCount->fetch(PDO::FETCH_ASSOC)['count'];
 
             if ($count == 0) {
-                $sqlUpdateSPV = "UPDATE sanpham_vongthi SET trangThai = 'Đã nộp', ngayCapNhat = NOW() 
+                $sqlUpdateSPV = "UPDATE sanpham_vongthi SET trangThai = 'Đã nộp', ngayCapNhat = NOW()
                                  WHERE idSanPham = :idSanPham AND idVongThi = :idVongThi";
                 $stmtSPV = $conn->prepare($sqlUpdateSPV);
                 $stmtSPV->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
             }
 
+            // Thu hồi vai trò nếu GV không còn phân công bài nào trong sự kiện này
+            $stmtGetSK = $conn->prepare("SELECT idSK FROM sanpham WHERE idSanPham = :idSanPham LIMIT 1");
+            $stmtGetSK->execute([':idSanPham' => $idSanPham]);
+            $skRow = $stmtGetSK->fetch(PDO::FETCH_ASSOC);
+            if ($skRow) {
+                $idSK_go = (int) $skRow['idSK'];
+                $stmtConLai = $conn->prepare(
+                    "SELECT COUNT(*) FROM phancong_doclap pd
+                     INNER JOIN sanpham sp ON pd.idSanPham = sp.idSanPham
+                     WHERE pd.idGV = :idGV AND sp.idSK = :idSK"
+                );
+                $stmtConLai->execute([':idGV' => $idGV, ':idSK' => $idSK_go]);
+                if ((int) $stmtConLai->fetchColumn() === 0) {
+                    $stmtGVTK = $conn->prepare("SELECT idTK FROM giangvien WHERE idGV = :idGV LIMIT 1");
+                    $stmtGVTK->execute([':idGV' => $idGV]);
+                    $gvTK = $stmtGVTK->fetch(PDO::FETCH_ASSOC);
+                    if ($gvTK) {
+                        $stmtRmRole = $conn->prepare(
+                            "UPDATE taikhoan_vaitro_sukien SET isActive = 0
+                             WHERE idTK = :idTK AND idSK = :idSK AND idVaiTro = 2
+                               AND nguonTao = 'PHANCONG_CHAM'"
+                        );
+                        $stmtRmRole->execute([':idTK' => $gvTK['idTK'], ':idSK' => $idSK_go]);
+                    }
+                }
+            }
             return ['success' => true, 'message' => 'Gỡ phân công thành công'];
         }
 
@@ -274,6 +385,35 @@ function cham_diem_moi_trong_tai($conn, $idSanPham, $idGV, $idVongThi)
         $sqlInsert = "INSERT IGNORE INTO phancong_doclap (idSanPham, idGV, idVongThi, isTrongTai) VALUES (:idSanPham, :idGV, :idVongThi, 1)";
         $stmtInsert = $conn->prepare($sqlInsert);
         $stmtInsert->execute([':idSanPham' => $idSanPham, ':idGV' => $idGV, ':idVongThi' => $idVongThi]);
+
+        // 1.5. Cấp vai trò GV_PHAN_BIEN (idVaiTro=2) cho trọng tài — để bật tab scoring-gv
+        $stmtTTLookupSK = $conn->prepare(
+            "SELECT sp.idSK FROM sanpham sp WHERE sp.idSanPham = :idSanPham LIMIT 1"
+        );
+        $stmtTTLookupSK->execute([':idSanPham' => $idSanPham]);
+        $ttSKRow = $stmtTTLookupSK->fetch(PDO::FETCH_ASSOC);
+        if ($ttSKRow) {
+            $idSK_tt = (int) $ttSKRow['idSK'];
+            $stmtLookupTK_tt = $conn->prepare("SELECT idTK FROM giangvien WHERE idGV = :idGV LIMIT 1");
+            $stmtLookupTK_tt->execute([':idGV' => $idGV]);
+            $gvTKRow_tt = $stmtLookupTK_tt->fetch(PDO::FETCH_ASSOC);
+            if ($gvTKRow_tt) {
+                $stmtTVS_tt = $conn->prepare(
+                    "INSERT INTO taikhoan_vaitro_sukien (idTK, idSK, idVaiTro, nguonTao, isActive)
+                     SELECT :idTK, :idSK, 2, 'PHANCONG_CHAM', 1
+                     WHERE NOT EXISTS (
+                         SELECT 1 FROM taikhoan_vaitro_sukien
+                         WHERE idTK = :idTK2 AND idSK = :idSK2 AND idVaiTro = 2 AND isActive = 1
+                     )"
+                );
+                $stmtTVS_tt->execute([
+                    ':idTK'  => $gvTKRow_tt['idTK'],
+                    ':idSK'  => $idSK_tt,
+                    ':idTK2' => $gvTKRow_tt['idTK'],
+                    ':idSK2' => $idSK_tt,
+                ]);
+            }
+        }
 
         // 2. Cấp quyền chấm điểm thực sự: INSERT vào phancongcham
         //    Lấy idBoTieuChi và idSK từ một giám khảo chính đang phụ trách bài thi này
@@ -624,7 +764,7 @@ function cham_diem_lay_danh_sach_canh_bao($conn, $idSK, $idVongThi)
         if ($irr['canhBao']) {
             $canhBaoList[] = [
                 'idSanPham'  => $sp['idSanPham'],
-                'tensanpham' => $sp['tensanpham'],
+                'tensanpham' => $sp['tensanpham'], // alias từ SQL: tenSanPham AS tensanpham
                 'tennhom'    => $sp['tennhom'],
                 'soGiamKhao' => $sp['soGiamKhao'],
                 'irr'        => $irr,
@@ -646,7 +786,35 @@ function cham_diem_lay_danh_sach_canh_bao($conn, $idSK, $idVongThi)
  */
 function cham_diem_tinh_diem_trung_binh($conn, $idSanPham, $idVongThi)
 {
-    // Chỉ tính TB từ GK chính (isTrongTai=0) — không trộn điểm trọng tài phúc khảo
+    // Kiểm tra: có trọng tài phúc khảo đã nộp phiếu cho SP này không?
+    // Nếu có → điểm của TT là phán quyết cuối cùng (binding arbitration), không lấy AVG GK chính.
+    $sqlTT = "SELECT pcc.idPhanCongCham
+              FROM phancong_doclap pd
+              INNER JOIN phancongcham pcc ON pcc.idGV = pd.idGV
+                  AND pcc.idVongThi = pd.idVongThi AND pcc.isActive = 1
+              INNER JOIN sanpham sp ON sp.idSanPham = pd.idSanPham
+              WHERE pd.idSanPham = :idSanPham
+                AND pd.idVongThi = :idVongThi
+                AND pd.isTrongTai = 1
+                AND pd.trangThaiCham = 'Đã xác nhận'
+                AND pcc.idSK = sp.idSK
+              LIMIT 1";
+    $stmtTT = $conn->prepare($sqlTT);
+    $stmtTT->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
+    $ttRow = $stmtTT->fetch(PDO::FETCH_ASSOC);
+
+    if ($ttRow) {
+        // Dùng tổng điểm của TT làm điểm chốt
+        $sqlDiemTT = "SELECT SUM(diem) as tongDiem
+                      FROM chamtieuchi
+                      WHERE idPhanCongCham = :idPCC AND idSanPham = :idSanPham";
+        $stmtDiemTT = $conn->prepare($sqlDiemTT);
+        $stmtDiemTT->execute([':idPCC' => $ttRow['idPhanCongCham'], ':idSanPham' => $idSanPham]);
+        $diemTT = $stmtDiemTT->fetch(PDO::FETCH_ASSOC);
+        return $diemTT['tongDiem'] !== null ? round((float) $diemTT['tongDiem'], 2) : null;
+    }
+
+    // Không có TT → lấy AVG tổng điểm từ GK chính (isTrongTai=0) như logic gốc
     $sql = "SELECT AVG(sub.tongDiem) as diemTB FROM (
                 SELECT pcc.idGV, SUM(ct.diem) as tongDiem
                 FROM chamtieuchi ct
@@ -658,11 +826,9 @@ function cham_diem_tinh_diem_trung_binh($conn, $idSanPham, $idVongThi)
                 WHERE ct.idSanPham = :idSanPham AND pcc.idVongThi = :idVongThi
                 GROUP BY pcc.idGV
             ) as sub";
-
     $stmt = $conn->prepare($sql);
     $stmt->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
     return $result['diemTB'] !== null ? round((float) $result['diemTB'], 2) : null;
 }
 
@@ -936,16 +1102,16 @@ function cham_diem_lay_bang_xep_hang($conn, $idSK, $idVongThi)
 {
     $sql = "SELECT 
                 sp.idSanPham,
-                sp.tensanpham,
-                n.manhom,
+                sp.tenSanPham AS tensanpham,
+                n.maNhom AS manhom,
                 ttn.tennhom,
                 spv.diemTrungBinh,
                 spv.trangThai,
                 spv.xepLoai,
                 (SELECT GROUP_CONCAT(sv2.tenSV SEPARATOR ', ') 
                  FROM thanhviennhom tvn 
-                 INNER JOIN sinhvien sv2 ON tvn.idtk = sv2.idTK 
-                 WHERE tvn.idnhom = n.idnhom AND tvn.trangthai = 1
+                 INNER JOIN sinhvien sv2 ON tvn.idTK = sv2.idTK 
+                 WHERE tvn.idNhom = n.idNhom
                 ) as thanhVien
             FROM sanpham_vongthi spv
             INNER JOIN sanpham sp ON spv.idSanPham = sp.idSanPham
@@ -992,9 +1158,9 @@ function cham_diem_lay_tat_ca_bai_thi($conn, $idSK, $idVongThi)
 {
     $sql = "SELECT 
                 sp.idSanPham,
-                sp.tensanpham,
-                sp.TrangThai as trangThaiSP,
-                n.manhom,
+                sp.tenSanPham AS tensanpham,
+                sp.trangThai as trangThaiSP,
+                n.maNhom AS manhom,
                 ttn.tennhom,
                 spv.diemTrungBinh,
                 spv.trangThai as trangThaiVongThi,
@@ -1039,7 +1205,7 @@ function cham_diem_lay_tat_ca_bai_thi($conn, $idSK, $idVongThi)
                     ELSE 4
                 END,
                 spv.diemTrungBinh DESC,
-                sp.tensanpham ASC";
+                sp.tenSanPham ASC";
 
     $stmt = $conn->prepare($sql);
     $stmt->execute([

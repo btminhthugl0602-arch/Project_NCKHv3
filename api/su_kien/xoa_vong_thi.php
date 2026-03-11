@@ -15,7 +15,25 @@ require_once __DIR__ . '/quan_ly_vong_thi.php';
 header('Content-Type: application/json; charset=utf-8');
 
 // ── Auth ──────────────────────────────────────────────────────────
-$actor = auth_require_quyen_he_thong('tao_su_kien');
+$_raw_body = file_get_contents('php://input');
+$input = json_decode($_raw_body, true);
+if (!is_array($input)) {
+    $input = array_merge($_GET, $_POST);
+}
+
+$id_vong_thi_auth = isset($input['id_vong_thi']) ? (int) $input['id_vong_thi'] : 0;
+if ($id_vong_thi_auth <= 0) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'ID vòng thi không hợp lệ']);
+    exit;
+}
+$_vong_thi_auth = lay_chi_tiet_vong_thi($conn, $id_vong_thi_auth);
+if (!$_vong_thi_auth) {
+    http_response_code(404);
+    echo json_encode(['status' => 'error', 'message' => 'Vòng thi không tồn tại']);
+    exit;
+}
+$actor = auth_require_quyen_su_kien((int)$_vong_thi_auth['idSK'], 'cauhinh_sukien');
 
 // Chấp nhận DELETE hoặc POST
 if (!in_array($_SERVER['REQUEST_METHOD'], ['DELETE', 'POST'])) {
@@ -29,23 +47,7 @@ if (!in_array($_SERVER['REQUEST_METHOD'], ['DELETE', 'POST'])) {
 
 try {
     $id_nguoi_thuc_hien = $actor['idTK'];
-
-    // Parse request
-    $input = json_decode(file_get_contents('php://input'), true);
-    if (!is_array($input)) {
-        $input = array_merge($_GET, $_POST);
-    }
-
-    $id_vong_thi = isset($input['id_vong_thi']) ? (int) $input['id_vong_thi'] : 0;
-
-    if ($id_vong_thi <= 0) {
-        http_response_code(400);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'ID vòng thi không hợp lệ',
-        ]);
-        exit;
-    }
+    $id_vong_thi = $id_vong_thi_auth;
 
     // Gọi service function
     $result = xoa_vong_thi($conn, $id_nguoi_thuc_hien, $id_vong_thi);
