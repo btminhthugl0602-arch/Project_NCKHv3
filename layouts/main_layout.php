@@ -48,7 +48,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Kiểm tra xem người dùng đã đăng nhập chưa (có thể bỏ comment nếu cần)
-// if (!isset($_SESSION['user_id'])) {
+// if (!isset($_SESSION['idTK'])) {
 //     header('Location: ' . $baseUrl . 'views/sign-in.php');
 //     exit();
 // }
@@ -57,32 +57,32 @@ if (session_status() === PHP_SESSION_NONE) {
 include __DIR__ . '/header.php';
 ?>
 
+<div class="flex min-h-screen overflow-hidden">
 <!-- Sidebar -->
 <?php include __DIR__ . '/sidebar.php'; ?>
 
 <!-- Main Content -->
-<main class="ease-soft-in-out xl:ml-68.5 relative h-full max-h-screen rounded-xl transition-all duration-200">
-    <!-- Navbar -->
+<main class="flex-1 flex flex-col min-h-screen overflow-y-auto bg-background-light">
+    <!-- Navbar / Top Header Bar -->
     <?php include __DIR__ . '/navbar.php'; ?>
-    
+
     <!-- Page Content -->
+    <div class="flex-1">
     <?php if (isset($content)): ?>
         <?php echo $content; ?>
     <?php else: ?>
-        <div class="w-full px-6 py-6 mx-auto">
-            <div class="flex flex-wrap -mx-3">
-                <div class="w-full px-3">
-                    <div class="p-6 bg-white rounded-lg shadow-soft-xl">
-                        <p class="text-slate-500">Nội dung trang chưa được định nghĩa. Vui lòng sử dụng output buffering để định nghĩa biến $content trước khi include layout.</p>
-                    </div>
-                </div>
+        <div class="p-8">
+            <div class="bg-white rounded-xl border border-slate-200 p-6">
+                <p class="text-slate-500">Nội dung trang chưa được định nghĩa. Vui lòng sử dụng output buffering để định nghĩa biến $content trước khi include layout.</p>
             </div>
         </div>
     <?php endif; ?>
-    
+    </div>
+
     <!-- Footer -->
     <?php include __DIR__ . '/footer.php'; ?>
 </main>
+</div><!-- end flex wrapper -->
 
 <!-- Scripts -->
 <?php include __DIR__ . '/scripts.php'; ?>

@@ -1,216 +1,221 @@
-<!-- Sidebar Navigation -->
-<aside class="max-w-62.5 ease-nav-brand z-990 fixed inset-y-0 my-4 ml-4 flex flex-col w-full -translate-x-full rounded-2xl border-0 bg-white p-0 antialiased shadow-soft-xl transition-transform duration-200 xl:left-0 xl:translate-x-0" style="height: calc(100vh - 2rem);">
-    <div class="flex-shrink-0">
-        <i class="absolute top-0 right-0 hidden p-4 opacity-50 cursor-pointer fas fa-times text-slate-400 xl:hidden" sidenav-close></i>
-        <a class="block px-8 py-6 m-0 text-sm whitespace-nowrap text-slate-700" href="/">
-            <img src="/assets/img/logo-ct.png" class="inline h-full max-w-full transition-all duration-200 ease-nav-brand max-h-8" alt="main_logo" />
-            <span class="ml-1 font-semibold transition-all duration-200 ease-nav-brand">ezManagement</span>
-        </a>
+<?php
+$useEventSidebar     = isset($useEventSidebar)     && $useEventSidebar === true;
+$eventSidebarEventId = isset($eventSidebarEventId) ? (int)    $eventSidebarEventId : 0;
+$eventSidebarSection = isset($eventSidebarSection) ? (string) $eventSidebarSection : 'overview';
+$_sbTabAccess        = isset($eventSidebarTabAccess) && is_array($eventSidebarTabAccess) ? $eventSidebarTabAccess : [];
+
+function _sb_link(string $section, string $current, int $idSk, string $icon, string $label): string
+{
+    $isActive    = $section === $current;
+    $activeClass = $isActive
+        ? 'bg-primary/5 text-primary border-l-2 border-primary font-semibold'
+        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-2 border-transparent';
+    $iconClass   = $isActive ? 'text-primary active-icon' : 'text-slate-400';
+    $ariaCurrent = $isActive ? 'page' : 'false';
+    $href        = "/event-detail?id_sk={$idSk}&amp;tab={$section}";
+    return <<<HTML
+<a href="{$href}"
+   class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors {$activeClass}"
+   aria-current="{$ariaCurrent}">
+    <span class="material-symbols-outlined text-[18px] shrink-0 {$iconClass}">{$icon}</span>
+    <span class="text-sm">{$label}</span>
+</a>
+HTML;
+}
+
+function _sb_section_label(string $label): string
+{
+    return "<p class='px-4 pt-4 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider'>{$label}</p>";
+}
+
+function _sb_link_if(array $tabAccess, string $section, string $current, int $idSk, string $icon, string $label): string
+{
+    if (empty($tabAccess[$section])) return '';
+    return _sb_link($section, $current, $idSk, $icon, $label);
+}
+?>
+<aside class="w-72 bg-white border-r border-slate-200 flex flex-col shrink-0 h-screen sticky top-0 overflow-y-auto">
+
+    <!-- Logo -->
+    <div class="p-5 flex items-center gap-3 border-b border-slate-100 shrink-0">
+        <div class="size-9 bg-gradient-to-br from-[#d946ef] to-[#9333ea] rounded-xl flex items-center justify-center text-white shrink-0">
+            <span class="material-symbols-outlined text-xl active-icon">school</span>
+        </div>
+        <div class="min-w-0">
+            <h1 class="text-slate-900 font-bold text-base leading-tight truncate">ezManagement</h1>
+            <p class="text-slate-500 text-xs font-medium truncate">Management Portal</p>
+        </div>
     </div>
 
-    <hr class="h-px mt-0 bg-transparent bg-gradient-to-r from-transparent via-black/40 to-transparent flex-shrink-0" />
+    <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto" aria-label="Điều hướng chính">
 
-    <div class="flex-1 overflow-y-auto">
-        <ul class="flex flex-col pl-0 mb-0 pb-8">
-            <?php
-                $useEventSidebar = isset($useEventSidebar) && $useEventSidebar === true;
-                $eventSidebarEventId = isset($eventSidebarEventId) ? (int) $eventSidebarEventId : 0;
-                $eventSidebarSection = isset($eventSidebarSection) ? (string) $eventSidebarSection : 'overview';
-            ?>
+        <?php if ($useEventSidebar): ?>
 
-            <?php if ($useEventSidebar): ?>
-            <li class="px-4 py-3 mx-4 mb-3 text-white bg-gradient-to-tl from-purple-700 to-pink-500 rounded-xl shadow-soft-xl flex-none">
-                <div class="flex items-center justify-between">
-                    <div class="min-w-0">
-                        <p class="mb-0 text-xs text-white opacity-80">Sự kiện hiện tại</p>
-                        <p id="sidebarEventName" class="mb-0 text-lg font-bold leading-tight truncate">Đang tải...</p>
-                    </div>
-                    <a href="/events" class="flex items-center justify-center w-8 h-8 text-white rounded-lg bg-white/20 hover:bg-white/30 transition-colors" title="Quay lại danh sách sự kiện">
-                        <i class="fas fa-exchange-alt text-xs"></i>
+            <!-- Event Card -->
+            <div class="mb-4 bg-gradient-to-br from-[#d946ef] to-[#9333ea] rounded-xl p-4 text-white shadow-lg shadow-purple-500/20">
+                <div class="flex items-start justify-between gap-2 mb-2">
+                    <span class="text-[10px] font-bold uppercase tracking-widest opacity-80">Sự kiện hiện tại</span>
+                    <a href="/events"
+                        class="flex items-center justify-center size-6 rounded-md bg-white/20 hover:bg-white/30 transition-colors shrink-0"
+                        title="Quay lại danh sách sự kiện">
+                        <span class="material-symbols-outlined text-sm">swap_horiz</span>
                     </a>
                 </div>
-            </li>
+                <p id="sidebarEventName" class="font-bold text-sm leading-snug mb-3 truncate">Đang tải…</p>
+                <div class="flex items-center gap-2">
+                    <span class="size-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                    <span class="text-xs font-medium">Đang diễn ra</span>
+                </div>
+            </div>
 
-            <li class="mt-0.5 w-full">
-                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'overview' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=overview">
-                    <i class="fas fa-home w-5 text-center mr-3 <?php echo $eventSidebarSection === 'overview' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
-                    <span>Tổng quan</span>
-                </a>
-            </li>
+            <!-- Tổng quan — tất cả đều thấy -->
+            <?php echo _sb_link('overview', $eventSidebarSection, $eventSidebarEventId, 'dashboard', 'Tổng quan'); ?>
 
-            <li class="w-full mt-4">
-                <h6 class="px-6 text-xs font-bold leading-tight uppercase text-slate-400">Cấu hình sự kiện</h6>
-            </li>
+            <?php $evSbIsGuest = isset($_SESSION['role']) && $_SESSION['role'] === 'guest'; ?>
+            <?php if (!$evSbIsGuest): ?>
 
-            <li class="mt-0.5 w-full">
-                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'config-basic' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=config-basic">
-                    <i class="fas fa-cog w-5 text-center mr-3 <?php echo $eventSidebarSection === 'config-basic' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
-                    <span>Cấu hình cơ bản</span>
-                </a>
-            </li>
+                <?php
+                $hasCauhinh = !empty($_sbTabAccess['config-basic'])
+                           || !empty($_sbTabAccess['config-vongthi'])
+                           || !empty($_sbTabAccess['config-tailieu'])
+                           || !empty($_sbTabAccess['config-rules'])
+                           || !empty($_sbTabAccess['config-criteria']);
+                if ($hasCauhinh):
+                ?>
+                <?php echo _sb_section_label('Cấu hình sự kiện'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'config-basic',    $eventSidebarSection, $eventSidebarEventId, 'tune',        'Cấu hình cơ bản'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'config-vongthi',  $eventSidebarSection, $eventSidebarEventId, 'flag',        'Cấu hình vòng thi'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'config-tailieu',  $eventSidebarSection, $eventSidebarEventId, 'folder_open', 'Cấu hình tài liệu'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'config-rules',    $eventSidebarSection, $eventSidebarEventId, 'gavel',       'Cấu hình quy chế'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'config-criteria', $eventSidebarSection, $eventSidebarEventId, 'checklist',   'Thiết lập bộ tiêu chí'); ?>
+                <?php endif; ?>
 
-            <li class="mt-0.5 w-full">
-                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'config-rules' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=config-rules">
-                    <i class="fas fa-balance-scale w-5 text-center mr-3 <?php echo $eventSidebarSection === 'config-rules' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
-                    <span>Cấu hình quy chế</span>
-                </a>
-            </li>
+                <?php
+                $hasBaiNop = !empty($_sbTabAccess['review-assign'])
+                          || !empty($_sbTabAccess['review-results']);
+                if ($hasBaiNop):
+                ?>
+                <?php echo _sb_section_label('Quản lý bài nộp'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'review-assign',  $eventSidebarSection, $eventSidebarEventId, 'person_check', 'Phân công phản biện'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'review-results', $eventSidebarSection, $eventSidebarEventId, 'bar_chart',    'Kết quả Review'); ?>
+                <?php endif; ?>
 
-            <li class="mt-0.5 w-full">
-                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'config-criteria' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=config-criteria">
-                    <i class="fas fa-tasks w-5 text-center mr-3 <?php echo $eventSidebarSection === 'config-criteria' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
-                    <span>Thiết lập bộ tiêu chí</span>
-                </a>
-            </li>
+                <?php
+                $hasChamThi = !empty($_sbTabAccess['scoring'])
+                           || !empty($_sbTabAccess['scoring-gv']);
+                if ($hasChamThi):
+                ?>
+                <?php echo _sb_section_label('Nghiệp vụ chấm thi'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'scoring',    $eventSidebarSection, $eventSidebarEventId, 'edit_note',    'Quản lý & Duyệt điểm'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'scoring-gv', $eventSidebarSection, $eventSidebarEventId, 'rate_review',  'Chấm điểm'); ?>
+                <?php endif; ?>
 
-            <li class="w-full mt-4">
-                <h6 class="px-6 text-xs font-bold leading-tight uppercase text-slate-400">Quản lý bài nộp</h6>
-            </li>
-
-            <li class="mt-0.5 w-full">
-                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'submissions' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=submissions">
-                    <i class="fas fa-file-alt w-5 text-center mr-3 <?php echo $eventSidebarSection === 'submissions' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
-                    <span>Tất cả bài nộp</span>
-                </a>
-            </li>
-
-            <li class="mt-0.5 w-full">
-                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'review-assign' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=review-assign">
-                    <i class="fas fa-user-check w-5 text-center mr-3 <?php echo $eventSidebarSection === 'review-assign' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
-                    <span>Phân công phản biện</span>
-                </a>
-            </li>
-
-            <li class="mt-0.5 w-full">
-                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'review-results' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=review-results">
-                    <i class="fas fa-chart-bar w-5 text-center mr-3 <?php echo $eventSidebarSection === 'review-results' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
-                    <span>Kết quả Review</span>
-                </a>
-            </li>
-
-            <li class="w-full mt-4">
-                <h6 class="px-6 text-xs font-bold leading-tight uppercase text-slate-400">Nghiệp vụ chấm thi</h6>
-            </li>
-
-            <li class="mt-0.5 w-full">
-                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors bg-gradient-to-r from-amber-100 to-yellow-100 hover:from-amber-200 hover:to-yellow-200 border border-amber-300 <?php echo $eventSidebarSection === 'scoring' ? 'ring-2 ring-amber-400 font-semibold' : ''; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=scoring">
-                    <i class="fas fa-edit w-5 text-center mr-3 text-amber-600"></i>
-                    <span class="text-slate-700">Phân công & Quản lý Điểm</span>
-                </a>
-            </li>
-
-            <li class="mt-1 w-full">
-                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors bg-gradient-to-r from-emerald-100 to-green-100 hover:from-emerald-200 hover:to-green-200 border border-emerald-300 <?php echo $eventSidebarSection === 'subcommittees' ? 'ring-2 ring-emerald-400 font-semibold' : ''; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=subcommittees">
-                    <i class="fas fa-sitemap w-5 text-center mr-3 text-emerald-600"></i>
-                    <span class="text-slate-700">Quản lý Tiểu ban</span>
-                </a>
-            </li>
-
-            <li class="w-full mt-4">
-                <h6 class="px-6 text-xs font-bold leading-tight uppercase text-slate-400">Tiểu ban & giải thưởng</h6>
-            </li>
-
-            <li class="mt-0.5 w-full">
-                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'committees' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=committees">
-                    <i class="fas fa-users w-5 text-center mr-3 <?php echo $eventSidebarSection === 'committees' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
-                    <span>Quản lý tiểu ban</span>
-                </a>
-            </li>
-
-            <li class="mt-0.5 w-full">
-                <a class="py-2 text-sm my-0 mx-4 flex items-center rounded-lg px-4 transition-colors <?php echo $eventSidebarSection === 'judges' ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50'; ?>" href="/event-detail?id_sk=<?php echo $eventSidebarEventId; ?>&tab=judges">
-                    <i class="fas fa-gavel w-5 text-center mr-3 <?php echo $eventSidebarSection === 'judges' ? 'text-purple-600' : 'text-slate-400'; ?>"></i>
-                    <span>Phân công BGK</span>
-                </a>
-            </li>
+                <?php
+                $hasNhom = !empty($_sbTabAccess['nhom-my'])
+                        || !empty($_sbTabAccess['nhom-all'])
+                        || !empty($_sbTabAccess['nhom-request']);
+                if ($hasNhom):
+                ?>
+                <?php echo _sb_section_label('Nhóm thi'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'nhom-my',      $eventSidebarSection, $eventSidebarEventId, 'group',  'Nhóm của tôi'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'nhom-all',     $eventSidebarSection, $eventSidebarEventId, 'groups', 'Tất cả nhóm'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'nhom-request', $eventSidebarSection, $eventSidebarEventId, 'mail',   'Lời mời'); ?>
+                <?php endif; ?>
 
             <?php else: ?>
-            <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo isset($currentPage) && $currentPage == 'dashboard' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap rounded-lg px-4 text-slate-700 transition-colors" href="/dashboard">
-                    <div class="<?php echo isset($currentPage) && $currentPage == 'dashboard' ? 'bg-gradient-to-tl from-purple-700 to-pink-500' : ''; ?> shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white bg-center stroke-0 text-center xl:p-2.5">
-                        <svg width="12px" height="12px" viewBox="0 0 45 40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                            <title>shop</title>
-                            <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                                <g transform="translate(-1716.000000, -439.000000)" fill="#FFFFFF" fill-rule="nonzero">
-                                    <g transform="translate(1716.000000, 291.000000)">
-                                        <g transform="translate(0.000000, 148.000000)">
-                                            <path class="opacity-60" d="M46.7199583,10.7414583 L40.8449583,0.949791667 C40.4909749,0.360605034 39.8540131,0 39.1666667,0 L7.83333333,0 C7.1459869,0 6.50902508,0.360605034 6.15504167,0.949791667 L0.280041667,10.7414583 C0.0969176761,11.0460037 -1.23209662e-05,11.3946378 -1.23209662e-05,11.75 C-0.00758042603,16.0663731 3.48367543,19.5725301 7.80004167,19.5833333 L7.81570833,19.5833333 C9.75003686,19.5882688 11.6168794,18.8726691 13.0522917,17.5760417 C16.0171492,20.2556967 20.5292675,20.2556967 23.494125,17.5760417 C26.4604562,20.2616016 30.9794188,20.2616016 33.94575,17.5760417 C36.2421905,19.6477597 39.5441143,20.1708521 42.3684437,18.9103691 C45.1927731,17.649886 47.0084685,14.8428276 47.0000295,11.75 C47.0000295,11.3946378 46.9030823,11.0460037 46.7199583,10.7414583 Z"></path>
-                                            <path class="" d="M39.198,22.4912623 C37.3776246,22.4928106 35.5817531,22.0149171 33.951625,21.0951667 L33.92225,21.1107282 C31.1430221,22.6838032 27.9255001,22.9318916 24.9844167,21.7998837 C24.4750389,21.605469 23.9777983,21.3722567 23.4960833,21.1018359 L23.4745417,21.1129513 C20.6961809,22.6871153 17.4786145,22.9344611 14.5386667,21.7998837 C14.029926,21.6054643 13.533337,21.3722507 13.0522917,21.1018359 C11.4250962,22.0190609 9.63246555,22.4947009 7.81570833,22.4912623 C7.16510551,22.4842162 6.51607673,22.4173045 5.875,22.2911849 L5.875,44.7220845 C5.875,45.9498589 6.7517757,46.9451667 7.83333333,46.9451667 L19.5833333,46.9451667 L19.5833333,33.6066734 L27.4166667,33.6066734 L27.4166667,46.9451667 L39.1666667,46.9451667 C40.2482243,46.9451667 41.125,45.9498589 41.125,44.7220845 L41.125,22.2822926 C40.4887822,22.4116582 39.8442868,22.4815492 39.198,22.4912623 Z"></path>
-                                        </g>
-                                    </g>
-                                </g>
-                            </g>
-                        </svg>
-                    </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Dashboard</span>
-                </a>
-            </li>
-
-            <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo isset($currentPage) && $currentPage == 'events' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap px-4 transition-colors" href="/events">
-                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white bg-center stroke-0 text-center xl:p-2.5">
-                        <svg width="12px" height="12px" viewBox="0 0 42 42" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                            <title>office</title>
-                            <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                                <g transform="translate(-1869.000000, -293.000000)" fill="#FFFFFF" fill-rule="nonzero">
-                                    <g transform="translate(1716.000000, 291.000000)">
-                                        <g transform="translate(153.000000, 2.000000)">
-                                            <path class="fill-slate-800 opacity-60" d="M12.25,17.5 L8.75,17.5 L8.75,1.75 C8.75,0.78225 9.53225,0 10.5,0 L31.5,0 C32.46775,0 33.25,0.78225 33.25,1.75 L33.25,12.25 L29.75,12.25 L29.75,3.5 L12.25,3.5 L12.25,17.5 Z"></path>
-                                            <path class="fill-slate-800" d="M40.25,14 L24.5,14 C23.53225,14 22.75,14.78225 22.75,15.75 L22.75,38.5 L19.25,38.5 L19.25,22.75 C19.25,21.78225 18.46775,21 17.5,21 L1.75,21 C0.78225,21 0,21.78225 0,22.75 L0,40.25 C0,41.21775 0.78225,42 1.75,42 L40.25,42 C41.21775,42 42,41.21775 42,40.25 L42,15.75 C42,14.78225 41.21775,14 40.25,14 Z M12.25,36.75 L7,36.75 L7,33.25 L12.25,33.25 L12.25,36.75 Z M12.25,29.75 L7,29.75 L7,26.25 L12.25,26.25 L12.25,29.75 Z M35,36.75 L29.75,36.75 L29.75,33.25 L35,33.25 L35,36.75 Z M35,29.75 L29.75,29.75 L29.75,26.25 L35,26.25 L35,29.75 Z M35,22.75 L29.75,22.75 L29.75,19.25 L35,19.25 L35,22.75 Z"></path>
-                                        </g>
-                                    </g>
-                                </g>
-                            </g>
-                        </svg>
-                    </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Quản lý Sự kiện</span>
-                </a>
-            </li>
-
-            <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'student'): ?>
-            <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo isset($currentPage) && $currentPage == 'groups' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap px-4 transition-colors" href="/groups">
-                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white bg-center stroke-0 text-center xl:p-2.5">
-                        <i class="fas fa-users text-slate-800 text-sm"></i>
-                    </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Nhóm của tôi</span>
-                </a>
-            </li>
+                <div class="mx-3 mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <p class="text-xs text-slate-500 mb-2">Đăng nhập để xem đầy đủ tính năng của sự kiện.</p>
+                    <a href="/sign-in"
+                        class="flex items-center justify-center gap-1.5 w-full px-3 py-2 text-xs font-semibold text-white rounded-lg transition-all hover:scale-102"
+                        style="background: linear-gradient(135deg, #d946ef, #9333ea);">
+                        <span class="material-symbols-outlined text-[14px]">login</span>
+                        Đăng nhập ngay
+                    </a>
+                </div>
             <?php endif; ?>
 
-            <?php if (isset($_SESSION['user_role']) && ($_SESSION['user_role'] === 'lecturer' || $_SESSION['user_role'] === 'admin')): ?>
-            <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo isset($currentPage) && $currentPage == 'review' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap px-4 transition-colors" href="/review">
-                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white bg-center stroke-0 text-center xl:p-2.5">
-                        <i class="fas fa-clipboard-check text-slate-800 text-sm"></i>
-                    </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Bình duyệt</span>
+        <?php else: ?>
+
+            <!-- Standard nav -->
+            <?php $sbIsGuest = isset($_SESSION['role']) && $_SESSION['role'] === 'guest'; ?>
+
+            <a href="/dashboard"
+                class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors <?php echo isset($currentPage) && $currentPage === 'dashboard' ? 'bg-primary/5 text-primary font-semibold' : 'text-slate-600 hover:bg-slate-50'; ?>">
+                <span class="material-symbols-outlined text-[18px] shrink-0">dashboard</span>
+                <span class="text-sm">Dashboard</span>
+            </a>
+            <a href="/events"
+                class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors <?php echo isset($currentPage) && $currentPage === 'events' ? 'bg-primary/5 text-primary font-semibold' : 'text-slate-600 hover:bg-slate-50'; ?>">
+                <span class="material-symbols-outlined text-[18px] shrink-0">event</span>
+                <span class="text-sm">Sự kiện</span>
+            </a>
+
+            <?php if (!$sbIsGuest): ?>
+
+                <?php if (isset($_SESSION['idLoaiTK']) && (int)$_SESSION['idLoaiTK'] === 3): ?>
+                    <a href="/groups"
+                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors <?php echo isset($currentPage) && $currentPage === 'groups' ? 'bg-primary/5 text-primary font-semibold' : 'text-slate-600 hover:bg-slate-50'; ?>">
+                        <span class="material-symbols-outlined text-[18px] shrink-0">group</span>
+                        <span class="text-sm">Nhóm của tôi</span>
+                    </a>
+                <?php endif; ?>
+
+                <?php if (isset($_SESSION['idLoaiTK']) && in_array((int)$_SESSION['idLoaiTK'], [1, 2], true)): ?>
+                    <a href="/review"
+                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors <?php echo isset($currentPage) && $currentPage === 'review' ? 'bg-primary/5 text-primary font-semibold' : 'text-slate-600 hover:bg-slate-50'; ?>">
+                        <span class="material-symbols-outlined text-[18px] shrink-0">rate_review</span>
+                        <span class="text-sm">Bình duyệt</span>
+                    </a>
+                <?php endif; ?>
+
+                <?php
+                $canManageUsers = false;
+                if (isset($_SESSION['idTK']) && (int)$_SESSION['idTK'] > 0) {
+                    if (!isset($conn) || !($conn instanceof PDO)) {
+                        if (!defined('_AUTHEN')) define('_AUTHEN', true);
+                        require_once __DIR__ . '/../api/core/base.php';
+                    }
+                    if (function_exists('kiem_tra_quyen_he_thong')) {
+                        $canManageUsers = kiem_tra_quyen_he_thong($conn, (int)$_SESSION['idTK'], 'quan_ly_tai_khoan');
+                    }
+                }
+                if ($canManageUsers): ?>
+                    <?php echo _sb_section_label('Hệ thống'); ?>
+                    <a href="/admin_users"
+                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors <?php echo isset($currentPage) && $currentPage === 'admin-users' ? 'bg-primary/5 text-primary border-l-2 border-primary font-semibold' : 'text-slate-600 hover:bg-slate-50 border-l-2 border-transparent'; ?>">
+                        <span class="material-symbols-outlined text-[18px] shrink-0 <?php echo isset($currentPage) && $currentPage === 'admin-users' ? 'text-primary active-icon' : 'text-slate-400'; ?>">manage_accounts</span>
+                        <span class="text-sm">Quản lý Tài khoản</span>
+                    </a>
+                <?php endif; ?>
+
+                <?php echo _sb_section_label('Tài khoản'); ?>
+                <a href="/profile"
+                    class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-slate-600 hover:bg-slate-50">
+                    <span class="material-symbols-outlined text-[18px] shrink-0">person</span>
+                    <span class="text-sm">Hồ sơ</span>
                 </a>
-            </li>
+                <a href="/api/tai_khoan/sign-in.php" id="logoutBtn"
+                    class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-rose-500 hover:bg-rose-50 cursor-pointer">
+                    <span class="material-symbols-outlined text-[18px] shrink-0">logout</span>
+                    <span class="text-sm">Đăng xuất</span>
+                </a>
+                <script>
+                    document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        fetch('/api/tai_khoan/sign-in.php', { method: 'DELETE', credentials: 'same-origin' })
+                            .finally(function() { window.location.href = '/sign-in'; });
+                    });
+                </script>
+
+            <?php else: ?>
+                <?php echo _sb_section_label('Tài khoản'); ?>
+                <a href="/sign-in"
+                    class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-primary hover:bg-primary/5 font-semibold">
+                    <span class="material-symbols-outlined text-[18px] shrink-0">login</span>
+                    <span class="text-sm">Đăng nhập</span>
+                </a>
             <?php endif; ?>
 
-            <li class="w-full mt-4">
-                <h6 class="pl-6 ml-2 text-xs font-bold leading-tight uppercase opacity-60">Tài khoản</h6>
-            </li>
-
-            <li class="mt-0.5 w-full">
-                <a class="py-2.7 <?php echo isset($currentPage) && $currentPage == 'profile' ? 'shadow-soft-xl bg-white font-semibold' : ''; ?> text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap px-4 transition-colors" href="/profile">
-                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white bg-center stroke-0 text-center xl:p-2.5">
-                        <i class="fas fa-user text-slate-800 text-sm"></i>
-                    </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Hồ sơ</span>
-                </a>
-            </li>
-
-            <li class="mt-0.5 w-full">
-                <a class="py-2.7 text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap px-4 transition-colors" href="/api/auth/logout.php">
-                    <div class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white bg-center stroke-0 text-center xl:p-2.5">
-                        <i class="fas fa-sign-out-alt text-slate-800 text-sm"></i>
-                    </div>
-                    <span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">Đăng xuất</span>
-                </a>
-            </li>
-            <?php endif; ?>
-        </ul>
-    </div>
+        <?php endif; ?>
+    </nav>
 </aside>

@@ -3,9 +3,14 @@
 define('_AUTHEN', true);
 
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../core/auth_guard.php';
+
 require_once __DIR__ . '/quan_ly_bo_tieu_chi.php';
 
 header('Content-Type: application/json; charset=utf-8');
+
+// ── Auth ──────────────────────────────────────────────────
+$actor = auth_require_login();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -28,7 +33,7 @@ if ($idSk <= 0) {
     exit;
 }
 
-$idUser = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0;
+$idUser = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
 if ($idUser <= 0 && isset($_GET['id_nguoi_thuc_hien'])) {
     $idUser = (int) $_GET['id_nguoi_thuc_hien'];
 }
@@ -54,9 +59,16 @@ try {
         throw new RuntimeException($criteriaBank['message'] ?? 'Không thể lấy ngân hàng tiêu chí');
     }
 
-    $sets = lay_danh_sach_bo_tieu_chi($conn, $idUser, $idSk);
-    if (empty($sets['status'])) {
-        throw new RuntimeException($sets['message'] ?? 'Không thể lấy danh sách bộ tiêu chí');
+    // Toàn bộ ngân hàng — dùng cho dropdown nhân bản
+    $setsAll = lay_danh_sach_bo_tieu_chi($conn, $idUser, $idSk, false);
+    if (empty($setsAll['status'])) {
+        throw new RuntimeException($setsAll['message'] ?? 'Không thể lấy danh sách bộ tiêu chí');
+    }
+
+    // Chỉ bộ tiêu chí của sự kiện này — dùng cho panel quản lý bên phải
+    $setsSuKien = lay_danh_sach_bo_tieu_chi($conn, $idUser, $idSk, true);
+    if (empty($setsSuKien['status'])) {
+        throw new RuntimeException($setsSuKien['message'] ?? 'Không thể lấy danh sách bộ tiêu chí theo sự kiện');
     }
 
     $usageMap = lay_ban_do_su_dung_bo_tieu_chi($conn, $idUser, $idSk);
@@ -68,10 +80,11 @@ try {
         'status' => 'success',
         'message' => 'Lấy dữ liệu bộ tiêu chí thành công',
         'data' => [
-            'vong_thi' => $rounds['data'] ?? [],
+            'vong_thi'          => $rounds['data'] ?? [],
             'ngan_hang_tieu_chi' => $criteriaBank['data'] ?? [],
-            'bo_tieu_chi' => $sets['data'] ?? [],
-            'usage_map' => $usageMap['data'] ?? [],
+            'bo_tieu_chi'       => $setsSuKien['data'] ?? [],   // panel sự kiện
+            'bo_tieu_chi_all'   => $setsAll['data'] ?? [],      // dropdown nhân bản
+            'usage_map'         => $usageMap['data'] ?? [],
         ],
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $exception) {

@@ -3,6 +3,8 @@
 define('_AUTHEN', true);
 
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../core/auth_guard.php';
+
 require_once __DIR__ . '/quan_ly_vong_thi.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -22,20 +24,11 @@ if (!is_array($input)) {
     $input = [];
 }
 
-$idNguoiTao = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0;
-if ($idNguoiTao <= 0 && isset($input['id_nguoi_tao'])) {
-    $idNguoiTao = (int) $input['id_nguoi_tao'];
-}
+// ── Auth ──────────────────────────────────────────────────
+$idSk = (int)($input['id_sk'] ?? 0);
+$actor = auth_require_quyen_su_kien($idSk, 'cauhinh_sukien');
 
-if ($idNguoiTao <= 0) {
-    http_response_code(401);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Bạn chưa đăng nhập hoặc thiếu thông tin người tạo',
-        'data' => null,
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
-}
+$idNguoiTao = $actor['idTK'];
 
 $result = tao_vong_thi(
     $conn,

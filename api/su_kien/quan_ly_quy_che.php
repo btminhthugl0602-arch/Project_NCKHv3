@@ -4,12 +4,8 @@ require_once __DIR__ . '/../core/base.php';
 
 function xac_thuc_quyen_quy_che($conn, $id_user, $id_su_kien = 0)
 {
-    $id_user = (int) $id_user;
-    $id_su_kien = (int) $id_su_kien;
-
-    if (kiem_tra_quyen_he_thong($conn, $id_user, 'admin_events')) {
-        return true;
-    }
+    $id_user     = (int) $id_user;
+    $id_su_kien  = (int) $id_su_kien;
 
     if (kiem_tra_quyen_he_thong($conn, $id_user, 'tao_su_kien')) {
         return true;

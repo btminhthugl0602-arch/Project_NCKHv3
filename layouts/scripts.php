@@ -1,13 +1,15 @@
 <!-- Page Specific JavaScript -->
 <?php if (isset($pageJs)): ?>
-    <script src="/assets/js/<?php echo $pageJs; ?>"></script>
+    <script src="<?php echo $basePath; ?>/assets/js/<?php echo $pageJs; ?>?v=<?php echo filemtime(__DIR__ . '/../assets/js/' . $pageJs) ?: time(); ?>"></script>
 <?php endif; ?>
 
+<!-- Navbar Search (global — load on every page) -->
+<?php $navSearchFile = __DIR__ . '/../assets/js/navbar-search.js'; ?>
+<script src="<?php echo $basePath; ?>/assets/js/navbar-search.js?v=<?php echo filemtime($navSearchFile) ?: time(); ?>"></script>
+
 <!-- Plugin for charts -->
-<script src="/assets/js/plugins/chartjs.min.js" async></script>
+<script src="<?php echo $basePath; ?>/assets/js/plugins/chartjs.min.js" defer></script>
 <!-- Plugin for scrollbar -->
-<script src="/assets/js/plugins/perfect-scrollbar.min.js" async></script>
-<!-- Main script file -->
-<script src="/assets/js/soft-ui-dashboard-tailwind.js?v=1.0.5" async></script>
+<script src="<?php echo $basePath; ?>/assets/js/plugins/perfect-scrollbar.min.js" defer></script>
 </body>
 </html>

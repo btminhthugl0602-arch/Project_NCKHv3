@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Quản lý sự kiện - Service Layer
  * 
@@ -29,17 +30,6 @@ define('SU_KIEN_MO_TA_MAX_LENGTH', 5000);
  */
 function co_quyen_quan_ly_su_kien($conn, int $id_tk, int $id_sk = 0): bool
 {
-    // Admin hệ thống có toàn quyền
-    if (kiem_tra_quyen_he_thong($conn, $id_tk, 'admin_events')) {
-        return true;
-    }
-
-    // Người có quyền tạo sự kiện
-    if (kiem_tra_quyen_he_thong($conn, $id_tk, 'tao_su_kien')) {
-        return true;
-    }
-
-    // Kiểm tra quyền cấu hình sự kiện cụ thể
     if ($id_sk > 0) {
         return kiem_tra_quyen_su_kien($conn, $id_tk, $id_sk, 'cauhinh_sukien');
     }
@@ -52,21 +42,22 @@ function co_quyen_quan_ly_su_kien($conn, int $id_tk, int $id_sk = 0): bool
  */
 function la_btc_su_kien($conn, int $id_tk, int $id_sk): bool
 {
-    if ($id_tk <= 0 || $id_sk <= 0) {
+    if ($id_tk <= 0 || $id_sk <= 0 || !$conn instanceof PDO) {
         return false;
     }
 
-    $result = _select_info($conn, 'taikhoan_vaitro_sukien', ['id'], [
-        'WHERE' => [
-            'idTK', '=', $id_tk, 'AND',
-            'idSK', '=', $id_sk, 'AND',
-            'idVaiTro', '=', 1, 'AND',
-            'isActive', '=', 1, '',
-        ],
-        'LIMIT' => [1],
-    ]);
-
-    return !empty($result);
+    $stmt = $conn->prepare("
+        SELECT 1
+        FROM taikhoan_vaitro_sukien tvs
+        JOIN vaitro v ON v.idVaiTro = tvs.idVaiTro
+        WHERE tvs.idTK = :idTK
+          AND tvs.idSK = :idSK
+          AND tvs.isActive = 1
+          AND v.maVaiTro = 'BTC'
+        LIMIT 1
+    ");
+    $stmt->execute([':idTK' => $id_tk, ':idSK' => $id_sk]);
+    return (bool) $stmt->fetchColumn();
 }
 
 // ==========================================
@@ -265,12 +256,32 @@ function btc_tao_su_kien(
 
         $id_sk = (int) $conn->lastInsertId();
 
+        $stmtBTC = $conn->prepare("SELECT idVaiTro FROM vaitro WHERE maVaiTro = 'BTC' LIMIT 1");
+        $stmtBTC->execute();
+        $idVaiTroBTC = (int) $stmtBTC->fetchColumn();
+        if ($idVaiTroBTC <= 0) {
+            $conn->rollBack();
+            return ['status' => false, 'message' => 'Không tìm thấy vai trò BTC trong hệ thống'];
+        }
+
         $existsBtcRole = _select_info($conn, 'taikhoan_vaitro_sukien', ['id'], [
             'WHERE' => [
-                'idTK', '=', $id_nguoi_tao, 'AND',
-                'idSK', '=', $id_sk, 'AND',
-                'idVaiTro', '=', 1, 'AND',
-                'isActive', '=', 1, '',
+                'idTK',
+                '=',
+                $id_nguoi_tao,
+                'AND',
+                'idSK',
+                '=',
+                $id_sk,
+                'AND',
+                'idVaiTro',
+                '=',
+                $idVaiTroBTC,
+                'AND',
+                'isActive',
+                '=',
+                1,
+                '',
             ],
             'LIMIT' => [1],
         ]);
@@ -280,7 +291,7 @@ function btc_tao_su_kien(
                 $conn,
                 'taikhoan_vaitro_sukien',
                 ['idTK', 'idSK', 'idVaiTro', 'nguonTao', 'idNguoiCap', 'isActive'],
-                [$id_nguoi_tao, $id_sk, 1, 'BTC_THEM', $id_nguoi_tao, 1]
+                [$id_nguoi_tao, $id_sk, $idVaiTroBTC, 'BTC_THEM', $id_nguoi_tao, 1]
             );
 
             if (!$assigned) {
@@ -326,42 +337,19 @@ function _gui_thong_bao_su_kien_moi($conn, int $id_sk, string $ten_su_kien, int 
     $created = _insert_info(
         $conn,
         'thongbao',
-        ['idSK', 'tieuDe', 'noiDung', 'loaiThongBao', 'nguoiGui', 'isPublic'],
+        ['idSK', 'tieuDe', 'noiDung', 'loaiThongBao', 'phamVi', 'nguoiGui'],
         [
             $id_sk,
             'Sự kiện mới: ' . $ten_su_kien,
             'Sự kiện "' . $ten_su_kien . '" vừa được công bố. Hãy xem chi tiết và đăng ký tham gia!',
-            'su_kien_moi',
+            'SU_KIEN',
+            'TAT_CA',
             $id_nguoi_tao,
-            1,
         ]
     );
 
     if (!$created) {
         return;
-    }
-
-    $id_thong_bao = (int) $conn->lastInsertId();
-
-    $stmt = $conn->prepare(
-        'SELECT idTK FROM taikhoan WHERE isActive = 1 AND idLoaiTK IN (2, 3) AND idTK != :idNguoiTao'
-    );
-    $stmt->execute([':idNguoiTao' => $id_nguoi_tao]);
-    $nguoi_nhan = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-    if (empty($nguoi_nhan)) {
-        return;
-    }
-
-    $insertStmt = $conn->prepare(
-        'INSERT INTO thongbao_nguoinhan (idThongBao, idTK, daDoc) VALUES (:idThongBao, :idTK, 0)'
-    );
-
-    foreach ($nguoi_nhan as $id_tk) {
-        $insertStmt->execute([
-            ':idThongBao' => $id_thong_bao,
-            ':idTK' => (int) $id_tk,
-        ]);
     }
 }
 
@@ -381,7 +369,13 @@ function btc_cap_nhat_su_kien(
     $ngay_dong_dk,
     $ngay_bat_dau,
     $ngay_ket_thuc,
-    $is_active
+    $is_active,
+    $so_thanh_vien_toi_thieu = null,
+    $so_thanh_vien_toi_da    = null,
+    $so_gvhd_toi_da          = false,
+    $so_nhom_toi_da_gvhd     = false,
+    $yeu_cau_co_gvhd         = null,
+    $cho_phep_gv_tao_nhom    = null
 ) {
     $id_nguoi_thuc_hien = (int) $id_nguoi_thuc_hien;
     $id_su_kien = (int) $id_su_kien;
@@ -429,9 +423,54 @@ function btc_cap_nhat_su_kien(
     $ngay_bat_dau = !empty($ngay_bat_dau) ? $ngay_bat_dau : null;
     $ngay_ket_thuc = !empty($ngay_ket_thuc) ? $ngay_ket_thuc : null;
 
+    // Validate cấu hình nhóm thi
+    if ($so_thanh_vien_toi_thieu !== null && $so_thanh_vien_toi_thieu < 1) {
+        return ['status' => false, 'message' => 'Số thành viên tối thiểu phải >= 1'];
+    }
+    if ($so_thanh_vien_toi_da !== null && $so_thanh_vien_toi_da < 1) {
+        return ['status' => false, 'message' => 'Số thành viên tối đa phải >= 1'];
+    }
+    if (
+        $so_thanh_vien_toi_thieu !== null && $so_thanh_vien_toi_da !== null
+        && $so_thanh_vien_toi_thieu > $so_thanh_vien_toi_da
+    ) {
+        return ['status' => false, 'message' => 'Số thành viên tối thiểu không được lớn hơn tối đa'];
+    }
+    if ($so_gvhd_toi_da !== false && $so_gvhd_toi_da !== null && $so_gvhd_toi_da < 1) {
+        return ['status' => false, 'message' => 'Số GVHD tối đa phải >= 1 hoặc để trống (không giới hạn)'];
+    }
+    if ($so_nhom_toi_da_gvhd !== false && $so_nhom_toi_da_gvhd !== null && $so_nhom_toi_da_gvhd < 1) {
+        return ['status' => false, 'message' => 'Số nhóm tối đa GVHD hướng dẫn phải >= 1 hoặc để trống (không giới hạn)'];
+    }
+
     try {
         $fields = ['tenSK', 'moTa', 'idCap', 'ngayMoDangKy', 'ngayDongDangKy', 'ngayBatDau', 'ngayKetThuc', 'isActive'];
         $values = [$ten_su_kien, $mo_ta, $id_cap, $ngay_mo_dk, $ngay_dong_dk, $ngay_bat_dau, $ngay_ket_thuc, $is_active];
+
+        if ($so_thanh_vien_toi_thieu !== null) {
+            $fields[] = 'soThanhVienToiThieu';
+            $values[] = $so_thanh_vien_toi_thieu;
+        }
+        if ($so_thanh_vien_toi_da !== null) {
+            $fields[] = 'soThanhVienToiDa';
+            $values[] = $so_thanh_vien_toi_da;
+        }
+        if ($so_gvhd_toi_da !== false) {
+            $fields[] = 'soGVHDToiDa';
+            $values[] = $so_gvhd_toi_da;
+        }
+        if ($so_nhom_toi_da_gvhd !== false) {
+            $fields[] = 'soNhomToiDaGVHD';
+            $values[] = $so_nhom_toi_da_gvhd;
+        }
+        if ($yeu_cau_co_gvhd !== null) {
+            $fields[] = 'yeuCauCoGVHD';
+            $values[] = $yeu_cau_co_gvhd;
+        }
+        if ($cho_phep_gv_tao_nhom !== null) {
+            $fields[] = 'choPhepGVTaoNhom';
+            $values[] = $cho_phep_gv_tao_nhom;
+        }
 
         $updated = _update_info($conn, 'sukien', $fields, $values, ['idSK' => ['=', $id_su_kien, '']]);
 
@@ -449,7 +488,6 @@ function btc_cap_nhat_su_kien(
         }
 
         return $response;
-
     } catch (Throwable $exception) {
         error_log('Lỗi cập nhật sự kiện: ' . $exception->getMessage());
         return ['status' => false, 'message' => 'Lỗi hệ thống khi cập nhật sự kiện'];
@@ -524,23 +562,30 @@ function lay_thong_ke_su_kien($conn, int $id_su_kien): array
 
     $stats = [];
 
-    // Đếm số nhóm tham gia
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM nhom_sukien WHERE idSK = ? AND isActive = 1');
+    // Đếm số nhóm tham gia — bảng `nhom`, cột `idSK`
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM nhom WHERE idSK = ? AND isActive = 1');
     $stmt->execute([$id_su_kien]);
     $stats['so_nhom'] = (int) $stmt->fetchColumn();
 
-    // Đếm số bài nộp
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM bainop WHERE idSK = ?');
+    // Đếm số bài nộp — bảng `sanpham`, cột `idSK` (loại trừ bị loại)
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM sanpham WHERE idSK = ? AND trangThai != 'BI_LOAI'");
     $stmt->execute([$id_su_kien]);
     $stats['so_bai_nop'] = (int) $stmt->fetchColumn();
 
     // Đếm số vòng thi
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM vongthi WHERE idSK = ? AND isActive = 1');
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM vongthi WHERE idSK = ?');
     $stmt->execute([$id_su_kien]);
     $stats['so_vong_thi'] = (int) $stmt->fetchColumn();
 
-    // Đếm số giám khảo
-    $stmt = $conn->prepare('SELECT COUNT(DISTINCT idTK) FROM taikhoan_vaitro_sukien WHERE idSK = ? AND idVaiTro = 3 AND isActive = 1');
+    // Đếm số giám khảo (các vai trò chấm điểm: GV_PHAN_BIEN, GV_CHAM_DOCLAP, GV_CHAM_TIEUBAN)
+    $stmt = $conn->prepare("
+        SELECT COUNT(DISTINCT tvs.idTK)
+        FROM taikhoan_vaitro_sukien tvs
+        JOIN vaitro v ON v.idVaiTro = tvs.idVaiTro
+        WHERE tvs.idSK = ?
+          AND tvs.isActive = 1
+          AND v.maVaiTro IN ('GV_PHAN_BIEN', 'GV_CHAM_DOCLAP', 'GV_CHAM_TIEUBAN')
+    ");
     $stmt->execute([$id_su_kien]);
     $stats['so_giam_khao'] = (int) $stmt->fetchColumn();
 

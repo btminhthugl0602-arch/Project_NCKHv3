@@ -8,9 +8,15 @@
 define('_AUTHEN', true);
 
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../../api/core/auth_guard.php';
+
 require_once __DIR__ . '/quan_ly_cham_diem.php';
 
 header('Content-Type: application/json; charset=utf-8');
+
+// ── Auth: yêu cầu quyền BTC hoặc phân công chấm trong sự kiện ──
+$idSK_auth = isset($_GET['id_sk']) ? (int) $_GET['id_sk'] : 0;
+$actor = auth_require_bat_ky_quyen_su_kien($idSK_auth, ['phan_cong_cham', 'cauhinh_sukien', 'duyet_diem']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -97,27 +103,32 @@ function handleGetRequest($conn) {
                 return;
             }
             
-            // Lấy chi tiết điểm và tính IRR
+            // Lấy chi tiết điểm và danh sách trọng tài phân công
             $chiTietDiem = cham_diem_lay_chi_tiet_diem($conn, $idSanPham, $idVongThi);
-            
-            if (count($chiTietDiem) < 2) {
+            $phanCongTrongTai = cham_diem_lay_trong_tai_phan_cong($conn, $idSanPham, $idVongThi);
+
+            // Chỉ tính IRR trên GK chính (isTrongTai=0) — trọng tài phúc khảo không tham gia IRR
+            $chiTietChinhThuc = array_values(array_filter($chiTietDiem, fn($gk) => empty($gk['isTrongTai'])));
+
+            if (count($chiTietChinhThuc) < 2) {
                 echo json_encode([
                     'status' => 'success',
-                    'message' => 'Cần ít nhất 2 giám khảo để phân tích IRR',
+                    'message' => 'Cần ít nhất 2 giám khảo chính để phân tích IRR',
                     'data' => [
                         'irr' => null,
-                        'chiTietDiem' => $chiTietDiem
+                        'chiTietDiem' => $chiTietDiem,
+                        'phanCongTrongTai' => $phanCongTrongTai
                     ]
                 ], JSON_UNESCAPED_UNICODE);
                 return;
             }
-            
-            // Chuẩn bị mảng điểm theo giám khảo
+
+            // Chuẩn bị mảng điểm chỉ từ GK chính
             $diemTheoGK = [];
-            foreach ($chiTietDiem as $gk) {
+            foreach ($chiTietChinhThuc as $gk) {
                 $diemTheoGK[] = array_column($gk['chiTiet'], 'diem');
             }
-            
+
             $irr = cham_diem_tinh_irr($diemTheoGK);
             
             echo json_encode([
@@ -125,7 +136,8 @@ function handleGetRequest($conn) {
                 'message' => 'Phân tích IRR thành công',
                 'data' => [
                     'irr' => $irr,
-                    'chiTietDiem' => $chiTietDiem
+                    'chiTietDiem' => $chiTietDiem,
+                    'phanCongTrongTai' => $phanCongTrongTai
                 ]
             ], JSON_UNESCAPED_UNICODE);
             break;

@@ -1,4 +1,9 @@
 <?php
+
+define('_AUTHEN', true);
+require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../core/auth_guard.php';
+require_once __DIR__ . '/quan_ly_vong_thi.php';
 /**
  * API Endpoint: Sắp xếp thứ tự vòng thi
  * Method: PUT/POST
@@ -11,8 +16,14 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/quan_ly_vong_thi.php';
-require_once __DIR__ . '/../core/session_helper.php';
+// ── Auth ──────────────────────────────────────────────────────────
+$_raw_body = file_get_contents('php://input');
+$input = json_decode($_raw_body, true);
+if (!is_array($input)) {
+    $input = $_POST;
+}
+$idSk = isset($input['id_su_kien']) ? (int) $input['id_su_kien'] : 0;
+$actor = auth_require_quyen_su_kien($idSk, 'cauhinh_sukien');
 
 // Chỉ chấp nhận PUT hoặc POST
 if (!in_array($_SERVER['REQUEST_METHOD'], ['PUT', 'POST'])) {
@@ -25,24 +36,7 @@ if (!in_array($_SERVER['REQUEST_METHOD'], ['PUT', 'POST'])) {
 }
 
 try {
-    // Lấy thông tin người dùng từ session
-    $session_user = get_current_user_from_session();
-    $id_nguoi_thuc_hien = $session_user['idTK'] ?? 0;
-
-    if ($id_nguoi_thuc_hien <= 0) {
-        http_response_code(401);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Vui lòng đăng nhập để thực hiện thao tác này',
-        ]);
-        exit;
-    }
-
-    // Parse request body
-    $input = json_decode(file_get_contents('php://input'), true);
-    if (!is_array($input)) {
-        $input = $_POST;
-    }
+    $id_nguoi_thuc_hien = $actor['idTK'];
 
     // Validate required fields
     $id_su_kien = isset($input['id_su_kien']) ? (int) $input['id_su_kien'] : 0;
@@ -67,7 +61,6 @@ try {
     }
 
     // Gọi service function
-    $conn = _connect();
     $result = sap_xep_thu_tu_vong_thi($conn, $id_nguoi_thuc_hien, $id_su_kien, $thu_tu_moi);
 
     if ($result['status']) {
