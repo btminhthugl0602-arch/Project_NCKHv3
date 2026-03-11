@@ -235,7 +235,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     <p class="text-sm">Không có yêu cầu nào đang chờ</p>
                 </div>`;
 
-                return list.map(yc => `
+                return list.map(yc => {
+                    const roleBadge = yc.loaiYeuCau === 'GVHD'
+                        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700"><i class="fas fa-chalkboard-teacher"></i> Xin làm GVHD</span>`
+                        : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700"><i class="fas fa-user-plus"></i> Xin tham gia</span>`;
+                    return `
                     <div id="yc-${yc.idYeuCau}" class="flex items-center justify-between p-4 border border-slate-200 rounded-xl mb-3">
                         <div class="flex items-center gap-3">
                             <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-400 flex items-center justify-center text-white text-sm font-bold">
@@ -243,7 +247,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-slate-700 mb-0">${esc(yc.ten)}</p>
-                                ${yc.loiNhan ? `<p class="text-xs text-slate-400 italic">"${esc(yc.loiNhan)}"</p>` : ''}
+                                <div class="mt-0.5">${roleBadge}</div>
+                                ${yc.loiNhan ? `<p class="text-xs text-slate-400 italic mt-0.5">"${esc(yc.loiNhan)}"</p>` : ''}
                             </div>
                         </div>
                         <div class="flex gap-2">
@@ -256,7 +261,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <i class="fas fa-times mr-1"></i> Từ chối
                             </button>
                         </div>
-                    </div>`).join('');
+                    </div>`;
+                }).join('');
             }
 
             function renderCaiDat(nhom) {
@@ -898,16 +904,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const elHistList = document.getElementById('historyList');
 
         function renderInviteCard(inv) {
-            const soTV = parseInt(inv.so_thanh_vien || 0);
-            const toiDa = parseInt(inv.soluongtoida || 5);
+            const soTV = parseInt(inv.so_thanh_vien_sv || 0);
+            const roleBadge = inv.loaiYeuCau === 'GVHD'
+                ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700"><i class="fas fa-chalkboard-teacher"></i> Mời làm GVHD</span>`
+                : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700"><i class="fas fa-users"></i> Mời tham gia nhóm</span>`;
             return `<div id="invite-${inv.idYeuCau}" class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3 shadow-soft-sm">
                 <div class="flex items-center justify-between gap-2">
                     <span class="font-bold text-slate-800 text-sm">${esc(inv.tennhom)}</span>
-                    <span class="text-xs text-slate-400">${soTV}/${toiDa} thành viên</span>
+                    <span class="text-xs text-slate-400">${soTV} thành viên</span>
                 </div>
-                ${inv.ten_truong_nhom ? `<div><span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700">
-                    <i class="fas fa-crown text-yellow-500" style="font-size:9px"></i> ${esc(inv.ten_truong_nhom)}
-                </span></div>` : ''}
+                <div>${roleBadge}</div>
                 ${inv.loiNhan ? `<p class="text-xs text-slate-500 italic">"${esc(inv.loiNhan)}"</p>` : ''}
                 <div class="flex gap-2">
                     <button onclick="respondInvite(${inv.idYeuCau}, 1)"
@@ -924,13 +930,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         async function loadInvites() {
             try {
-                const [pRes, aRes] = await Promise.all([
-                    apiFetch(`/api/nhom/getrequest.php?id_sk=${idSk}`),
-                    apiFetch(`/api/nhom/getrequest.php?id_sk=${idSk}&tat_ca=1`),
-                ]);
+                const d = await apiFetch(`/api/nhom/getrequest.php?id_sk=${idSk}`);
                 elLoading.classList.add('hidden');
-                const pending = pRes.data || [];
-                const history = (aRes.data || []).filter(i => parseInt(i.trangThai) !== 0);
+                if (d.status !== 'success') {
+                    elError.textContent = d.message || 'Lỗi tải dữ liệu';
+                    elError.classList.remove('hidden');
+                    return;
+                }
+                const pending = d.data?.loi_moi_den || [];
+                const history = (d.data?.yeu_cau_gui_di || []).filter(i => parseInt(i.trangThai) !== 0);
 
                 if (!pending.length) {
                     elEmpty.innerHTML = `<div class="flex flex-col items-center justify-center py-16 text-center">
@@ -950,8 +958,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (history.length) {
                     elHistList.innerHTML = history.map(i => {
                         const ok = parseInt(i.trangThai) === 1;
+                        const roleLabel = i.loaiYeuCau === 'GVHD' ? 'GVHD' : 'Thành viên';
                         return `<div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                            <span class="text-sm text-slate-600">${esc(i.tennhom)}</span>
+                            <div>
+                                <span class="text-sm text-slate-600">${esc(i.tennhom)}</span>
+                                <span class="text-xs text-slate-400 ml-2">(${roleLabel})</span>
+                            </div>
                             <span class="text-xs px-2 py-0.5 rounded-full ${ok ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}">${ok ? 'Đã chấp nhận' : 'Đã từ chối'}</span>
                         </div>`;
                     }).join('');
@@ -978,7 +990,7 @@ document.addEventListener('DOMContentLoaded', function () {
             confirmButtonColor: '#5e72e4',
         });
         if (!r.isConfirmed) return;
-        const res = await apiPost('/api/nhom/gui_yeu_cau.php', { id_sk: idSk, id_nhom: idNhom, chieu_moi: 1, loi_nhan: r.value || '' });
+        const res = await apiPost('/api/nhom/gui_yeu_cau.php', { id_sk: idSk, id_nhom: idNhom, chieu_moi: 1, loai_yeu_cau: 'SV', loi_nhan: r.value || '' });
         Swal.fire({ icon: res.status === 'success' ? 'success' : 'error', title: res.message, confirmButtonColor: '#5e72e4' });
     };
 

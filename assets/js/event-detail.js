@@ -1151,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Load necessary data
             const promises = [
-                fetch(`${BASE_PATH}/api/cham_diem/phan_cong_giam_khao.php?action=list_giang_vien`, {
+                fetch(`${BASE_PATH}/api/cham_diem/phan_cong_giam_khao.php?action=list_giang_vien&id_sk=${encodeURIComponent(idSk)}`, {
                     method: 'GET',
                     credentials: 'same-origin'
                 }).then(r => r.json()),
@@ -2464,24 +2464,24 @@ document.addEventListener('DOMContentLoaded', function () {
         let _vongThiOptions = [];
 
         // ── DOM refs ──────────────────────────────────────────
-        const elVongThiList    = document.getElementById('tlVongThiList');
-        const elCurrentName    = document.getElementById('tlCurrentRoundName');
-        const elFieldList      = document.getElementById('tlFieldList');
-        const btnAddField      = document.getElementById('btnTlAddField');
-        const copySrc          = document.getElementById('tlCopySrc');
-        const copyDst          = document.getElementById('tlCopyDst');
-        const copyMode         = document.getElementById('tlCopyMode');
-        const btnCopyForm      = document.getElementById('btnTlCopyForm');
-        const modal            = document.getElementById('tlFieldModal');
-        const modalTitle       = document.getElementById('tlModalTitle');
-        const fieldEditId      = document.getElementById('tlFieldEditId');
-        const fieldTen         = document.getElementById('tlFieldTenTruong');
-        const fieldKieu        = document.getElementById('tlFieldKieuTruong');
-        const fieldBatBuoc     = document.getElementById('tlFieldBatBuoc');
+        const elVongThiList = document.getElementById('tlVongThiList');
+        const elCurrentName = document.getElementById('tlCurrentRoundName');
+        const elFieldList = document.getElementById('tlFieldList');
+        const btnAddField = document.getElementById('btnTlAddField');
+        const copySrc = document.getElementById('tlCopySrc');
+        const copyDst = document.getElementById('tlCopyDst');
+        const copyMode = document.getElementById('tlCopyMode');
+        const btnCopyForm = document.getElementById('btnTlCopyForm');
+        const modal = document.getElementById('tlFieldModal');
+        const modalTitle = document.getElementById('tlModalTitle');
+        const fieldEditId = document.getElementById('tlFieldEditId');
+        const fieldTen = document.getElementById('tlFieldTenTruong');
+        const fieldKieu = document.getElementById('tlFieldKieuTruong');
+        const fieldBatBuoc = document.getElementById('tlFieldBatBuoc');
         const fieldCauHinhWrap = document.getElementById('tlFieldCauHinhWrap');
-        const btnModalClose    = document.getElementById('btnTlModalClose');
-        const btnModalCancel   = document.getElementById('btnTlModalCancel');
-        const btnModalSave     = document.getElementById('btnTlModalSave');
+        const btnModalClose = document.getElementById('btnTlModalClose');
+        const btnModalCancel = document.getElementById('btnTlModalCancel');
+        const btnModalSave = document.getElementById('btnTlModalSave');
 
         if (!elVongThiList) return;
 
@@ -2506,7 +2506,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return fetch(BASE_PATH + url).then(r => r.json());
         }
         function escHtml(s) {
-            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
         function escHtmlAttr(s) {
             return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#039;');
@@ -2532,8 +2532,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="flex items-center justify-between">
                         <span><i class="fas fa-layer-group mr-1.5 opacity-40 text-xs"></i>${escHtml(vt.tenVongThi)}</span>
                         <span class="text-xs px-2 py-0.5 rounded-full ${parseInt(vt.soField) > 0
-                            ? 'bg-fuchsia-100 text-fuchsia-600'
-                            : 'bg-slate-100 text-slate-400'}">
+                    ? 'bg-fuchsia-100 text-fuchsia-600'
+                    : 'bg-slate-100 text-slate-400'}">
                             ${vt.soField} trường
                         </span>
                     </div>
@@ -2570,12 +2570,12 @@ document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.tl-vt-btn').forEach(b => {
                 const isActive = parseInt(b.dataset.id) === idVT;
                 b.classList.toggle('border-fuchsia-400', isActive);
-                b.classList.toggle('bg-fuchsia-50',      isActive);
-                b.classList.toggle('text-fuchsia-700',   isActive);
-                b.classList.toggle('font-semibold',      isActive);
-                b.classList.toggle('border-slate-200',   !isActive);
-                b.classList.toggle('bg-white',           !isActive);
-                b.classList.toggle('text-slate-700',     !isActive);
+                b.classList.toggle('bg-fuchsia-50', isActive);
+                b.classList.toggle('text-fuchsia-700', isActive);
+                b.classList.toggle('font-semibold', isActive);
+                b.classList.toggle('border-slate-200', !isActive);
+                b.classList.toggle('bg-white', !isActive);
+                b.classList.toggle('text-slate-700', !isActive);
             });
         }
 
@@ -2591,7 +2591,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             elFieldList.innerHTML = fields.map(f => {
-                const icon  = KIEU_ICON[f.kieuTruong]  || 'fa-question';
+                const icon = KIEU_ICON[f.kieuTruong] || 'fa-question';
                 const label = KIEU_LABEL[f.kieuTruong] || f.kieuTruong;
                 const inactive = parseInt(f.isActive) === 0;
                 return `
@@ -2636,9 +2636,9 @@ document.addEventListener('DOMContentLoaded', function () {
             elFieldList.querySelectorAll('[data-action]').forEach(btn => {
                 btn.addEventListener('click', function () {
                     const action = this.dataset.action;
-                    const id     = parseInt(this.dataset.id);
-                    const name   = this.dataset.name || '';
-                    if (action === 'edit')   handleEditField(id);
+                    const id = parseInt(this.dataset.id);
+                    const name = this.dataset.name || '';
+                    if (action === 'edit') handleEditField(id);
                     if (action === 'toggle') handleToggleField(id);
                     if (action === 'delete') handleDeleteField(id, name);
                 });
@@ -2717,10 +2717,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const cfg = {};
             switch (kieu) {
                 case 'FILE': {
-                    const accept  = document.getElementById('cfAccept')?.value.trim();
+                    const accept = document.getElementById('cfAccept')?.value.trim();
                     const maxSize = parseInt(document.getElementById('cfMaxSize')?.value || 0);
-                    if (accept)   cfg.accept    = accept;
-                    if (maxSize)  cfg.maxSizeKB = maxSize;
+                    if (accept) cfg.accept = accept;
+                    if (maxSize) cfg.maxSizeKB = maxSize;
                     break;
                 }
                 case 'SELECT': {
@@ -2730,12 +2730,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 case 'TEXT':
                 case 'TEXTAREA': {
-                    const ph  = document.getElementById('cfPlaceholder')?.value.trim();
-                    const ml  = parseInt(document.getElementById('cfMaxLength')?.value || 0);
+                    const ph = document.getElementById('cfPlaceholder')?.value.trim();
+                    const ml = parseInt(document.getElementById('cfMaxLength')?.value || 0);
                     const rws = parseInt(document.getElementById('cfRows')?.value || 0);
-                    if (ph)  cfg.placeholder = ph;
-                    if (ml)  cfg.maxLength   = ml;
-                    if (rws) cfg.rows        = rws;
+                    if (ph) cfg.placeholder = ph;
+                    if (ml) cfg.maxLength = ml;
+                    if (rws) cfg.rows = rws;
                     break;
                 }
                 case 'URL': {
@@ -2755,10 +2755,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // ── Modal ─────────────────────────────────────────────
         function showModal(title, editData = null) {
             if (!modal) return;
-            if (modalTitle)  modalTitle.textContent = title;
+            if (modalTitle) modalTitle.textContent = title;
             if (fieldEditId) fieldEditId.value = editData?.idField || '';
-            if (fieldTen)    fieldTen.value    = editData?.tenTruong || '';
-            if (fieldKieu)   fieldKieu.value   = editData?.kieuTruong || 'TEXT';
+            if (fieldTen) fieldTen.value = editData?.tenTruong || '';
+            if (fieldKieu) fieldKieu.value = editData?.kieuTruong || 'TEXT';
             if (fieldBatBuoc) fieldBatBuoc.checked = editData ? parseInt(editData.batBuoc) === 1 : true;
             renderCauHinhInputs(
                 editData?.kieuTruong || 'TEXT',
@@ -2852,11 +2852,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         btnModalSave?.addEventListener('click', async function () {
-            const tenTruong   = fieldTen?.value.trim() || '';
-            const kieuTruong  = fieldKieu?.value || 'TEXT';
-            const batBuoc     = fieldBatBuoc?.checked ? 1 : 0;
+            const tenTruong = fieldTen?.value.trim() || '';
+            const kieuTruong = fieldKieu?.value || 'TEXT';
+            const batBuoc = fieldBatBuoc?.checked ? 1 : 0;
             const cauHinhJson = collectCauHinhJson(kieuTruong);
-            const editId      = fieldEditId?.value ? parseInt(fieldEditId.value) : null;
+            const editId = fieldEditId?.value ? parseInt(fieldEditId.value) : null;
 
             if (!tenTruong) {
                 Swal.fire({ icon: 'warning', title: 'Thiếu dữ liệu', text: 'Vui lòng nhập tên trường.' });
@@ -2902,8 +2902,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         btnCopyForm?.addEventListener('click', async function () {
-            const src  = parseInt(copySrc?.value) || null;
-            const dst  = parseInt(copyDst?.value) || null;
+            const src = parseInt(copySrc?.value) || null;
+            const dst = parseInt(copyDst?.value) || null;
             const mode = copyMode?.value || 'them_vao';
             if (!src || !dst) {
                 Swal.fire({ icon: 'warning', title: 'Chưa chọn', text: 'Vui lòng chọn nguồn và đích.' });

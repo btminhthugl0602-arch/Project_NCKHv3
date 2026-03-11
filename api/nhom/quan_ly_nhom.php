@@ -961,7 +961,9 @@ function lay_nhom_cua_toi(PDO $conn, int $idTK, int $idSK): ?array
              LEFT JOIN taikhoan tk ON yc.idTK = tk.idTK
              LEFT JOIN sinhvien sv ON tk.idTK = sv.idTK
              LEFT JOIN giangvien gv ON tk.idTK = gv.idTK
-             WHERE yc.idNhom = :idNhom AND yc.trangThai = 0
+             WHERE yc.idNhom = :idNhom
+               AND yc.trangThai = 0
+               AND (yc.ChieuMoi = 1 OR yc.loaiYeuCau = \'SV\')
              ORDER BY yc.ngayGui DESC'
         );
         $stmtYC->execute([':idNhom' => $idNhom]);
