@@ -2,17 +2,21 @@
 
 /**
  * Trang đăng nhập - ezManagement NCKH
- * views/dang_nhap.php
+ * views/sign-in.php
  */
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (isset($_SESSION['idTK'])) {
+$_alreadyLoggedIn = isset($_SESSION['idTK']) && (int)$_SESSION['idTK'] > 0;
+if ($_alreadyLoggedIn) {
     header('Location: /dashboard');
     exit();
 }
+
+// Guest đang xem với tư cách khách — cho vào trang đăng nhập bình thường
+// (session guest sẽ bị ghi đè khi đăng nhập thành công)
 
 $redirect = isset($_GET['redirect']) ? $_GET['redirect'] : '/dashboard';
 ?>
@@ -143,100 +147,100 @@ $redirect = isset($_GET['redirect']) ? $_GET['redirect'] : '/dashboard';
     <script src="/assets/js/plugins/perfect-scrollbar.min.js" async></script>
     <script src="/assets/js/soft-ui-dashboard-tailwind.js?v=1.0.5" async></script>
     <script>
-    function togglePassword() {
-        const input = document.getElementById('matKhau');
-        const icon = document.getElementById('eyeIcon');
-        input.type = input.type === 'password' ? 'text' : 'password';
-        icon.classList.toggle('fa-eye');
-        icon.classList.toggle('fa-eye-slash');
-    }
-
-    function showError(msg) {
-        document.getElementById('errorMsg').textContent = msg;
-        document.getElementById('errorBox').classList.remove('hidden');
-    }
-
-    function hideError() {
-        document.getElementById('errorBox').classList.add('hidden');
-    }
-
-    function setLoginLoading(on) {
-        document.getElementById('btnText').classList.toggle('hidden', on);
-        document.getElementById('btnLoading').classList.toggle('hidden', !on);
-        document.getElementById('loginBtn').disabled = on;
-    }
-
-    function setGuestLoading(on) {
-        document.getElementById('guestText').classList.toggle('hidden', on);
-        document.getElementById('guestLoading').classList.toggle('hidden', !on);
-        document.getElementById('guestBtn').disabled = on;
-    }
-
-    function doLogin() {
-        hideError();
-        const tenTK = document.getElementById('tenTK').value.trim();
-        const matKhau = document.getElementById('matKhau').value;
-        const redirect = document.getElementById('redirectUrl').value;
-
-        if (!tenTK || !matKhau) {
-            showError('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.');
-            return;
+        function togglePassword() {
+            const input = document.getElementById('matKhau');
+            const icon = document.getElementById('eyeIcon');
+            input.type = input.type === 'password' ? 'text' : 'password';
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
         }
 
-        setLoginLoading(true);
+        function showError(msg) {
+            document.getElementById('errorMsg').textContent = msg;
+            document.getElementById('errorBox').classList.remove('hidden');
+        }
 
-        const fd = new FormData();
-        fd.append('tenTK', tenTK);
-        fd.append('matKhau', matKhau);
-        fd.append('redirect', redirect);
+        function hideError() {
+            document.getElementById('errorBox').classList.add('hidden');
+        }
 
-        fetch('/api/tai_khoan/dang_nhap.php', {
-                method: 'POST',
-                body: fd
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    window.location.href = data.data.redirect || '/dashboard';
-                } else {
-                    showError(data.message || 'Đăng nhập thất bại.');
+        function setLoginLoading(on) {
+            document.getElementById('btnText').classList.toggle('hidden', on);
+            document.getElementById('btnLoading').classList.toggle('hidden', !on);
+            document.getElementById('loginBtn').disabled = on;
+        }
+
+        function setGuestLoading(on) {
+            document.getElementById('guestText').classList.toggle('hidden', on);
+            document.getElementById('guestLoading').classList.toggle('hidden', !on);
+            document.getElementById('guestBtn').disabled = on;
+        }
+
+        function doLogin() {
+            hideError();
+            const tenTK = document.getElementById('tenTK').value.trim();
+            const matKhau = document.getElementById('matKhau').value;
+            const redirect = document.getElementById('redirectUrl').value;
+
+            if (!tenTK || !matKhau) {
+                showError('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.');
+                return;
+            }
+
+            setLoginLoading(true);
+
+            const fd = new FormData();
+            fd.append('tenTK', tenTK);
+            fd.append('matKhau', matKhau);
+            fd.append('redirect', redirect);
+
+            fetch('/api/tai_khoan/sign-in.php', {
+                    method: 'POST',
+                    body: fd
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.location.href = data.data.redirect || '/dashboard';
+                    } else {
+                        showError(data.message || 'Đăng nhập thất bại.');
+                        setLoginLoading(false);
+                    }
+                })
+                .catch(() => {
+                    showError('Lỗi kết nối, vui lòng thử lại.');
                     setLoginLoading(false);
-                }
-            })
-            .catch(() => {
-                showError('Lỗi kết nối, vui lòng thử lại.');
-                setLoginLoading(false);
-            });
-    }
+                });
+        }
 
-    function doGuest() {
-        setGuestLoading(true);
-        const fd = new FormData();
-        fd.append('guest', '1');
+        function doGuest() {
+            setGuestLoading(true);
+            const fd = new FormData();
+            fd.append('guest', '1');
 
-        fetch('/api/tai_khoan/dang_nhap.php', {
-                method: 'POST',
-                body: fd
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    window.location.href = data.data.redirect || '/su-kien';
-                } else {
-                    showError(data.message || 'Có lỗi xảy ra.');
+            fetch('/api/tai_khoan/sign-in.php', {
+                    method: 'POST',
+                    body: fd
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.location.href = data.data.redirect || '/su-kien';
+                    } else {
+                        showError(data.message || 'Có lỗi xảy ra.');
+                        setGuestLoading(false);
+                    }
+                })
+                .catch(() => {
+                    showError('Lỗi kết nối, vui lòng thử lại.');
                     setGuestLoading(false);
-                }
-            })
-            .catch(() => {
-                showError('Lỗi kết nối, vui lòng thử lại.');
-                setGuestLoading(false);
-            });
-    }
+                });
+        }
 
-    // Enter để đăng nhập
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Enter') doLogin();
-    });
+        // Enter để đăng nhập
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter') doLogin();
+        });
     </script>
 </body>
 

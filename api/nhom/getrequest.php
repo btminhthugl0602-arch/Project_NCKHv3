@@ -1,6 +1,7 @@
 <?php
 define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../core/auth_guard.php';
 require_once __DIR__ . '/quan_ly_nhom.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -11,8 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-$idSk  = isset($_GET['id_sk'])  ? (int) $_GET['id_sk'] : 0;
-$tatCa = isset($_GET['tat_ca']) && (int) $_GET['tat_ca'] === 1;
+$idSk = isset($_GET['id_sk']) ? (int) $_GET['id_sk'] : 0;
 
 if ($idSk <= 0) {
     http_response_code(400);
@@ -20,21 +20,17 @@ if ($idSk <= 0) {
     exit;
 }
 
-if (session_status() === PHP_SESSION_NONE) session_start();
-$idTK = (int) ($_SESSION['user_id'] ?? 0);
-if ($idTK <= 0) {
-    http_response_code(401);
-    echo json_encode(['status' => 'error', 'message' => 'Chưa đăng nhập', 'data' => null], JSON_UNESCAPED_UNICODE);
-    exit;
-}
+// ── Auth ──────────────────────────────────────────────────
+// Chỉ yêu cầu đăng nhập (không cần quyền sự kiện cụ thể)
+$actor = auth_require_login();
+$idTK  = $actor['idTK'];
 
 try {
-    $loiMoi = lay_loi_moi($conn, $idTK, $idSk, $tatCa);
-
+    $data = lay_yeu_cau_cua_toi($conn, $idTK, $idSk);
     echo json_encode([
         'status'  => 'success',
-        'message' => 'Lấy lời mời thành công',
-        'data'    => $loiMoi,
+        'message' => 'Lấy yêu cầu thành công',
+        'data'    => $data,
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     http_response_code(500);

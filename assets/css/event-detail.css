@@ -1,3 +1,8 @@
+/* SweetAlert2 phải hiển thị trên tất cả modal (modal có z-index 9999) */
+.swal2-container {
+    z-index: 20000 !important;
+}
+
 .swal2-container .swal2-popup.swal-round-popup {
     border-radius: 14px !important;
 }

@@ -1,5 +1,465 @@
 # CHANGELOG
 
+## [Unreleased] — Part B: Giao diện Nộp tài liệu (Sinh viên/Nhóm)
+
+### Tính năng mới
+- **`api/nhom/lay_tai_lieu.php`** *(mới)*: GET endpoint trả về toàn bộ dữ liệu cần cho tab Nộp tài liệu:
+  - `sanpham` (null nếu chưa tạo), `chuDeSK`, `vongThi` (mảng, gồm `soField`, `daNop`, `daQiaHan`, `khongCanNop`)
+  - Khi có `?id_vong_thi=`: trả thêm `formFields` và `daNopValues` (keyed by `idField`)
+  - Auth: thành viên hoặc GVHD của nhóm
+- **`views/partials/event-detail/tab-nhom-my.php`**: Thêm sub-tab `nop-tai-lieu` (Nộp tài liệu)
+- **`assets/js/nhom_thi.js`** — thêm 6 hàm mới:
+  - `renderNopTaiLieuSkeleton()`: placeholder loading
+  - `loadNopTaiLieu(nhom)`: async fetch + render toàn bộ tab
+  - `buildNopTaiLieuUI()`: render layout 2 cột (vòng thi | form)
+  - `buildFormHTML()`: render dynamic form theo `kieuTruong` (TEXT/TEXTAREA/URL/FILE/SELECT/CHECKBOX) với giá trị đã nộp pre-fill
+  - `loadVongThiForm()`: async load form + giá trị đã nộp khi click vòng thi
+  - `bindNtlSubmit()`: submit via `FormData` (hỗ trợ cả text và file upload)
+  - `bindNopTaiLieu()`: bind toàn bộ event listeners (modal tạo/sửa đề tài, chọn vòng thi)
+
+### Bug fixes
+- **`api/nhom/quan_ly_nhom.php` — `nop_tai_lieu_vong()`**: Sửa lỗi INSERT thiếu cột `idVongThi` vào `sanpham_field_value` — giờ lưu đúng `idVongThi` để đảm bảo tính nhất quán dữ liệu
+
+---
+
+## 2026-03-11 — Sửa lỗi đồng bộ Code ↔ Database Schema
+
+### Bug fixes
+- **`api/su_kien/dang_ky_tham_gia.php`**: Xóa tham chiếu đến cột `cheDoDangKySV` và `cheDoDangKyGV` không tồn tại trong bảng `sukien` — nguyên nhân gây lỗi "Lỗi hệ thống" khi sinh viên đăng ký tham gia sự kiện
+- **`api/nhom/nop_bai.php`**: Thay thế lời gọi hàm `nop_bai_nhom()` (không tồn tại) bằng `tao_hoac_cap_nhat_san_pham()` — nguyên nhân gây Fatal Error khi nộp bài
+- **`api/su_kien/quan_ly_su_kien.php`**: Sửa hàm `_gui_thong_bao_su_kien_moi()`:
+  - Xóa cột `isPublic` không tồn tại trong bảng `thongbao`
+  - Thêm cột `phamVi` = `'TAT_CA'` theo schema mới
+  - Đổi `loaiThongBao` từ `'su_kien_moi'` (invalid ENUM) thành `'SU_KIEN'`
+  - Xóa INSERT vào bảng `thongbao_nguoinhan` (không tồn tại), dùng `phamVi='TAT_CA'` thay thế
+- **`api/cham_diem/quan_ly_cham_diem.php`**:
+  - Thay `sp.isActive = 1` bằng `sp.trangThai != 'BI_LOAI'` (bảng `sanpham` không có cột `isActive`, dùng ENUM `trangThai`)
+  - Sửa `n.idnhomtruong` thành `n.idTruongNhom` (tên cột đúng trong bảng `nhom`)
+- **`api/nhom/quan_ly_nhom.php`**: Thêm hàm `_merge_thanh_vien()` và gộp `thanh_vien_sv` + `gvhd` thành mảng `thanh_vien` thống nhất với các key `idtk`, `idvaitronhom`, `msv_ma` — khớp với cấu trúc dữ liệu frontend cần
+- **`api/nhom/tim_kiem_user.php`**: Sửa đọc query parameter — API đọc `keyword` nhưng frontend gửi `q`, giờ hỗ trợ cả hai
+
+---
+
+## 2026-03-11 — Refactor Nhóm 4: Nộp sản phẩm (Schema v2)
+
+### Thay đổi nghiệp vụ
+- **Sản phẩm**: Mỗi nhóm chỉ 1 sản phẩm per SK (`UNIQUE KEY uq_nhom_sk`). Tạo mới hoặc cập nhật qua cùng API
+- **Nộp tài liệu**: Theo form động (`form_field`) gắn với vòng thi. Hỗ trợ TEXT/TEXTAREA/URL/FILE/SELECT/CHECKBOX
+- **Quyền**: Chỉ `idTruongNhom` được tạo/cập nhật sản phẩm và nộp tài liệu
+- **Validate file**: Kiểm tra định dạng (`cauHinhJson.accept`) và kích thước (`cauHinhJson.maxSizeKB`)
+- **Nộp lại**: Dùng `ON DUPLICATE KEY UPDATE` trên `(idSanPham, idField)` — không tạo bản ghi trùng
+- **Deadline**: Check `vongthi.thoiGianDongNop > NOW()` trước khi cho nộp
+- **GVHD**: Nếu `sukien.yeuCauCoGVHD = 1`, nhóm phải có GVHD trước khi tạo sản phẩm
+
+### API thay đổi
+- **`api/nhom/san_pham.php`** *(MỚI)*: POST, JSON input `{ id_nhom, ten_san_pham, id_chu_de_sk? }`. Lấy `idSK` từ nhóm
+- **`api/nhom/nop_tai_lieu.php`** *(MỚI)*: POST multipart/form-data. Input: `id_nhom`, `id_vong_thi`, `field_{id}` (text), `file_{id}` (file)
+- **`api/nhom/nop_bai.php`**: Vẫn giữ nguyên (endpoint cũ, sử dụng hàm cũ đã bị thay thế — cần migrate sang `san_pham.php`)
+
+### Business logic (`api/nhom/quan_ly_nhom.php`)
+- Xóa: `nop_bai_nhom()` (dùng schema cũ với `moTa`, `linkTaiLieu`, `TrangThai`, `isActive`)
+- Thêm mới: `tao_hoac_cap_nhat_san_pham()`, `nop_tai_lieu_vong()`, `lay_san_pham_nhom()`, `lay_tai_lieu_da_nop()`, `lay_form_vong_thi()`
+
+---
+
+## 2026-03-10 — Refactor Nhóm 3: Đọc dữ liệu (Schema v2)
+
+### Thay đổi nghiệp vụ
+- **`lay_tat_ca_nhom()`**: Query dùng JOIN + GROUP BY thay vì correlated subquery. Trả thêm `ten_chu_nhom`, `ten_truong_nhom`, `so_thanh_vien_sv`, `so_gvhd`, `soThanhVienToiDa`
+- **`lay_nhom_cua_toi()`**: Dùng UNION để tìm nhóm cho cả SV lẫn GV. Trả tách biệt `thanh_vien_sv` và `gvhd`, kèm `is_chu_nhom`, `is_truong_nhom`
+- **`lay_yeu_cau_cua_toi()`** *(MỚI)*: Thay thế `lay_loi_moi()`. Trả 2 mảng `loi_moi_den` và `yeu_cau_gui_di`
+- **`lay_chi_tiet_nhom()`**: Thêm param `$idTKNguoiXem`, auth check (chủ nhóm/thành viên/GVHD). Trả tách biệt `thanh_vien_sv` và `gvhd`
+- **`kiem_tra_user_co_nhom()`** *(MỚI)*: Kiểm tra cả SV và GV có nhóm, thay thế `kiem_tra_sv_co_nhom()` ở endpoint
+- **`tim_kiem_sinh_vien()`**: Thêm param `$idSK`. Trả thêm `da_dang_ky_sk`, `da_co_nhom`
+- **`tim_kiem_giang_vien()`**: Thêm param `$idSK`. Trả thêm `da_dang_ky_sk`, `so_nhom_dang_huong_dan`
+
+### API thay đổi
+- **`api/nhom/getallnhom.php`**: Response `data` wrap thành `{ nhom: [...], user_has_group: bool }`. Dùng `kiem_tra_user_co_nhom()` cho cả SV/GV
+- **`api/nhom/getmygroup.php`**: Message rõ ràng hơn khi chưa có nhóm
+- **`api/nhom/getchitietnhom.php`**: Bỏ param `id_sk` (lấy từ nhóm). Auth check tích hợp trong `lay_chi_tiet_nhom()`. Trả 403 khi không có quyền xem
+- **`api/nhom/getrequest.php`**: Dùng `lay_yeu_cau_cua_toi()`. Bỏ param `tat_ca`. Response trả `{ loi_moi_den, yeu_cau_gui_di }`
+- **`api/nhom/tim_kiem_user.php`**: Param `q` → `keyword`. Truyền `$idSK` vào hàm tìm kiếm. Dùng `mb_strlen` cho check độ dài
+
+### Business logic (`api/nhom/quan_ly_nhom.php`)
+- Viết lại: `tim_kiem_giang_vien()`, `tim_kiem_sinh_vien()`, `lay_tat_ca_nhom()`, `lay_nhom_cua_toi()`, `lay_chi_tiet_nhom()`
+- Thêm mới: `kiem_tra_user_co_nhom()`, `lay_yeu_cau_cua_toi()`
+- Xóa: `lay_loi_moi()`
+- Bỏ tham chiếu tới: `vaitronhom`, `trangthai`, `laChuNhom`, `idvaitronhom`, `soluongtoida`
+
+---
+
+## 2026-03-10 — Refactor Nhóm 2: Thành viên (Schema v2)
+
+### Thay đổi nghiệp vụ
+- **Gửi yêu cầu** hỗ trợ `loaiYeuCau` = `'SV'` | `'GVHD'`, validate đúng loại tài khoản
+- Kiểm tra config sự kiện: `soThanhVienToiDa`, `soGVHDToiDa`, `soNhomToiDaGVHD` khi gửi & duyệt
+- **Duyệt yêu cầu SV**: INSERT vào `thanhviennhom`, auto-reject pending requests của SV trong cùng SK
+- **Duyệt yêu cầu GVHD**: INSERT vào `nhom_gvhd` + INSERT `taikhoan_vaitro_sukien` (nguonTao=`QUA_NHOM`)
+- **Rời nhóm**: SV → DELETE `thanhviennhom`, GV → DELETE `nhom_gvhd` + deactivate `taikhoan_vaitro_sukien`
+- Chủ nhóm không thể rời, Trưởng nhóm không thể tự rời (chủ nhóm kick → SET `idTruongNhom=NULL`)
+
+### API thay đổi
+- **`api/nhom/gui_yeu_cau.php`**: Bỏ param `id_sk` (lấy từ DB). Thêm param `loai_yeu_cau` (`'SV'`|`'GVHD'`)
+- **`api/nhom/duyet_yeu_cau.php`**: Bỏ param `id_sk` (lấy từ yêu cầu → nhóm). Input: `id_yeu_cau`, `trang_thai`
+- **`api/nhom/roinhom.php`**: Bỏ param `id_sk` (lấy từ DB). Hỗ trợ rời nhóm GV/SV
+
+### Business logic (`api/nhom/quan_ly_nhom.php`)
+- Viết lại: `gui_yeu_cau_nhom()`, `duyet_yeu_cau_nhom()`, `roi_nhom()`
+- Bỏ tham chiếu tới: `vaitronhom`, `trangthai`, `laChuNhom`, `soluongtoida`
+- Sử dụng transaction cho `duyet_yeu_cau_nhom()` và `roi_nhom()`
+
+---
+
+## 2026-03-10 — Refactor Nhóm 1: Khởi tạo nhóm (Schema v2)
+
+### Thay đổi nghiệp vụ
+- **Chủ nhóm** (`nhom.idChuNhom`) và **Trưởng nhóm** (`nhom.idTruongNhom`) tách biệt hoàn toàn
+- SV tạo nhóm → tự động là Chủ nhóm + Trưởng nhóm
+- GV tạo nhóm → là Chủ nhóm, Trưởng nhóm = NULL (chỉ định sau)
+- GVHD lưu riêng ở bảng `nhom_gvhd`, không tính vào `soThanhVienToiDa`
+- `soThanhVienToiDa` lấy từ cấu hình sự kiện, bỏ cột `thongtinnhom.soluongtoida`
+
+### API thay đổi
+- **`api/nhom/taonhom.php`**: Bỏ param `so_luong_toi_da`, `dang_tuyen`. Response trả `idNhom`, `maNhom`
+- **`api/nhom/cap_nhat_nhom.php`**: Bỏ param `id_sk` (lấy từ DB). Thêm param `is_active` (optional)
+- **`api/nhom/nhuong_quyen.php`** *(MỚI)*: Nhượng quyền Chủ nhóm hoặc Trưởng nhóm. Input: `id_nhom`, `action` (`chu_nhom`|`truong_nhom`), `id_nguoi_nhan`
+
+### Business logic (`api/nhom/quan_ly_nhom.php`)
+- Viết lại: `la_chu_nhom()`, `la_truong_nhom()`, `kiem_tra_sv_co_nhom()`, `tao_nhom_moi()`, `cap_nhat_thong_tin_nhom()`, `kiem_tra_thanh_vien_nhom()`
+- Thêm mới: `la_thanh_vien_sv()`, `la_gvhd_nhom()`, `so_thanh_vien_sv()`, `so_gvhd_nhom()`, `so_nhom_gv_huong_dan()`, `nhuong_quyen_nhom()`
+
+### Migration
+- `database/migrations/2026_03_10_drop_soluongtoida_thongtinnhom.sql`: Drop cột `soluongtoida` khỏi `thongtinnhom`
+
+---
+
+## 2026-03-10 (Phase 5 — Feature Completion)
+
+### Tính năng & Sửa lỗi cuối cùng
+
+#### 5.1 — Implement động cơ quy chế vòng thi `cham_diem_kiem_tra_quy_che`
+**`api/cham_diem/quan_ly_cham_diem.php`**
+- Thay thế stub `return true` bằng bộ đánh giá điều kiện đệ quy thực sự
+- Thêm `dk_lay_du_lieu_spv($conn, $idSanPham, $idVongThi)`:
+  - Lấy `{diemTrungBinh, xepLoai, trangThai}` từ `sanpham_vongthi` sau khi điểm đã chốt
+- Thêm `dk_evaluate($conn, $idDieuKien, $spvData, $depth)`:
+  - Đệ quy trên cây `dieukien` (DON/TOHOP)
+  - DON: truy vấn `dieukien_don → thuoctinh_kiemtra → toantu`, so sánh số học & chuỗi với short-circuit
+  - TOHOP: truy vấn `tohop_dieukien`, áp dụng AND/OR với short-circuit evaluation
+  - Bảo vệ khỏi vòng lặp vô hạn: giới hạn độ sâu đệ quy = 20
+- `cham_diem_kiem_tra_quy_che()`:
+  - Lấy **tất cả** quy chế `VONGTHI` của sự kiện (không chỉ `LIMIT 1`)
+  - Đánh giá `quyche_dieukien.idDieuKienCuoi` của từng quy chế
+  - Trả về `false` ngay khi vi phạm bất kỳ quy chế nào (AND giữa các quy chế)
+  - Không có quy chế → trả về `true` (mặc định đạt)
+
+#### 5.2 — Fix `idBoTieuChi LIMIT 1` sai ngữ cảnh sản phẩm
+**`api/cham_diem/quan_ly_cham_diem.php`** — hàm `cham_diem_moi_trong_tai()`
+- **Lỗi**: Query `SELECT ... FROM phancongcham WHERE idVongThi=X LIMIT 1` lấy bộ tiêu chí của bất kỳ GK nào trong vòng thi, có thể không phải GK chấm SP đang xét
+- **Fix**: Thêm `INNER JOIN phancong_doclap pd ON pd.idGV = pcc.idGV AND pd.idSanPham = :idSanPham AND pd.isTrongTai = 0` để đảm bảo lấy đúng `idBoTieuChi` của GK chính đang phụ trách SP cụ thể này
+- Cập nhật `execute()` thêm binding `:idSanPham`
+
+#### 5.3 — Export bảng xếp hạng ra CSV
+**`api/cham_diem/xet_ket_qua.php`**
+- Thêm `case 'export_ranking':` trong `handleGetRequest()`
+- Stream CSV với UTF-8 BOM (để Excel nhận đúng tiếng Việt)
+- Cột: Hạng, Tên sản phẩm, Mã nhóm, Tên nhóm, Điểm TB, Xếp loại, Thành viên
+- Header `Content-Disposition: attachment` → browser tự download
+
+**`assets/js/scoring.js`** — `handleExportRanking()`
+- Thay `showToast('đang phát triển')` bằng `window.open(url)` với URL `?action=export_ranking&id_sk=...&id_vong_thi=...`
+- Kiểm tra `idSK` và `idVongThi` trước khi mở
+
+#### 5.4 — Hệ thống thông báo giám khảo
+**`api/thong_bao/giam_khao.php`** *(file mới)*
+- GET `?action=lay_chua_doc&id_sk=X` — lấy thông báo `CA_NHAN` chưa đọc của user hiện tại
+- GET `?action=danh_dau_da_doc&id_thong_bao=Y` — đánh dấu đã đọc (INSERT IGNORE vào `thongbao_da_doc`)
+- POST `{action:'gui_nhac_nho', id_sk, id_vong_thi}` (chỉ BTC):
+  - Truy vấn GK chưa hoàn thành: `phancong_doclap LEFT JOIN chamtieuchi HAVING da_cham < tong_sp`
+  - Tạo 1 bản ghi `thongbao` (phamVi=`CA_NHAN`) + N bản ghi `thongbao_ca_nhan`
+  - Trả về danh sách GK nhận + số lượng SP còn thiếu
+
+**`assets/js/scoring.js`**
+- Thêm `API.thongBaoGK` endpoint
+- Thêm `elements.btnGuiNhacNho` (cache DOM)
+- Bind `click → handleGuiNhacNho()` trong `bindEvents()`
+- `handleGuiNhacNho()`: confirm Swal → POST → showToast với kết quả
+
+**`views/partials/event-detail/tab-scoring.php`**
+- Thêm nút `#btnGuiNhacNho` (Nhắc nhở GK) bên cạnh nút "Làm mới" ở Tab 2 (Tiến độ IRR)
+
+---
+
+## 2026-03-10 (Phase 4 — Performance & Code Quality)
+
+### Refactor — Hiệu năng & Chất lượng mã nguồn
+
+#### 4.1 — Batch query cảnh báo IRR (N+1 → 2 queries)
+**`api/cham_diem/quan_ly_cham_diem.php`**
+- Thêm `cham_diem_lay_chi_tiet_diem_batch($conn, $idSK, $idVongThi)`:
+  - 1 query SQL duy nhất lấy toàn bộ điểm chấm của mọi SP trong vòng thi
+  - Group by `idSanPham → idGV → chiTiet[]` hoàn toàn trong PHP
+- Refactor `cham_diem_lay_danh_sach_canh_bao()`:
+  - **Trước**: gọi `cham_diem_lay_chi_tiet_diem()` trong vòng lặp → N queries
+  - **Sau**: 1 query batch + PHP filter/map → tổng **2 queries** thay vì N+1
+  - Lọc chỉ GK chính (`isTrongTai=0`) trước khi tính IRR (nhất quán với Phase 1)
+
+#### 4.2 — Fix php://input double-read
+**`api/cham_diem/phan_cong_giam_khao.php`**
+- Vấn đề: Auth block đọc `php://input` lần 1 (khi `id_sk` vắng mặt trong GET) và lưu vào `$_SERVER['_PARSED_INPUT']`; `handlePostRequest()` gọi `file_get_contents('php://input')` lần 2 → body rỗng
+- Fix: `handlePostRequest()` kiểm tra `$_SERVER['_PARSED_INPUT']` trước; chỉ đọc `php://input` nếu chưa có (trường hợp `id_sk` đã có trong GET query string)
+
+#### 4.3 — VIEW phân công giám khảo
+**`database/migrations/2026_03_10_create_view_giam_khao_san_pham.sql`** *(migration mới)*
+- `CREATE OR REPLACE VIEW v_giam_khao_san_pham` — gộp `phancong_doclap UNION chamtieuchi` thành 1 VIEW kèm `isTrongTai`
+- **Cần thực thi migration này để VIEW hoạt động**
+
+**`api/cham_diem/quan_ly_cham_diem.php`** — `cham_diem_lay_giam_khao_san_pham()`
+- **Trước**: inline UNION SELECT với 10 tham số PDO (`:idSanPhamN`, `:idVongThiN`)
+- **Sau**: `SELECT ... FROM v_giam_khao_san_pham WHERE idSanPham=? AND idVongThi=?` — 6 tham số, dễ đọc hơn
+
+---
+
+## 2026-03-10 (Phase 3 — UX Refinements)
+
+### Fix + Feature — Cải tiến trải nghiệm quản lý chấm điểm
+
+#### 3.1 — Badge "Trọng tài" trong Tab 1 (Phân công)
+**`api/cham_diem/quan_ly_cham_diem.php`** — `cham_diem_lay_giam_khao_san_pham`
+- LEFT JOIN `phancong_doclap pd_info` để lấy `isTrongTai` cho mỗi GK
+- Thứ tự hiển thị: GK chính trước, Trọng tài sau (`ORDER BY pd_info.isTrongTai ASC`)
+
+**`assets/js/scoring.js`** — `loadPanelPhanCong`
+- Hiển thị badge vàng `Trọng tài` (<i>fas fa-shield-alt</i>) bên cạnh tên GV có `isTrongTai=1`
+- Viền/nền thẻ khác màu (amber) để phân biệt trực quan
+
+#### 3.2 — Fix typo "Đánh rật" → "Đánh rớt"
+**`assets/js/scoring.js`** — `handleRejectFromModal`
+- Sửa 4 vị trí: title, confirmButtonText, toast success message, toast error message
+
+#### Bugfix — `scoredJudges` chưa đổi tên sau Phase 2
+**`assets/js/scoring.js`** — `renderIRRDetailModal`
+- `const noteCount = scoredJudges.length` → `const noteCount = scoredMainJudges.length`
+
+#### 3.3 — Auto-refresh polling Tab 2 (Tiến độ & IRR)
+**`assets/js/scoring.js`**
+- Thêm `state.pollingTimer` + hằng `POLLING_INTERVAL = 30000` (30 giây)
+- `startPolling()` — bắt đầu `setInterval` refresh `loadTienDoCham()`; dừng interval cũ trước khi tạo mới
+- `stopPolling()` — `clearInterval` và reset
+- `switchSubTab()` — tự động `startPolling()` khi chuyển sang Tab 2, `stopPolling()` khi rời
+- Nút refresh thủ công `btnRefreshCanhBao` vẫn hoạt động bình thường
+
+#### 3.4 — Nút "Hủy duyệt" cho bài đã duyệt/loại
+**`api/cham_diem/quan_ly_cham_diem.php`**
+- Thêm `cham_diem_huy_duyet($conn, $idSanPham, $idVongThi)` — reset `trangThai = NULL` về trạng thái chờ xét
+
+**`api/cham_diem/xet_ket_qua.php`**
+- Thêm `cancel_approval` vào danh sách validation params
+- Thêm `case 'cancel_approval'` gọi `cham_diem_huy_duyet()`
+
+**`assets/js/scoring.js`**
+- Thêm `async function huyDuyet(idSanPham)` với Swal xác nhận (phân biệt "hủy duyệt" / "hủy loại")
+- `renderTienDoCham`: Badge "Đã duyệt" và "Bị loại" giờ đi kèm nút "Hủy duyệt" / "Hủy loại"
+- `renderBangVang`: Mỗi bài trong Bảng vàng có nút "Hủy" nhỏ để rút lại duyệt
+- Expose `huyDuyet` trong `window.scoringModule`
+
+---
+
+## 2026-03-10 (Phase 2 — Decision Safety)
+
+### Fix + Feature — An toàn quyết định duyệt điểm & hiển thị IRR
+
+#### 2.1 — Backend `approve_multiple` kiểm tra IRR
+**`api/cham_diem/xet_ket_qua.php`**
+- Tham số `skip_warned` (bool): khi `true`, mỗi bài được kiểm tra IRR trước khi duyệt — bài có `canhBao=true` sẽ bị bỏ qua
+- Response thêm `skippedCount` để frontend biết số bài đã bỏ qua
+
+#### 2.2 — Frontend: `duyetDiem` thêm Swal xác nhận
+**`assets/js/scoring.js`**
+- Hiển thị dialog xác nhận trước khi gọi API duyệt đơn lẻ
+- Nếu bài có cảnh báo IRR (`state.canhBaoMap`): icon `warning`, nút màu vàng, nội dung nhắc nhở
+
+#### 2.3 — Frontend: `handleDuyetTatCa` phân tách bài có cảnh báo
+**`assets/js/scoring.js`**
+- Trước khi gọi API, kiểm tra từng bài trong `listCanDuyet` với `state.canhBaoMap`
+- Hiển thị Swal 3 lựa chọn khi có bài cảnh báo:
+  - **"Duyệt tất cả"**: gồm cả bài cảnh báo
+  - **"Chỉ duyệt bài không cảnh báo"** (nút vàng): chỉ gửi danh sách bài sạch
+  - **"Hủy"**: không làm gì
+- Khi không có cảnh báo: confirm đơn giản như cũ
+
+#### 2.4 — Backend: Ranking đồng hạng chuẩn (competition ranking)
+**`api/cham_diem/quan_ly_cham_diem.php`** — `cham_diem_lay_bang_xep_hang`
+- Các bài điểm bằng nhau chia sẻ cùng hạng; hạng tiếp theo nhảy (1, 1, 3 thay vì 1, 1, 2)
+
+#### 2.5 — Frontend: `overallAvg` chỉ tính GK chính
+**`assets/js/scoring.js`** — `renderIRRDetailModal`
+- `scoredMainJudges = mainJudges.filter(...)` thay vì dùng toàn bộ `judges`
+- Điểm TB hiển thị trong modal IRR không bị pha trộn điểm trọng tài phúc khảo
+
+#### 2.6 — Frontend: `ttScored` yêu cầu trọng tài chấm đủ tiêu chí
+**`assets/js/scoring.js`** — `renderIRRDetailModal`
+- `.some(tc => ...)` → `.every(tc => ...)` để trọng tài chỉ được xem là "đã chấm xong" khi chấm đủ **tất cả** tiêu chí, không chỉ 1
+
+---
+
+## 2026-03-10 (Phase 1 — Data Integrity)
+
+### Fix — Toàn vẹn dữ liệu module chấm điểm (BUG-1, BUG-2, BUG-3, BUG-8, LOGIC-2)
+
+#### 1.1 — Migration: Sửa độ chính xác cột `diemTrungBinh`
+**`database/migrations/2026_03_10_fix_diem_trung_binh_decimal_precision.sql`**
+- `ALTER TABLE sanpham_vongthi MODIFY COLUMN diemTrungBinh decimal(7,2)` — fix lỗi `decimal(5,0)` làm mất phần thập phân (ví dụ 42.75 → 43)
+
+#### 1.2 — BUG-1: Tách `soGiamKhao` thành GK chính / Trọng tài
+**`api/cham_diem/quan_ly_cham_diem.php`** (3 hàm)
+- `cham_diem_lay_danh_sach_san_pham`: `soGiamKhao` giờ chỉ đếm GK chính (`isTrongTai=0`), thêm cột `soTrongTai`, `soGKDaCham` JOIN `phancong_doclap WHERE isTrongTai=0`
+- `cham_diem_lay_thong_ke_tien_do`: `sqlAssigned` chỉ đếm SP có GK chính; `sqlDone` dùng `soGKChinh/soGKChinhDaCham` thay UNION cũ
+- `cham_diem_lay_tat_ca_bai_thi`: Tương tự `lay_danh_sach_san_pham` — thêm `soTrongTai`, fix `soGKDaCham`
+**`assets/js/scoring.js`**
+- Progress label hiển thị `+NTT` khi có trọng tài đã mời (ví dụ: `2/2 GK +1TT`)
+
+#### 1.3 — BUG-2: `cham_diem_tinh_diem_trung_binh` loại trọng tài khỏi TB
+**`api/cham_diem/quan_ly_cham_diem.php`**
+- INNER JOIN `phancong_doclap WHERE isTrongTai=0` — điểm TB chỉ tính GK chính, không trộn điểm trọng tài phúc khảo
+
+#### 1.4 — BUG-3: IRR chỉ kiểm định trên GK chính
+**`api/cham_diem/tien_do_irr.php`**
+- Filter `$chiTietChinhThuc = array_filter(...fn($gk) => empty($gk['isTrongTai']))` trước khi build `$diemTheoGK`
+- Early-return nếu GK chính < 2 (thay vì check tổng)
+
+#### 1.5 — BUG-8: Kiểm tra trùng vai trò khi mời Trọng tài
+**`api/cham_diem/quan_ly_cham_diem.php`** — `cham_diem_moi_trong_tai`
+- Kiểm tra GV không phải GK chính của bài thi (isTrongTai=0) trước khi mời làm Trọng tài
+- Kiểm tra GV chưa là Trọng tài của bài thi đó — tránh mời trùng
+- Cả 2 kiểm tra đều trước `beginTransaction()` để không tốn overhead
+
+---
+
+## 2026-03-10
+
+### Refactor + Feature — Tách module chấm điểm & Luồng Trọng tài 5 bước
+
+#### Tổng quan
+Tái cấu trúc backend chấm điểm thành 3 module rõ ràng, sửa lỗi trọng tài không thể chấm điểm thực sự, và nâng cấp modal phân tích IRR thành giao diện 5 bước có hướng dẫn đầy đủ cho Trọng tài phúc khảo.
+
+---
+
+#### Module 1 — Score Analyzer *(file mới)*
+**`api/cham_diem/modules/score_analyzer.php`**
+- `score_calc_total($scores)` — tính tổng điểm từ mảng tiêu chí
+- `score_calc_deviation_percent($scores)` — tính `(max−min)/avg × 100`
+- `score_build_scoring_matrix($chiTietByJudge)` — xây ma trận criterion × judge với `avg`, `deviationPct`, `isHighDeviation`, `commentsByGV`
+- `score_calc_judge_quality($matrix)` — chỉ số chất lượng từng GK: `biasScore`, `consistencyScore`, `qualityLevel` (ok/warning/outlier)
+
+#### Module 2 — Statistical Test *(file mới)*
+**`api/cham_diem/modules/statistical_test.php`**
+- `stat_test_irr($diemTheoGK)` — tự chọn phương pháp (T-test / ANOVA) theo số GK
+- `stat_test_paired_ttest($g1, $g2)` — Paired T-test
+- `stat_test_one_way_anova($groups)` — One-way ANOVA
+- `stat_test_t_to_p($t, $df)` / `stat_test_f_to_p($f, $df1, $df2)` — chuyển đổi thống kê → p-value
+- `stat_test_interpret($pValue, $method, $hasCanhBao)` — diễn giải kết quả thành văn bản
+
+#### Module 3 — Warning System *(file mới)*
+**`api/cham_diem/modules/warning_system.php`**
+- `warn_check_criterion($deviationPct)` — 'critical' (>50%) / 'high' (>30%) / 'ok'
+- `warn_check_judge_outlier($judgeTotal, $allTotals)` — z-score outlier detection
+- `warn_generate_report($matrix)` — báo cáo tổng hợp: criterion warnings + judge warnings + overallLevel
+- `warn_get_level($pValue, $maxDeviation)` — mức cảnh báo tổng thể
+- `warn_judge_quality_summary($judgeQuality)` — bản tóm tắt hiển thị cho UI
+
+---
+
+#### Refactor — `api/cham_diem/quan_ly_cham_diem.php`
+- Thêm `require_once` cho 3 module mới ở đầu file
+- Thay `cham_diem_tinh_irr`, `cham_diem_paired_ttest`, `cham_diem_one_way_anova`, `cham_diem_t_to_p`, `cham_diem_f_to_p` bằng thin-wrapper gọi module tương ứng (backward-compatible)
+- **Fix lỗi quan trọng** `cham_diem_moi_trong_tai()`:
+  - Trước: chỉ INSERT `phancong_doclap` → trọng tài không thể chấm điểm
+  - Sau: cũng INSERT `phancongcham` (tra cứu `idBoTieuChi`/`idSK` từ phân công hiện có) → trọng tài có đầy đủ quyền chấm điểm
+
+---
+
+#### Feature — Modal phân tích IRR: giao diện 5 bước Trọng tài
+**`assets/js/scoring.js` — `renderIRRDetailModal()`**
+
+| Bước | Nội dung |
+|------|----------|
+| **1** | Bảng điểm chi tiết (criterion × judge) · IRR stats · Kết luận |
+| **2** | Nhận xét của từng Giám khảo (accordion per-judge, expandable) |
+| **3** | Trạng thái Trọng tài: Đã mời/Đã chấm/Chưa mời + form mời |
+| **4** | Điều chỉnh điểm cuối: input chốt + Duyệt &amp; Chốt + Đánh rớt |
+| **5** | Giám sát chất lượng GK: bias direction, z-score, consistency score |
+
+---
+
+#### Database Migration
+**`database/migrations/2026_03_10_trong_tai_phancongcham.sql`**
+- Thêm `INDEX idx_pcc_vongthi_active` để tăng tốc tra cứu
+- Backfill: cấp quyền chấm (`phancongcham`) cho các trọng tài đã mời trước khi migration
+
+---
+
+## 2026-03-09
+
+
+### Feature - Gỡ bộ tiêu chí khỏi vòng thi (Ungap Criteria from Round)
+
+#### Tính năng
+- Cho phép BTC gỡ liên kết giữa bộ tiêu chí và một vòng thi cụ thể trực tiếp từ panel bên phải tab Config Criteria
+- Mỗi badge "Đang dùng" trên vòng thi nay có nút ✕ inline để gỡ ngay
+- Cảnh báo nếu đã có dữ liệu chấm điểm liên quan (không xóa dữ liệu chấm)
+
+#### Files thay đổi
+
+##### `api/su_kien/quan_ly_bo_tieu_chi.php`
+- `lay_ban_do_su_dung_bo_tieu_chi`: Thêm `c.idVongThi` vào SELECT query vòng thi; thêm `'idVongThi'` vào mỗi item trong usage map
+- Thêm hàm mới `go_bo_tieu_chi_khoi_vong($conn, $id_nguoi, $id_sk, $id_bo, $id_vong_thi)`: kiểm tra quyền, cảnh báo nếu có chấm điểm, xóa bản ghi `cauhinh_tieuchi_sk`
+
+##### `api/su_kien/go_bo_tieu_chi.php` *(file mới)*
+- Endpoint POST nhận `id_sk`, `id_bo`, `id_vong_thi`
+- Gọi `go_bo_tieu_chi_khoi_vong()` và trả về JSON chuẩn
+
+##### `assets/js/event-detail.js`
+- Thêm hàm `goBoTieuChiKhoiVong(idBo, idVongThi)` fetch tới `go_bo_tieu_chi.php`
+- `renderCriteriaSetList`: Mỗi badge vòng thi (`bg-emerald-100`) nay có nút X (`criteria-ungap-btn`) với `data-id-bo` và `data-id-vong`
+- `criteriaSetList` click handler: Thêm nhánh xử lý `.criteria-ungap-btn` — xác nhận SweetAlert → gọi API → reload panel
+
+---
+
+## 2026-03-05
+
+### Fixed - Lỗi Tạo Vòng thi (Không khởi tạo được, báo lỗi hệ thống)
+
+#### Nguyên nhân gốc rễ (Root causes)
+1. **`kiem_tra_trung_ten_vong_thi`** — Query dùng `AND isActive = 1` nhưng bảng `vongthi` không có cột này (đã đổi thành `dongNopThuCong`). PDO ở chế độ `ERRMODE_EXCEPTION` → throw exception → hàm `tao_vong_thi()` bắt lỗi và trả về "Lỗi hệ thống".
+2. **Session key không khớp** — `tao_vong_thi.php` đọc `$_SESSION['user_id']` nhưng `dang_nhap.php` lưu vào `$_SESSION['idTK']` → luôn nhận được `idNguoiTao = 0` → trả về 401 "Chưa đăng nhập".
+3. **Bảng không tồn tại trong schema** — `vong_thi_co_du_lieu_lien_quan()` và `lay_thong_ke_vong_thi()` tham chiếu `bainop`, `phancong_chamthi`, `ketqua_chamthi` → không có trong `schema.sql`.
+4. **Thiếu `define('_AUTHEN', true)`** — `cap_nhat_vong_thi.php`, `toggle_vong_thi.php`, `xoa_vong_thi.php`, `sap_xep_vong_thi.php` không khai báo hằng guard trước khi require `base.php` → PHP die ngay khi gọi API.
+5. **Require file không tồn tại** — `toggle_vong_thi.php`, `xoa_vong_thi.php`, `sap_xep_vong_thi.php`, `cap_nhat_vong_thi.php` đều require `api/core/session_helper.php` không tồn tại.
+
+#### Files đã sửa
+
+##### `api/su_kien/quan_ly_vong_thi.php`
+- `kiem_tra_trung_ten_vong_thi`: Xóa `AND isActive = 1` khỏi query
+- `vong_thi_co_du_lieu_lien_quan`: Đổi bảng sai → `sanpham_vongthi`, `phancong_doclap`, `phancongcham`
+- `lay_thong_ke_vong_thi`: Đổi bảng sai → `sanpham_vongthi`, `phancong_doclap`, `phancongcham`
+
+##### `api/su_kien/tao_vong_thi.php`
+- Đổi `$_SESSION['user_id']` → `$_SESSION['idTK']`
+
+##### `api/su_kien/cap_nhat_vong_thi.php`
+- Thêm `define('_AUTHEN', true)`
+- Xóa require `session_helper.php`, đổi sang đọc trực tiếp `$_SESSION['idTK']`
+
+##### `api/su_kien/toggle_vong_thi.php`, `xoa_vong_thi.php`, `sap_xep_vong_thi.php`
+- Thêm `define('_AUTHEN', true)` vào đầu mỗi file
+- Xóa require `session_helper.php`, đổi sang đọc trực tiếp `$_SESSION['idTK']`
+
+##### `api/su_kien/danh_sach_vong_thi.php`, `cap_nhat_su_kien.php`, `luu_quy_che.php`, `luu_bo_tieu_chi.php`, `du_lieu_bo_tieu_chi.php`, `chi_tiet_quy_che.php`, `chi_tiet_bo_tieu_chi.php`
+- Đổi toàn bộ `$_SESSION['user_id']` → `$_SESSION['idTK']` để đồng nhất với session key của `dang_nhap.php`
+
+---
+
 ## 2026-03-04.2
 
 ### Fixed - API Path Issues trong Event Detail Modules

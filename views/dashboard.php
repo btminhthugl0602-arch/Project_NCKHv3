@@ -3,6 +3,13 @@
  * Dashboard Page
  */
 
+if (session_status() === PHP_SESSION_NONE) session_start();
+$_isGuest = isset($_SESSION['role']) && $_SESSION['role'] === 'guest';
+if (!isset($_SESSION['idTK']) && !$_isGuest) {
+    header('Location: /sign-in');
+    exit;
+}
+
 // Thiết lập các biến cho layout
 $pageTitle = "Dashboard - ezManagement";
 $currentPage = "dashboard";

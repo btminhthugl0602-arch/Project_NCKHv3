@@ -304,33 +304,25 @@ function truy_van_mot_ban_ghi($conn, $bang, $cot_khoa, $gia_tri_khoa)
 
 /**
  * Ánh xạ mã quyền -> idQuyen
- * CSDL mới dùng maQuyen_code để code backend kiểm tra.
- * (Nếu cần tương thích cũ, vẫn fallback maQuyen)
+ * Dùng cột maQuyen trong bảng quyen.
  */
-function anh_xa_ma_quyen($conn, $ma_quyen_code)
+function anh_xa_ma_quyen($conn, $ma_quyen)
 {
     try {
         if (!$conn instanceof PDO) {
             return null;
         }
 
-        $safe = trim((string) $ma_quyen_code);
+        $safe = trim((string) $ma_quyen);
         if ($safe === '') {
             return null;
         }
 
-        $stmt = $conn->prepare('SELECT idQuyen FROM quyen WHERE maQuyen_code = ? LIMIT 1');
+        $stmt = $conn->prepare('SELECT idQuyen FROM quyen WHERE maQuyen = ? LIMIT 1');
         $stmt->execute([$safe]);
         $idQuyen = $stmt->fetchColumn();
-        if ($idQuyen !== false) {
-            return (int) $idQuyen;
-        }
 
-        $stmtFallback = $conn->prepare('SELECT idQuyen FROM quyen WHERE maQuyen = ? LIMIT 1');
-        $stmtFallback->execute([$safe]);
-        $idQuyenFallback = $stmtFallback->fetchColumn();
-
-        return $idQuyenFallback !== false ? (int) $idQuyenFallback : null;
+        return $idQuyen !== false ? (int) $idQuyen : null;
     } catch (Throwable $exception) {
         error_log('SQL Error in anh_xa_ma_quyen: ' . $exception->getMessage());
         return null;
@@ -339,12 +331,15 @@ function anh_xa_ma_quyen($conn, $ma_quyen_code)
 
 /**
  * Kiểm tra quyền HỆ THỐNG (HE_THONG) theo bảng taikhoan_quyen.
- * Truyền vào maQuyen_code (vd: admin_events, admin_users)
+ * Truyền vào maQuyen (vd: quan_ly_tai_khoan, tao_su_kien)
  */
-function kiem_tra_quyen_he_thong($conn, $id_tai_khoan, $ma_quyen_code)
+function kiem_tra_quyen_he_thong($conn, $id_tai_khoan, $ma_quyen)
 {
-    // DEV MODE: bypass quyền
-    if (defined('_BYPASS_AUTH') && _BYPASS_AUTH === true) {
+    // DEV MODE: chỉ bypass khi đang ở môi trường development
+    if (
+        defined('APP_ENV') && APP_ENV === 'development'
+        && defined('_BYPASS_AUTH') && _BYPASS_AUTH === true
+    ) {
         return true;
     }
 
@@ -354,7 +349,7 @@ function kiem_tra_quyen_he_thong($conn, $id_tai_khoan, $ma_quyen_code)
     // Admin hệ thống: full quyền
     if ((int)$user['idLoaiTK'] === 1) return true;
 
-    $id_quyen = anh_xa_ma_quyen($conn, $ma_quyen_code);
+    $id_quyen = anh_xa_ma_quyen($conn, $ma_quyen);
     if (!$id_quyen) return false;
 
     $conditions = [
@@ -387,27 +382,27 @@ function kiem_tra_quyen_he_thong($conn, $id_tai_khoan, $ma_quyen_code)
 }
 
 /**
- * Kiểm tra quyền THEO SỰ KIỆN (SU_KIEN) dựa trên CSDL mới.
+ * Kiểm tra quyền THEO SỰ KIỆN (SU_KIEN) dựa trên CSDL.
  * - Role của user trong sự kiện: taikhoan_vaitro_sukien (isActive=1)
  * - Quyền role lấy từ bảng vaitro_quyen theo idVaiTro
- * - Quyền match theo quyen.maQuyen_code (phamVi='SU_KIEN')
+ * - Quyền match theo quyen.maQuyen (phamVi='SU_KIEN')
+ * Admin KHÔNG tự động bypass — phải được gán vai trò trong sự kiện.
  */
-function kiem_tra_quyen_su_kien($conn, int $idTK, int $idSK, string $maQuyenCode): bool
+function kiem_tra_quyen_su_kien($conn, int $idTK, int $idSK, string $maQuyen): bool
 {
-    // DEV MODE: bypass quyền
-    if (defined('_BYPASS_AUTH') && _BYPASS_AUTH === true) {
+    // DEV MODE: chỉ bypass khi đang ở môi trường development
+    if (
+        defined('APP_ENV') && APP_ENV === 'development'
+        && defined('_BYPASS_AUTH') && _BYPASS_AUTH === true
+    ) {
         return true;
     }
 
-    if ($idTK <= 0 || $idSK <= 0 || trim($maQuyenCode) === '') return false;
+    if ($idTK <= 0 || $idSK <= 0 || trim($maQuyen) === '') return false;
 
-    $idTK = (int)$idTK;
-    $idSK = (int)$idSK;
-    $code = trim($maQuyenCode);
-
-    // Admin hệ thống: full quyền
-    $user = truy_van_mot_ban_ghi($conn, 'taikhoan', 'idTK', $idTK);
-    if ($user && (int)$user['idLoaiTK'] === 1) return true;
+    $idTK  = (int) $idTK;
+    $idSK  = (int) $idSK;
+    $code  = trim($maQuyen);
 
     try {
         if (!$conn instanceof PDO) {
@@ -423,7 +418,7 @@ function kiem_tra_quyen_su_kien($conn, int $idTK, int $idSK, string $maQuyenCode
               AND tvs.idSK = :idSK
               AND tvs.isActive = 1
               AND q.phamVi = 'SU_KIEN'
-              AND q.maQuyen_code = :code
+              AND q.maQuyen = :code
             LIMIT 1
         ";
 
@@ -497,4 +492,16 @@ function filter()
         }
     }
     return $filterArr;
+}
+
+// ── Guest helper ────────────────────────────────────────────
+function is_guest(): bool
+{
+    return isset($_SESSION['role']) && $_SESSION['role'] === 'guest'
+        && (!isset($_SESSION['idTK']) || (int)$_SESSION['idTK'] === 0);
+}
+
+function is_logged_in(): bool
+{
+    return isset($_SESSION['idTK']) && (int)$_SESSION['idTK'] > 0;
 }

@@ -1,9 +1,20 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Get base path for API calls
     const BASE_PATH = window.APP_BASE_PATH || '';
-    
+
     const idSk = Number(window.EVENT_DETAIL_ID || 0);
     const currentTab = String(window.EVENT_DETAIL_TAB || 'overview');
+    const isGuest = window.IS_GUEST === true;
+
+    // Global 401/403 handler — nếu API trả về 401/403, redirect về login
+    const _origFetch = window.fetch;
+    window.fetch = async function (...args) {
+        const res = await _origFetch(...args);
+        if ((res.status === 401 || res.status === 403) && isGuest) {
+            window.location.href = '/sign-in?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+        }
+        return res;
+    };
 
     const loadingEl = document.getElementById('eventDetailLoading');
     const errorEl = document.getElementById('eventDetailError');
@@ -324,6 +335,20 @@ document.addEventListener('DOMContentLoaded', function () {
         return data.data || {};
     }
 
+    async function goBoTieuChiKhoiVong(idBo, idVongThi) {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/go_bo_tieu_chi.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ id_sk: idSk, id_bo: idBo, id_vong_thi: idVongThi }),
+        });
+        const data = await response.json();
+        if (data.status !== 'success') {
+            throw new Error(data.message || 'Không thể gỡ bộ tiêu chí');
+        }
+        return data;
+    }
+
     function addCriteriaRow(noiDung = '', diemToiDa = '', tyTrong = '1') {
         if (!criteriaTableBody) {
             return;
@@ -369,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function () {
         rows.forEach((row, index) => {
             const stt = row.querySelector('.criteria-stt');
             if (stt) stt.textContent = String(index + 1);
-            
+
             // Disable nút lên cho dòng đầu, nút xuống cho dòng cuối
             const upBtn = row.querySelector('.criteria-row-up');
             const downBtn = row.querySelector('.criteria-row-down');
@@ -389,10 +414,10 @@ document.addEventListener('DOMContentLoaded', function () {
         criteriaTableBody.querySelectorAll('.criteria-row').forEach((row) => {
             const diemInput = row.querySelector('[data-field="diem_toi_da"]');
             const tyTrongInput = row.querySelector('[data-field="ty_trong"]');
-            
+
             const diem = parseFloat(diemInput?.value || 0);
             const tyTrong = parseFloat(tyTrongInput?.value || 0);
-            
+
             if (!isNaN(diem)) totalDiem += diem;
             if (!isNaN(tyTrong)) totalTyTrong += tyTrong;
         });
@@ -403,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function moveCriteriaRow(row, direction) {
         if (!criteriaTableBody || !row) return;
-        
+
         if (direction === 'up') {
             const prev = row.previousElementSibling;
             if (prev) {
@@ -415,7 +440,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 criteriaTableBody.insertBefore(next, row);
             }
         }
-        
+
         updateCriteriaSTT();
     }
 
@@ -434,26 +459,29 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (!Array.isArray(sets) || sets.length === 0) {
-            criteriaSetList.innerHTML = '<div class="px-3 py-2 border rounded-lg border-slate-200 bg-slate-50 text-slate-500">Chưa có bộ tiêu chí nào. Tạo mới ở form bên trái.</div>';
+            criteriaSetList.innerHTML = '<div class="px-3 py-2 border rounded-lg border-slate-200 bg-slate-50 text-slate-500">Chưa có bộ tiêu chí nào được gán cho sự kiện này. Tạo mới hoặc nhân bản và gán vào vòng thi ở form bên trái.</div>';
             return;
         }
 
         criteriaSetList.innerHTML = sets.map((set) => {
             const idBo = Number(set.idBoTieuChi || 0);
             const usage = Array.isArray(criteriaUsageMap[idBo]) ? criteriaUsageMap[idBo] : [];
-            
+
             // Phân loại usage theo loại
             const vongThiUsage = usage.filter((item) => item.loai === 'vong');
             const tieubanUsage = usage.filter((item) => item.loai === 'tieuban');
-            
+
             let usageHtml = '';
             if (vongThiUsage.length > 0 || tieubanUsage.length > 0) {
                 // Có đang sử dụng
                 usageHtml = '<div class="flex flex-wrap gap-1">';
                 vongThiUsage.forEach((item) => {
                     usageHtml += `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         ${item.text || ''}
+                        <button type="button" class="criteria-ungap-btn ml-0.5 hover:text-rose-600 focus:outline-none" data-id-bo="${idBo}" data-id-vong="${item.idVongThi || 0}" title="Gỡ khỏi vòng thi này">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
                     </span>`;
                 });
                 tieubanUsage.forEach((item) => {
@@ -582,17 +610,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     .join('');
             }
 
-            // Populate dropdown bộ tiêu chí có sẵn
-            const sets = Array.isArray(data.bo_tieu_chi) ? data.bo_tieu_chi : [];
-            console.log('Danh sách bộ tiêu chí:', sets);
+            // Dropdown nhân bản: toàn bộ ngân hàng
+            const setsAll = Array.isArray(data.bo_tieu_chi_all) ? data.bo_tieu_chi_all : [];
             if (criteriaReuseSetDropdown) {
-                criteriaReuseSetDropdown.innerHTML = '<option value="">-- Chọn bộ tiêu chí để nhân bản --</option>' + sets
+                criteriaReuseSetDropdown.innerHTML = '<option value="">-- Chọn bộ tiêu chí để nhân bản --</option>' + setsAll
                     .map((item) => `<option value="${item.idBoTieuChi}">${item.tenBoTieuChi}</option>`)
                     .join('');
             }
 
+            // Panel bên phải: chỉ bộ tiêu chí đã gán cho sự kiện này
+            const setsSuKien = Array.isArray(data.bo_tieu_chi) ? data.bo_tieu_chi : [];
             criteriaUsageMap = data.usage_map || {};
-            renderCriteriaSetList(sets);
+            renderCriteriaSetList(setsSuKien);
             resetCriteriaForm();
         } catch (error) {
             console.error('Lỗi khi tải dữ liệu bộ tiêu chí:', error);
@@ -1102,9 +1131,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Get review-assign container elements
-        const reviewAssignContainer = document.querySelector('#reviewAssignContainer') || 
-                                    document.querySelector('[data-tab="review-assign"]') ||
-                                    document.querySelector('.review-assign-content');
+        const reviewAssignContainer = document.querySelector('#reviewAssignContainer') ||
+            document.querySelector('[data-tab="review-assign"]') ||
+            document.querySelector('.review-assign-content');
 
         if (!reviewAssignContainer) {
             console.warn('Review assign container not found');
@@ -1122,13 +1151,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Load necessary data
             const promises = [
-                fetch(`${BASE_PATH}/api/cham_diem/phan_cong_giam_khao.php?action=list_giang_vien`, {
+                fetch(`${BASE_PATH}/api/cham_diem/phan_cong_giam_khao.php?action=list_giang_vien&id_sk=${encodeURIComponent(idSk)}`, {
                     method: 'GET',
                     credentials: 'same-origin'
                 }).then(r => r.json()),
-                
+
                 fetch(`${BASE_PATH}/api/su_kien/danh_sach_vong_thi.php?id_sk=${encodeURIComponent(idSk)}`, {
-                    method: 'GET', 
+                    method: 'GET',
                     credentials: 'same-origin'
                 }).then(r => r.json())
             ];
@@ -1162,9 +1191,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function renderReviewAssignInterface(giangVien, vongThi) {
-        const reviewAssignContainer = document.querySelector('#reviewAssignContainer') || 
-                                    document.querySelector('[data-tab="review-assign"]') ||
-                                    document.querySelector('.review-assign-content');
+        const reviewAssignContainer = document.querySelector('#reviewAssignContainer') ||
+            document.querySelector('[data-tab="review-assign"]') ||
+            document.querySelector('.review-assign-content');
 
         if (!reviewAssignContainer) return;
 
@@ -1251,7 +1280,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Add reviewer selection event listeners
-        reviewAssignContainer.addEventListener('click', function(event) {
+        reviewAssignContainer.addEventListener('click', function (event) {
             if (event.target.matches('.reviewer-select-btn')) {
                 const reviewerId = event.target.getAttribute('data-reviewer-id');
                 // Handle reviewer selection logic here
@@ -1263,11 +1292,11 @@ document.addEventListener('DOMContentLoaded', function () {
     async function loadSubmissionsForReview() {
         const vongThiSelect = document.getElementById('reviewVongThiSelect');
         const listContainer = document.getElementById('reviewAssignmentList');
-        
+
         if (!vongThiSelect || !listContainer) return;
-        
+
         const selectedVongThi = vongThiSelect.value;
-        
+
         if (!selectedVongThi) {
             listContainer.innerHTML = `
                 <div class="px-4 py-8 text-center text-slate-400">
@@ -1395,8 +1424,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 // Badge đóng nộp
-                const dongNopBadge = daDongNop 
-                    ? '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-rose-100 text-rose-600">Đã đóng nộp</span>' 
+                const dongNopBadge = daDongNop
+                    ? '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-rose-100 text-rose-600">Đã đóng nộp</span>'
                     : '';
 
                 // Nút di chuyển lên/xuống
@@ -1428,10 +1457,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                     </button>
                                     <button type="button" class="btn-toggle-round p-1 ${daDongNop ? 'text-emerald-400 hover:text-emerald-600' : 'text-amber-400 hover:text-amber-600'}" data-round-id="${idVongThi}" title="${daDongNop ? 'Mở lại nộp bài' : 'Đóng nộp bài'}">
-                                        ${daDongNop 
-                                            ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>'
-                                            : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>'
-                                        }
+                                        ${daDongNop
+                        ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>'
+                        : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>'
+                    }
                                     </button>
                                     <button type="button" class="btn-delete-round p-1 text-rose-400 hover:text-rose-600" data-round-id="${idVongThi}" title="Xóa vòng thi">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -1469,7 +1498,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function attachRoundActionListeners() {
         // Nút sửa
         document.querySelectorAll('.btn-edit-round').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const roundId = Number(this.dataset.roundId);
                 handleEditRound(roundId);
             });
@@ -1477,7 +1506,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Nút xóa
         document.querySelectorAll('.btn-delete-round').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const roundId = Number(this.dataset.roundId);
                 handleDeleteRound(roundId);
             });
@@ -1485,7 +1514,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Nút toggle
         document.querySelectorAll('.btn-toggle-round').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const roundId = Number(this.dataset.roundId);
                 handleToggleRound(roundId);
             });
@@ -1493,7 +1522,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Nút di chuyển lên
         document.querySelectorAll('.btn-move-round-up').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const roundId = Number(this.dataset.roundId);
                 handleMoveRound(roundId, 'up');
             });
@@ -1501,7 +1530,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Nút di chuyển xuống
         document.querySelectorAll('.btn-move-round-down').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const roundId = Number(this.dataset.roundId);
                 handleMoveRound(roundId, 'down');
             });
@@ -1650,7 +1679,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const confirm = await Swal.fire({
             title: `Xác nhận ${action}`,
-            text: daDongNop 
+            text: daDongNop
                 ? `Bạn có muốn mở lại cho sinh viên nộp bài vào vòng "${round.tenVongThi}"?`
                 : `Bạn có muốn đóng nộp bài cho vòng "${round.tenVongThi}"? Sinh viên sẽ không thể nộp bài mới.`,
             icon: 'question',
@@ -1818,9 +1847,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     khoiTaoTrangChiTiet();
-    khoiTaoTabConfigRules();
-    khoiTaoTabConfigCriteria();
-    khoiTaoTabReviewAssign();
+    // Các tab sau yêu cầu đăng nhập — guest không init
+    if (!isGuest) {
+        khoiTaoTabConfigRules();
+        khoiTaoTabConfigCriteria();
+        khoiTaoTabReviewAssign();
+        khoiTaoTabConfigTaiLieu();
+    }
 
     if (btnSaveBasicConfig) {
         btnSaveBasicConfig.addEventListener('click', async function () {
@@ -2232,7 +2265,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const removeBtn = event.target.closest('.criteria-row-remove');
             const upBtn = event.target.closest('.criteria-row-up');
             const downBtn = event.target.closest('.criteria-row-down');
-            
+
             if (removeBtn) {
                 const row = removeBtn.closest('.criteria-row');
                 if (row) {
@@ -2245,19 +2278,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 return;
             }
-            
+
             if (upBtn) {
                 const row = upBtn.closest('.criteria-row');
                 moveCriteriaRow(row, 'up');
                 return;
             }
-            
+
             if (downBtn) {
                 const row = downBtn.closest('.criteria-row');
                 moveCriteriaRow(row, 'down');
             }
         });
-        
+
         // Cập nhật tổng khi input thay đổi
         criteriaTableBody.addEventListener('input', function (event) {
             const target = event.target;
@@ -2288,6 +2321,43 @@ document.addEventListener('DOMContentLoaded', function () {
             const cloneBtn = event.target.closest('.criteria-clone-btn');
             const editBtn = event.target.closest('.criteria-edit-btn');
             const deleteBtn = event.target.closest('.criteria-delete-btn');
+            const ungapBtn = event.target.closest('.criteria-ungap-btn');
+
+            if (ungapBtn) {
+                const idBo = Number(ungapBtn.dataset.idBo || 0);
+                const idVongThi = Number(ungapBtn.dataset.idVong || 0);
+                if (idBo <= 0 || idVongThi <= 0) return;
+
+                const confirmed = await Swal.fire({
+                    title: 'Gỡ bộ tiêu chí khỏi vòng thi?',
+                    html: `Bộ tiêu chí <strong>#${idBo}</strong> sẽ bị gỡ khỏi vòng thi này.<br><small class="text-slate-500">Dữ liệu chấm điểm đã có (nếu có) sẽ không bị xóa.</small>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Gỡ',
+                    cancelButtonText: 'Huỷ',
+                    confirmButtonColor: '#ef4444',
+                });
+                if (!confirmed.isConfirmed) return;
+
+                try {
+                    const result = await goBoTieuChiKhoiVong(idBo, idVongThi);
+                    await khoiTaoTabConfigCriteria();
+                    const warningsHtml =
+                        Array.isArray(result.warnings) && result.warnings.length > 0
+                            ? `<br><small class="text-amber-600">${result.warnings.join('<br>')}</small>`
+                            : '';
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Đã gỡ',
+                        html: `Bộ tiêu chí đã được gỡ khỏi vòng thi thành công.${warningsHtml}`,
+                        timer: 2500,
+                        showConfirmButton: false,
+                    });
+                } catch (error) {
+                    Swal.fire({ icon: 'error', title: 'Không thể gỡ', text: error.message || 'Vui lòng thử lại.' });
+                }
+                return;
+            }
 
             if (cloneBtn) {
                 const idBo = Number(cloneBtn.dataset.criteriaClone || 0);
@@ -2382,4 +2452,495 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // =========================================================
+    // Tab: Cấu hình tài liệu (config-tailieu)
+    // =========================================================
+
+    async function khoiTaoTabConfigTaiLieu() {
+        if (currentTab !== 'config-tailieu') return;
+
+        let _currentVongThi = null;
+        let _vongThiOptions = [];
+
+        // ── DOM refs ──────────────────────────────────────────
+        const elVongThiList = document.getElementById('tlVongThiList');
+        const elCurrentName = document.getElementById('tlCurrentRoundName');
+        const elFieldList = document.getElementById('tlFieldList');
+        const btnAddField = document.getElementById('btnTlAddField');
+        const copySrc = document.getElementById('tlCopySrc');
+        const copyDst = document.getElementById('tlCopyDst');
+        const copyMode = document.getElementById('tlCopyMode');
+        const btnCopyForm = document.getElementById('btnTlCopyForm');
+        const modal = document.getElementById('tlFieldModal');
+        const modalTitle = document.getElementById('tlModalTitle');
+        const fieldEditId = document.getElementById('tlFieldEditId');
+        const fieldTen = document.getElementById('tlFieldTenTruong');
+        const fieldKieu = document.getElementById('tlFieldKieuTruong');
+        const fieldBatBuoc = document.getElementById('tlFieldBatBuoc');
+        const fieldCauHinhWrap = document.getElementById('tlFieldCauHinhWrap');
+        const btnModalClose = document.getElementById('btnTlModalClose');
+        const btnModalCancel = document.getElementById('btnTlModalCancel');
+        const btnModalSave = document.getElementById('btnTlModalSave');
+
+        if (!elVongThiList) return;
+
+        // ── Helpers ───────────────────────────────────────────
+        const KIEU_LABEL = {
+            TEXT: 'Văn bản', TEXTAREA: 'Đoạn văn', URL: 'URL',
+            FILE: 'Upload file', SELECT: 'Chọn lựa', CHECKBOX: 'Xác nhận'
+        };
+        const KIEU_ICON = {
+            TEXT: 'fa-font', TEXTAREA: 'fa-align-left', URL: 'fa-link',
+            FILE: 'fa-file-upload', SELECT: 'fa-list', CHECKBOX: 'fa-check-square'
+        };
+
+        function _post(url, body) {
+            return fetch(BASE_PATH + url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            }).then(r => r.json());
+        }
+        function _get(url) {
+            return fetch(BASE_PATH + url).then(r => r.json());
+        }
+        function escHtml(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function escHtmlAttr(s) {
+            return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+
+        // ── Render vòng thi list ──────────────────────────────
+        function renderVongThiList(tongQuan) {
+            const vts = tongQuan.vongThi || [];
+            _vongThiOptions = vts;
+
+            if (!vts.length) {
+                elVongThiList.innerHTML = `<div class="px-3 py-2 text-xs text-slate-400 border rounded-lg border-slate-200 bg-white">
+                    Sự kiện chưa có vòng thi nào. Hãy tạo vòng thi ở tab <strong>Cấu hình vòng thi</strong> trước.
+                </div>`;
+                copySrc.innerHTML = copyDst.innerHTML = '<option value="">— Chưa có vòng thi —</option>';
+                return;
+            }
+
+            elVongThiList.innerHTML = vts.map(vt => `
+                <button type="button" data-id="${vt.idVongThi}"
+                    class="tl-vt-btn w-full text-left px-3 py-2 rounded-lg border transition-all text-sm
+                           border-slate-200 bg-white text-slate-700 hover:border-fuchsia-300 hover:bg-fuchsia-50/50">
+                    <div class="flex items-center justify-between">
+                        <span><i class="fas fa-layer-group mr-1.5 opacity-40 text-xs"></i>${escHtml(vt.tenVongThi)}</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full ${parseInt(vt.soField) > 0
+                    ? 'bg-fuchsia-100 text-fuchsia-600'
+                    : 'bg-slate-100 text-slate-400'}">
+                            ${vt.soField} trường
+                        </span>
+                    </div>
+                </button>
+            `).join('');
+
+            const optHTML = vts.map(vt =>
+                `<option value="${vt.idVongThi}">${escHtml(vt.tenVongThi)} (${vt.soField} trường)</option>`
+            ).join('');
+            copySrc.innerHTML = optHTML;
+            copyDst.innerHTML = optHTML;
+
+            // Tự chọn vòng đầu nếu chỉ có 1 và chưa chọn gì
+            if (vts.length >= 1 && _currentVongThi === null) {
+                const first = vts[0];
+                selectVongThi(first.idVongThi, first.tenVongThi);
+                loadFormFields(first.idVongThi);
+            }
+
+            elVongThiList.querySelectorAll('.tl-vt-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = parseInt(this.dataset.id);
+                    const ten = _vongThiOptions.find(v => v.idVongThi == id)?.tenVongThi || '';
+                    selectVongThi(id, ten);
+                    loadFormFields(id);
+                });
+            });
+        }
+
+        function selectVongThi(idVT, tenVT) {
+            _currentVongThi = idVT;
+            if (elCurrentName) elCurrentName.textContent = tenVT || '—';
+            if (btnAddField) btnAddField.disabled = false;
+            document.querySelectorAll('.tl-vt-btn').forEach(b => {
+                const isActive = parseInt(b.dataset.id) === idVT;
+                b.classList.toggle('border-fuchsia-400', isActive);
+                b.classList.toggle('bg-fuchsia-50', isActive);
+                b.classList.toggle('text-fuchsia-700', isActive);
+                b.classList.toggle('font-semibold', isActive);
+                b.classList.toggle('border-slate-200', !isActive);
+                b.classList.toggle('bg-white', !isActive);
+                b.classList.toggle('text-slate-700', !isActive);
+            });
+        }
+
+        // ── Render field list ─────────────────────────────────
+        function renderFieldList(fields) {
+            if (!fields.length) {
+                elFieldList.innerHTML = `
+                    <div class="p-6 text-sm text-center text-slate-400 border rounded-xl border-dashed border-slate-300 bg-white">
+                        <i class="fas fa-inbox text-2xl mb-2 block opacity-30"></i>
+                        Vòng thi này chưa có trường nào.<br>
+                        <span class="text-xs">Nhóm sẽ không cần nộp tài liệu ở vòng này.</span>
+                    </div>`;
+                return;
+            }
+            elFieldList.innerHTML = fields.map(f => {
+                const icon = KIEU_ICON[f.kieuTruong] || 'fa-question';
+                const label = KIEU_LABEL[f.kieuTruong] || f.kieuTruong;
+                const inactive = parseInt(f.isActive) === 0;
+                return `
+                <div class="flex items-center gap-3 px-4 py-3 border rounded-xl bg-white
+                            ${inactive ? 'opacity-50' : ''} border-slate-200 transition-all hover:border-fuchsia-200"
+                     data-field-id="${f.idField}">
+                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-fuchsia-50 text-fuchsia-500">
+                        <i class="fas ${icon} text-xs"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-semibold text-slate-700 truncate">${escHtml(f.tenTruong)}</span>
+                            ${parseInt(f.batBuoc) ? '<span class="text-red-500 text-xs font-bold">*</span>' : ''}
+                            ${inactive ? '<span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-400">Ẩn</span>' : ''}
+                        </div>
+                        <div class="text-xs text-slate-400 mt-0.5">
+                            <span class="mr-2"><i class="fas ${icon} mr-1"></i>${label}</span>
+                            <span class="text-slate-300">Thứ tự: ${f.thuTu}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                        <button type="button" title="${inactive ? 'Hiện' : 'Ẩn'} trường"
+                            data-action="toggle" data-id="${f.idField}"
+                            class="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                            <i class="fas ${inactive ? 'fa-eye' : 'fa-eye-slash'} text-xs"></i>
+                        </button>
+                        <button type="button" title="Sửa trường"
+                            data-action="edit" data-id="${f.idField}"
+                            class="p-2 rounded-lg text-slate-400 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-colors">
+                            <i class="fas fa-pen text-xs"></i>
+                        </button>
+                        <button type="button" title="Xóa trường"
+                            data-action="delete" data-id="${f.idField}" data-name="${escHtmlAttr(f.tenTruong)}"
+                            class="p-2 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Event delegation — không dùng onclick inline
+            elFieldList.querySelectorAll('[data-action]').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const action = this.dataset.action;
+                    const id = parseInt(this.dataset.id);
+                    const name = this.dataset.name || '';
+                    if (action === 'edit') handleEditField(id);
+                    if (action === 'toggle') handleToggleField(id);
+                    if (action === 'delete') handleDeleteField(id, name);
+                });
+            });
+        }
+
+        // ── Cấu hình JSON theo kiểu trường ───────────────────
+        function renderCauHinhInputs(kieu, current = {}) {
+            let html = '';
+            switch (kieu) {
+                case 'FILE':
+                    html = `
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block mb-1 text-xs font-semibold text-slate-600">Định dạng cho phép</label>
+                                <input id="cfAccept" type="text" value="${escHtmlAttr(current.accept || '')}" placeholder="pdf,docx,xlsx"
+                                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+                                <p class="mt-1 text-xs text-slate-400">Phân cách bằng dấu phẩy, để trống = tất cả</p>
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-xs font-semibold text-slate-600">Dung lượng tối đa (KB)</label>
+                                <input id="cfMaxSize" type="number" value="${current.maxSizeKB || ''}" placeholder="5120"
+                                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+                            </div>
+                        </div>`;
+                    break;
+                case 'SELECT':
+                    html = `
+                        <div>
+                            <label class="block mb-1 text-xs font-semibold text-slate-600">Các lựa chọn <span class="text-red-400">*</span></label>
+                            <textarea id="cfOptions" rows="4" placeholder="Mỗi lựa chọn một dòng"
+                                class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none">${escHtml((current.options || []).join('\n'))}</textarea>
+                            <p class="mt-1 text-xs text-slate-400">Mỗi lựa chọn trên 1 dòng</p>
+                        </div>`;
+                    break;
+                case 'TEXT':
+                case 'TEXTAREA':
+                    html = `
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block mb-1 text-xs font-semibold text-slate-600">Placeholder</label>
+                                <input id="cfPlaceholder" type="text" value="${escHtmlAttr(current.placeholder || '')}"
+                                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-xs font-semibold text-slate-600">${kieu === 'TEXTAREA' ? 'Số hàng' : 'Độ dài tối đa'}</label>
+                                <input id="${kieu === 'TEXTAREA' ? 'cfRows' : 'cfMaxLength'}" type="number"
+                                    value="${kieu === 'TEXTAREA' ? (current.rows || 4) : (current.maxLength || 200)}"
+                                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+                            </div>
+                        </div>`;
+                    break;
+                case 'URL':
+                    html = `
+                        <div>
+                            <label class="block mb-1 text-xs font-semibold text-slate-600">Placeholder</label>
+                            <input id="cfPlaceholder" type="text" value="${escHtmlAttr(current.placeholder || 'https://')}"
+                                class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+                        </div>`;
+                    break;
+                case 'CHECKBOX':
+                    html = `
+                        <div>
+                            <label class="block mb-1 text-xs font-semibold text-slate-600">Nhãn xác nhận</label>
+                            <input id="cfLabel" type="text" value="${escHtmlAttr(current.label || '')}" placeholder="Tôi xác nhận đã đọc quy định"
+                                class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+                        </div>`;
+                    break;
+            }
+            if (fieldCauHinhWrap) {
+                fieldCauHinhWrap.innerHTML = html || '<p class="text-xs text-slate-400">Kiểu này không cần cấu hình thêm.</p>';
+            }
+        }
+
+        function collectCauHinhJson(kieu) {
+            const cfg = {};
+            switch (kieu) {
+                case 'FILE': {
+                    const accept = document.getElementById('cfAccept')?.value.trim();
+                    const maxSize = parseInt(document.getElementById('cfMaxSize')?.value || 0);
+                    if (accept) cfg.accept = accept;
+                    if (maxSize) cfg.maxSizeKB = maxSize;
+                    break;
+                }
+                case 'SELECT': {
+                    const raw = document.getElementById('cfOptions')?.value || '';
+                    cfg.options = raw.split('\n').map(s => s.trim()).filter(Boolean);
+                    break;
+                }
+                case 'TEXT':
+                case 'TEXTAREA': {
+                    const ph = document.getElementById('cfPlaceholder')?.value.trim();
+                    const ml = parseInt(document.getElementById('cfMaxLength')?.value || 0);
+                    const rws = parseInt(document.getElementById('cfRows')?.value || 0);
+                    if (ph) cfg.placeholder = ph;
+                    if (ml) cfg.maxLength = ml;
+                    if (rws) cfg.rows = rws;
+                    break;
+                }
+                case 'URL': {
+                    const ph = document.getElementById('cfPlaceholder')?.value.trim();
+                    if (ph) cfg.placeholder = ph;
+                    break;
+                }
+                case 'CHECKBOX': {
+                    const lbl = document.getElementById('cfLabel')?.value.trim();
+                    if (lbl) cfg.label = lbl;
+                    break;
+                }
+            }
+            return Object.keys(cfg).length ? cfg : null;
+        }
+
+        // ── Modal ─────────────────────────────────────────────
+        function showModal(title, editData = null) {
+            if (!modal) return;
+            if (modalTitle) modalTitle.textContent = title;
+            if (fieldEditId) fieldEditId.value = editData?.idField || '';
+            if (fieldTen) fieldTen.value = editData?.tenTruong || '';
+            if (fieldKieu) fieldKieu.value = editData?.kieuTruong || 'TEXT';
+            if (fieldBatBuoc) fieldBatBuoc.checked = editData ? parseInt(editData.batBuoc) === 1 : true;
+            renderCauHinhInputs(
+                editData?.kieuTruong || 'TEXT',
+                editData?.cauHinhJson ? JSON.parse(editData.cauHinhJson) : {}
+            );
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            fieldTen?.focus();
+        }
+
+        function hideModal() {
+            modal?.classList.add('hidden');
+            modal?.classList.remove('flex');
+        }
+
+        // ── Load ──────────────────────────────────────────────
+        async function loadTongQuan() {
+            try {
+                elVongThiList.innerHTML = `<div class="px-3 py-2 text-sm text-slate-400 border rounded-lg border-slate-200 bg-white">Đang tải...</div>`;
+                const res = await _get(`/api/su_kien/lay_form_field.php?id_sk=${idSk}&mode=tong_quan`);
+                if (res.status === 'success') renderVongThiList(res.data);
+                else elVongThiList.innerHTML = `<p class="text-xs text-red-500 px-2">${escHtml(res.message)}</p>`;
+            } catch {
+                elVongThiList.innerHTML = `<p class="text-xs text-red-500 px-2">Lỗi tải danh sách vòng thi.</p>`;
+            }
+        }
+
+        async function loadFormFields(idVT) {
+            if (!elFieldList) return;
+            elFieldList.innerHTML = `<div class="p-4 text-sm text-slate-400 text-center border rounded-xl border-slate-200 bg-white">Đang tải...</div>`;
+            try {
+                const res = await _get(`/api/su_kien/lay_form_field.php?id_sk=${idSk}&mode=fields&id_vong_thi=${idVT}`);
+                if (res.status === 'success') renderFieldList(res.data);
+                else elFieldList.innerHTML = `<p class="text-xs text-red-500 px-2">${escHtml(res.message)}</p>`;
+            } catch {
+                elFieldList.innerHTML = `<p class="text-xs text-red-500 px-2">Lỗi tải danh sách trường.</p>`;
+            }
+        }
+
+        // ── Handlers ──────────────────────────────────────────
+        async function handleEditField(idField) {
+            try {
+                const res = await _get(`/api/su_kien/lay_form_field.php?id_sk=${idSk}&mode=fields&id_vong_thi=${_currentVongThi}`);
+                const field = (res.data || []).find(f => f.idField == idField);
+                if (field) showModal('Sửa trường', field);
+            } catch {
+                Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không tải được thông tin trường.' });
+            }
+        }
+
+        async function handleToggleField(idField) {
+            try {
+                const res = await _post('/api/su_kien/cap_nhat_form_field.php', { action: 'toggle', id_field: idField });
+                if (res.status === 'success') await loadFormFields(_currentVongThi);
+                else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+            } catch {
+                Swal.fire({ icon: 'error', title: 'Lỗi kết nối', text: 'Vui lòng thử lại.' });
+            }
+        }
+
+        async function handleDeleteField(idField, tenTruong) {
+            const confirm = await Swal.fire({
+                icon: 'warning', title: 'Xóa trường?',
+                html: `Xóa trường <strong>${escHtml(tenTruong)}</strong>?<br>
+                       <span class="text-xs text-slate-500">Không thể xóa nếu đã có nhóm nộp dữ liệu — hãy dùng "Ẩn".</span>`,
+                showCancelButton: true, confirmButtonText: 'Xóa', cancelButtonText: 'Hủy',
+                confirmButtonColor: '#ef4444'
+            });
+            if (!confirm.isConfirmed) return;
+            try {
+                const res = await _post('/api/su_kien/cap_nhat_form_field.php', { action: 'xoa', id_field: idField });
+                if (res.status === 'success') {
+                    await loadFormFields(_currentVongThi);
+                    await loadTongQuan();
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Không thể xóa', text: res.message });
+                }
+            } catch {
+                Swal.fire({ icon: 'error', title: 'Lỗi kết nối', text: 'Vui lòng thử lại.' });
+            }
+        }
+
+        // ── Sự kiện modal ─────────────────────────────────────
+        fieldKieu?.addEventListener('change', function () {
+            renderCauHinhInputs(this.value, {});
+        });
+
+        btnAddField?.addEventListener('click', function () {
+            if (_currentVongThi === null) return;
+            showModal('Thêm trường mới');
+        });
+
+        btnModalSave?.addEventListener('click', async function () {
+            const tenTruong = fieldTen?.value.trim() || '';
+            const kieuTruong = fieldKieu?.value || 'TEXT';
+            const batBuoc = fieldBatBuoc?.checked ? 1 : 0;
+            const cauHinhJson = collectCauHinhJson(kieuTruong);
+            const editId = fieldEditId?.value ? parseInt(fieldEditId.value) : null;
+
+            if (!tenTruong) {
+                Swal.fire({ icon: 'warning', title: 'Thiếu dữ liệu', text: 'Vui lòng nhập tên trường.' });
+                return;
+            }
+            if (kieuTruong === 'SELECT' && !(cauHinhJson?.options?.length)) {
+                Swal.fire({ icon: 'warning', title: 'Thiếu lựa chọn', text: 'SELECT phải có ít nhất 1 lựa chọn.' });
+                return;
+            }
+
+            btnModalSave.disabled = true;
+            btnModalSave.textContent = 'Đang lưu...';
+
+            try {
+                const body = editId
+                    ? { action: 'cap_nhat', id_field: editId, ten_truong: tenTruong, kieu_truong: kieuTruong, bat_buoc: batBuoc, cau_hinh_json: cauHinhJson }
+                    : { id_sk: idSk, id_vong_thi: _currentVongThi, ten_truong: tenTruong, kieu_truong: kieuTruong, bat_buoc: batBuoc, cau_hinh_json: cauHinhJson };
+                const url = editId ? '/api/su_kien/cap_nhat_form_field.php' : '/api/su_kien/tao_form_field.php';
+                const res = await _post(url, body);
+
+                if (res.status === 'success') {
+                    hideModal();
+                    await loadFormFields(_currentVongThi);
+                    await loadTongQuan();
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Không thể lưu', text: res.message });
+                }
+            } catch {
+                Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể kết nối máy chủ.' });
+            } finally {
+                if (btnModalSave) {
+                    btnModalSave.disabled = false;
+                    btnModalSave.textContent = 'Lưu trường';
+                }
+            }
+        });
+
+        [btnModalClose, btnModalCancel].forEach(btn =>
+            btn?.addEventListener('click', hideModal)
+        );
+        modal?.addEventListener('click', function (e) {
+            if (e.target === modal) hideModal();
+        });
+
+        btnCopyForm?.addEventListener('click', async function () {
+            const src = parseInt(copySrc?.value) || null;
+            const dst = parseInt(copyDst?.value) || null;
+            const mode = copyMode?.value || 'them_vao';
+            if (!src || !dst) {
+                Swal.fire({ icon: 'warning', title: 'Chưa chọn', text: 'Vui lòng chọn nguồn và đích.' });
+                return;
+            }
+            if (src === dst) {
+                Swal.fire({ icon: 'warning', title: 'Không hợp lệ', text: 'Nguồn và đích phải khác nhau.' });
+                return;
+            }
+            const cf = await Swal.fire({
+                icon: 'question', title: 'Xác nhận copy',
+                text: mode === 'ghi_de'
+                    ? 'Sẽ xóa các trường cũ (chưa có dữ liệu) ở đích rồi copy. Tiếp tục?'
+                    : 'Sẽ thêm các trường nguồn vào đích. Tiếp tục?',
+                showCancelButton: true, confirmButtonText: 'Tiếp tục', cancelButtonText: 'Hủy'
+            });
+            if (!cf.isConfirmed) return;
+
+            try {
+                const res = await _post('/api/su_kien/cap_nhat_form_field.php', {
+                    action: 'copy', id_sk: idSk, src_vong_thi: src, dst_vong_thi: dst, mode
+                });
+                if (res.status === 'success') {
+                    await Swal.fire({ icon: 'success', title: 'Đã copy', text: res.message, timer: 1500, showConfirmButton: false });
+                    await loadTongQuan();
+                    if (_currentVongThi === dst) await loadFormFields(dst);
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+                }
+            } catch {
+                Swal.fire({ icon: 'error', title: 'Lỗi kết nối', text: 'Vui lòng thử lại.' });
+            }
+        });
+
+        // ── Khởi động ─────────────────────────────────────────
+        await loadTongQuan();
+    }
+
+
 });

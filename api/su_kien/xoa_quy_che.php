@@ -3,6 +3,8 @@
 define('_AUTHEN', true);
 
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../core/auth_guard.php';
+
 require_once __DIR__ . '/quan_ly_quy_che.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -22,8 +24,12 @@ if (!is_array($input)) {
     $input = [];
 }
 
-$idQuyChe = isset($input['id_quy_che']) ? (int) $input['id_quy_che'] : 0;
 $idSkRequest = isset($input['id_sk']) ? (int) $input['id_sk'] : 0;
+
+// ── Auth ──────────────────────────────────────────────────
+$actor = auth_require_cauhinh_su_kien($idSkRequest);
+
+$idQuyChe = isset($input['id_quy_che']) ? (int) $input['id_quy_che'] : 0;
 if ($idQuyChe <= 0) {
     http_response_code(400);
     echo json_encode([
@@ -44,7 +50,7 @@ if ($idSkRequest <= 0) {
     exit;
 }
 
-$idUser = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0;
+$idUser = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
 if ($idUser <= 0 && isset($input['id_nguoi_thuc_hien'])) {
     $idUser = (int) $input['id_nguoi_thuc_hien'];
 }

@@ -3,9 +3,14 @@
 define('_AUTHEN', true);
 
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../core/auth_guard.php';
+
 require_once __DIR__ . '/quan_ly_quy_che.php';
 
 header('Content-Type: application/json; charset=utf-8');
+
+// ── Auth ──────────────────────────────────────────────────
+$actor = auth_require_login();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -115,7 +120,7 @@ try {
         exit;
     }
 
-    $idUser = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0;
+    $idUser = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
     if ($idUser > 0 && !xac_thuc_quyen_quy_che($conn, $idUser, $idSk)) {
         http_response_code(403);
         echo json_encode([

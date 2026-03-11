@@ -1,6 +1,7 @@
 <?php
 define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../core/auth_guard.php';
 require_once __DIR__ . '/quan_ly_nhom.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -18,20 +19,16 @@ if ($idSk <= 0) {
     exit;
 }
 
-if (session_status() === PHP_SESSION_NONE) session_start();
-$idTK = (int) ($_SESSION['user_id'] ?? 0);
-if ($idTK <= 0) {
-    http_response_code(401);
-    echo json_encode(['status' => 'error', 'message' => 'Chưa đăng nhập', 'data' => null], JSON_UNESCAPED_UNICODE);
-    exit;
-}
+// ── Auth ──────────────────────────────────────────────────
+// Chỉ yêu cầu đăng nhập (không cần quyền sự kiện cụ thể)
+$actor = auth_require_login();
+$idTK  = $actor['idTK'];
 
 try {
     $nhom = lay_nhom_cua_toi($conn, $idTK, $idSk);
-
     echo json_encode([
         'status'  => 'success',
-        'message' => $nhom ? 'Lấy nhóm thành công' : 'Chưa có nhóm',
+        'message' => $nhom ? 'Lấy nhóm thành công' : 'Bạn chưa có nhóm trong sự kiện này',
         'data'    => $nhom,
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {

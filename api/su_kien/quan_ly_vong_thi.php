@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Quản lý vòng thi - Service Layer
  * 
@@ -24,10 +25,6 @@ define('VONG_THI_MO_TA_MAX_LENGTH', 2000);
  */
 function co_quyen_quan_ly_vong_thi($conn, int $id_nguoi_thuc_hien, int $id_sk): bool
 {
-    if (kiem_tra_quyen_he_thong($conn, $id_nguoi_thuc_hien, 'admin_events')) {
-        return true;
-    }
-
     if (kiem_tra_quyen_he_thong($conn, $id_nguoi_thuc_hien, 'tao_su_kien')) {
         return true;
     }
@@ -94,7 +91,7 @@ function kiem_tra_trung_ten_vong_thi($conn, string $ten_vong, int $id_sk, int $e
         return false;
     }
 
-    $sql = 'SELECT COUNT(*) FROM vongthi WHERE tenVongThi = :tenVong AND idSK = :idSK AND isActive = 1';
+    $sql = 'SELECT COUNT(*) FROM vongthi WHERE tenVongThi = :tenVong AND idSK = :idSK';
     $params = [':tenVong' => trim($ten_vong), ':idSK' => $id_sk];
 
     if ($exclude_id > 0) {
@@ -164,22 +161,22 @@ function vong_thi_co_du_lieu_lien_quan($conn, int $id_vong_thi): array
         return $has_data;
     }
 
-    // Kiểm tra bài nộp
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM bainop WHERE idVongThi = ?');
+    // Kiểm tra sản phẩm đã tham gia vòng thi
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM sanpham_vongthi WHERE idVongThi = ?');
     $stmt->execute([$id_vong_thi]);
     if ((int) $stmt->fetchColumn() > 0) {
-        $has_data[] = 'bài nộp';
+        $has_data[] = 'sản phẩm đã nộp';
     }
 
-    // Kiểm tra phân công chấm
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM phancong_chamthi WHERE idVongThi = ?');
+    // Kiểm tra phân công chấm độc lập
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM phancong_doclap WHERE idVongThi = ?');
     $stmt->execute([$id_vong_thi]);
     if ((int) $stmt->fetchColumn() > 0) {
         $has_data[] = 'phân công chấm';
     }
 
-    // Kiểm tra kết quả chấm
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM ketqua_chamthi WHERE idVongThi = ?');
+    // Kiểm tra phân công chấm theo bộ tiêu chí
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM phancongcham WHERE idVongThi = ?');
     $stmt->execute([$id_vong_thi]);
     if ((int) $stmt->fetchColumn() > 0) {
         $has_data[] = 'kết quả chấm';
@@ -268,7 +265,6 @@ function tao_vong_thi($conn, $id_nguoi_tao, $id_sk, $ten_vong, $mo_ta, $thu_tu =
         }
 
         return $response;
-
     } catch (Throwable $e) {
         error_log('Lỗi tạo vòng thi: ' . $e->getMessage());
         return ['status' => false, 'message' => 'Lỗi hệ thống khi tạo vòng thi'];
@@ -345,7 +341,6 @@ function cap_nhat_vong_thi($conn, $id_nguoi_sua, $id_vong_thi, $ten_vong, $mo_ta
         }
 
         return $response;
-
     } catch (Throwable $e) {
         error_log('Lỗi cập nhật vòng thi: ' . $e->getMessage());
         return ['status' => false, 'message' => 'Lỗi hệ thống khi cập nhật vòng thi'];
@@ -399,7 +394,7 @@ function lay_chi_tiet_vong_thi($conn, $id_vong_thi)
     ];
 
     $data = _select_info($conn, 'vongthi', [], $conditions);
-    
+
     if (empty($data) || !is_array($data)) {
         return null;
     }
@@ -452,7 +447,6 @@ function xoa_vong_thi($conn, $id_nguoi_xoa, $id_vong_thi)
         return $result
             ? ['status' => true, 'message' => 'Đã xóa vòng thi thành công']
             : ['status' => false, 'message' => 'Lỗi xóa vòng thi'];
-
     } catch (Throwable $e) {
         error_log('Lỗi xóa vòng thi: ' . $e->getMessage());
         return ['status' => false, 'message' => 'Lỗi hệ thống khi xóa vòng thi'];
@@ -504,7 +498,6 @@ function toggle_dong_nop_vong_thi($conn, int $id_nguoi_thuc_hien, int $id_vong_t
             'message' => $new_status === 1 ? 'Đã đóng nộp bài cho vòng thi' : 'Đã mở lại nộp bài cho vòng thi',
             'dongNopThuCong' => $new_status,
         ];
-
     } catch (Throwable $e) {
         error_log('Lỗi toggle trạng thái vòng thi: ' . $e->getMessage());
         return ['status' => false, 'message' => 'Lỗi hệ thống'];
@@ -561,7 +554,6 @@ function sap_xep_thu_tu_vong_thi($conn, int $id_nguoi_thuc_hien, int $id_sk, arr
             'message' => "Đã sắp xếp lại thứ tự {$updated} vòng thi",
             'updatedCount' => $updated,
         ];
-
     } catch (Throwable $e) {
         if ($conn->inTransaction()) {
             $conn->rollBack();
@@ -582,18 +574,18 @@ function lay_thong_ke_vong_thi($conn, int $id_vong_thi): array
 
     $stats = [];
 
-    // Đếm số bài nộp
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM bainop WHERE idVongThi = ?');
+    // Đếm số sản phẩm tham gia vòng thi
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM sanpham_vongthi WHERE idVongThi = ?');
     $stmt->execute([$id_vong_thi]);
     $stats['soBaiNop'] = (int) $stmt->fetchColumn();
 
-    // Đếm phân công chấm
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM phancong_chamthi WHERE idVongThi = ?');
+    // Đếm phân công chấm độc lập
+    $stmt = $conn->prepare('SELECT COUNT(DISTINCT idSanPham) FROM phancong_doclap WHERE idVongThi = ?');
     $stmt->execute([$id_vong_thi]);
     $stats['soPhanCong'] = (int) $stmt->fetchColumn();
 
-    // Đếm kết quả chấm
-    $stmt = $conn->prepare('SELECT COUNT(*) FROM ketqua_chamthi WHERE idVongThi = ?');
+    // Đếm phân công chấm theo bộ tiêu chí
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM phancongcham WHERE idVongThi = ?');
     $stmt->execute([$id_vong_thi]);
     $stats['soKetQuaCham'] = (int) $stmt->fetchColumn();
 

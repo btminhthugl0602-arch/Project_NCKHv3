@@ -1,6 +1,7 @@
 <?php
 define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../core/auth_guard.php';
 require_once __DIR__ . '/quan_ly_nhom.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -8,14 +9,6 @@ header('Content-Type: application/json; charset=utf-8');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['status' => 'error', 'message' => 'Phương thức không hợp lệ', 'data' => null], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-if (session_status() === PHP_SESSION_NONE) session_start();
-$idTK = (int) ($_SESSION['user_id'] ?? 0);
-if ($idTK <= 0) {
-    http_response_code(401);
-    echo json_encode(['status' => 'error', 'message' => 'Chưa đăng nhập', 'data' => null], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -29,9 +22,28 @@ if ($idYeuCau <= 0 || !in_array($trangThai, [1, 2], true)) {
     exit;
 }
 
+// Lấy idSK từ yêu cầu → nhóm
+$ycCheck = truy_van_mot_ban_ghi($conn, 'yeucau_thamgia', 'idYeuCau', $idYeuCau);
+if (!$ycCheck) {
+    http_response_code(404);
+    echo json_encode(['status' => 'error', 'message' => 'Yêu cầu không tồn tại', 'data' => null], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+$nhomCheck = lay_nhom_theo_id($conn, (int) $ycCheck['idNhom']);
+if (!$nhomCheck) {
+    http_response_code(404);
+    echo json_encode(['status' => 'error', 'message' => 'Nhóm không tồn tại', 'data' => null], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+$idSk = (int) $nhomCheck['idSK'];
+
+// ── Auth ──────────────────────────────────────────────────
+// Chỉ yêu cầu đăng nhập (quyền đã được gán qua role)
+$actor = auth_require_login();
+$idTK  = $actor['idTK'];
+
 try {
     $result = duyet_yeu_cau_nhom($conn, $idTK, $idYeuCau, $trangThai);
-
     if ($result['status'] === true) {
         echo json_encode(['status' => 'success', 'message' => $result['message'], 'data' => null], JSON_UNESCAPED_UNICODE);
     } else {
