@@ -430,8 +430,10 @@ function btc_cap_nhat_su_kien(
     if ($so_thanh_vien_toi_da !== null && $so_thanh_vien_toi_da < 1) {
         return ['status' => false, 'message' => 'Số thành viên tối đa phải >= 1'];
     }
-    if ($so_thanh_vien_toi_thieu !== null && $so_thanh_vien_toi_da !== null
-        && $so_thanh_vien_toi_thieu > $so_thanh_vien_toi_da) {
+    if (
+        $so_thanh_vien_toi_thieu !== null && $so_thanh_vien_toi_da !== null
+        && $so_thanh_vien_toi_thieu > $so_thanh_vien_toi_da
+    ) {
         return ['status' => false, 'message' => 'Số thành viên tối thiểu không được lớn hơn tối đa'];
     }
     if ($so_gvhd_toi_da !== false && $so_gvhd_toi_da !== null && $so_gvhd_toi_da < 1) {
@@ -442,6 +444,7 @@ function btc_cap_nhat_su_kien(
     }
 
     try {
+        $fields = ['tenSK', 'moTa', 'idCap', 'ngayMoDangKy', 'ngayDongDangKy', 'ngayBatDau', 'ngayKetThuc', 'isActive'];
         $values = [$ten_su_kien, $mo_ta, $id_cap, $ngay_mo_dk, $ngay_dong_dk, $ngay_bat_dau, $ngay_ket_thuc, $is_active];
 
         if ($so_thanh_vien_toi_thieu !== null) {
