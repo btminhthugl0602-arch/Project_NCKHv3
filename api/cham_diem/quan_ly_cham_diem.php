@@ -204,7 +204,7 @@ function cham_diem_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi)
             return [
                 'success' => false,
                 'message' => 'Vòng thi chưa được cấu hình bộ tiêu chí. '
-                           . 'Vui lòng vào tab "Thiết lập bộ tiêu chí" để gán bộ tiêu chí cho vòng trước khi phân công.',
+                    . 'Vui lòng vào tab "Thiết lập bộ tiêu chí" để gán bộ tiêu chí cho vòng trước khi phân công.',
             ];
         }
         $idBoTieuChi = (int) $btcRow['idBoTieuChi'];
@@ -784,7 +784,8 @@ function cham_diem_lay_danh_sach_canh_bao($conn, $idSK, $idVongThi)
 /**
  * Tính điểm trung bình của sản phẩm từ tất cả giám khảo
  */
-function cham_diem_tinh_diem_trung_binh($conn, $idSanPham, $idVongThi) {
+function cham_diem_tinh_diem_trung_binh($conn, $idSanPham, $idVongThi)
+{
     // Kiểm tra: có trọng tài phúc khảo đã nộp phiếu cho SP này không?
     // Nếu có → điểm của TT là phán quyết cuối cùng (binding arbitration), không lấy AVG GK chính.
     $sqlTT = "SELECT pcc.idPhanCongCham
