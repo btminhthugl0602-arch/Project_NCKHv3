@@ -79,3 +79,62 @@
         </div>
     </div>
 </div>
+
+<!-- Cấu hình nhóm thi — full width -->
+<div class="p-4 mt-4 border rounded-xl border-slate-200 bg-slate-50">
+    <p class="mb-3 text-xs font-bold uppercase text-slate-400">Cấu hình nhóm thi</p>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+
+        <!-- Số thành viên -->
+        <div class="space-y-3">
+            <p class="text-xs font-semibold text-slate-600">Số thành viên (sinh viên)</p>
+            <div>
+                <label class="block mb-1 text-xs font-semibold text-slate-700">Tối thiểu</label>
+                <input id="basicSoTVToiThieu" type="number" min="1"
+                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+            </div>
+            <div>
+                <label class="block mb-1 text-xs font-semibold text-slate-700">Tối đa</label>
+                <input id="basicSoTVToiDa" type="number" min="1"
+                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+            </div>
+        </div>
+
+        <!-- Giảng viên hướng dẫn -->
+        <div class="space-y-3">
+            <p class="text-xs font-semibold text-slate-600">Giảng viên hướng dẫn (GVHD)</p>
+            <div>
+                <label class="block mb-1 text-xs font-semibold text-slate-700">Số GVHD tối đa / nhóm</label>
+                <div class="flex items-center gap-2 mb-1">
+                    <input id="basicSoGVHDKhongGioiHan" type="checkbox" class="w-4 h-4 accent-fuchsia-600" />
+                    <label for="basicSoGVHDKhongGioiHan" class="text-xs text-slate-600">Không giới hạn</label>
+                </div>
+                <input id="basicSoGVHDToiDa" type="number" min="1"
+                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+            </div>
+            <div>
+                <label class="block mb-1 text-xs font-semibold text-slate-700">Số nhóm tối đa 1 GVHD hướng dẫn</label>
+                <div class="flex items-center gap-2 mb-1">
+                    <input id="basicSoNhomGVHDKhongGioiHan" type="checkbox" class="w-4 h-4 accent-fuchsia-600" />
+                    <label for="basicSoNhomGVHDKhongGioiHan" class="text-xs text-slate-600">Không giới hạn</label>
+                </div>
+                <input id="basicSoNhomToiDaGVHD" type="number" min="1"
+                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+            </div>
+        </div>
+
+        <!-- Tùy chọn -->
+        <div class="space-y-3">
+            <p class="text-xs font-semibold text-slate-600">Tùy chọn khác</p>
+            <div class="flex items-center gap-2">
+                <input id="basicYeuCauCoGVHD" type="checkbox" class="w-4 h-4 accent-fuchsia-600" />
+                <label for="basicYeuCauCoGVHD" class="text-sm text-slate-700">Bắt buộc có GVHD mới được nộp bài</label>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="basicChoPhepGVTaoNhom" type="checkbox" class="w-4 h-4 accent-fuchsia-600" />
+                <label for="basicChoPhepGVTaoNhom" class="text-sm text-slate-700">Cho phép giảng viên tạo nhóm</label>
+            </div>
+        </div>
+
+    </div>
+</div>

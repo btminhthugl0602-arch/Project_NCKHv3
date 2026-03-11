@@ -345,7 +345,6 @@ function cham_diem_go_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi)
                     }
                 }
             }
-
             return ['success' => true, 'message' => 'Gỡ phân công thành công'];
         }
 
@@ -785,11 +784,6 @@ function cham_diem_lay_danh_sach_canh_bao($conn, $idSK, $idVongThi)
 /**
  * Tính điểm trung bình của sản phẩm từ tất cả giám khảo
  */
-<<<<<<< HEAD
-function cham_diem_tinh_diem_trung_binh($conn, $idSanPham, $idVongThi)
-{
-    // Chỉ tính TB từ GK chính (isTrongTai=0) — không trộn điểm trọng tài phúc khảo
-=======
 function cham_diem_tinh_diem_trung_binh($conn, $idSanPham, $idVongThi) {
     // Kiểm tra: có trọng tài phúc khảo đã nộp phiếu cho SP này không?
     // Nếu có → điểm của TT là phán quyết cuối cùng (binding arbitration), không lấy AVG GK chính.
@@ -820,7 +814,6 @@ function cham_diem_tinh_diem_trung_binh($conn, $idSanPham, $idVongThi) {
     }
 
     // Không có TT → lấy AVG tổng điểm từ GK chính (isTrongTai=0) như logic gốc
->>>>>>> MinhThu
     $sql = "SELECT AVG(sub.tongDiem) as diemTB FROM (
                 SELECT pcc.idGV, SUM(ct.diem) as tongDiem
                 FROM chamtieuchi ct
@@ -832,17 +825,9 @@ function cham_diem_tinh_diem_trung_binh($conn, $idSanPham, $idVongThi) {
                 WHERE ct.idSanPham = :idSanPham AND pcc.idVongThi = :idVongThi
                 GROUP BY pcc.idGV
             ) as sub";
-<<<<<<< HEAD
-
     $stmt = $conn->prepare($sql);
     $stmt->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-=======
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
->>>>>>> MinhThu
     return $result['diemTB'] !== null ? round((float) $result['diemTB'], 2) : null;
 }
 

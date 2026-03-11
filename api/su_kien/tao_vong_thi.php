@@ -9,9 +9,6 @@ require_once __DIR__ . '/quan_ly_vong_thi.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-// ── Auth ──────────────────────────────────────────────────
-$actor = auth_require_quyen_he_thong('tao_su_kien');
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode([
@@ -27,20 +24,11 @@ if (!is_array($input)) {
     $input = [];
 }
 
-$idNguoiTao = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
-if ($idNguoiTao <= 0 && isset($input['id_nguoi_tao'])) {
-    $idNguoiTao = (int) $input['id_nguoi_tao'];
-}
+// ── Auth ──────────────────────────────────────────────────
+$idSk = (int)($input['id_sk'] ?? 0);
+$actor = auth_require_quyen_su_kien($idSk, 'cauhinh_sukien');
 
-if ($idNguoiTao <= 0) {
-    http_response_code(401);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Bạn chưa đăng nhập hoặc thiếu thông tin người tạo',
-        'data' => null,
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
-}
+$idNguoiTao = $actor['idTK'];
 
 $result = tao_vong_thi(
     $conn,

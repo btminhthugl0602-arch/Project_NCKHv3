@@ -25,12 +25,7 @@ define('VONG_THI_MO_TA_MAX_LENGTH', 2000);
  */
 function co_quyen_quan_ly_vong_thi($conn, int $id_nguoi_thuc_hien, int $id_sk): bool
 {
-    if (kiem_tra_quyen_he_thong($conn, $id_nguoi_thuc_hien, 'tao_su_kien')) {
-        return true;
-    }
-
-    return kiem_tra_quyen_su_kien($conn, $id_nguoi_thuc_hien, $id_sk, 'cauhinh_vongthi')
-        || kiem_tra_quyen_su_kien($conn, $id_nguoi_thuc_hien, $id_sk, 'cauhinh_sukien');
+    return kiem_tra_quyen_su_kien($conn, $id_nguoi_thuc_hien, $id_sk, 'cauhinh_sukien');
 }
 
 // ==========================================

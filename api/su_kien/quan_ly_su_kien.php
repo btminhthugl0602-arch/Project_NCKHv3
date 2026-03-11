@@ -30,12 +30,6 @@ define('SU_KIEN_MO_TA_MAX_LENGTH', 5000);
  */
 function co_quyen_quan_ly_su_kien($conn, int $id_tk, int $id_sk = 0): bool
 {
-    // Người có quyền tạo sự kiện (Admin tự bypass qua kiem_tra_quyen_he_thong)
-    if (kiem_tra_quyen_he_thong($conn, $id_tk, 'tao_su_kien')) {
-        return true;
-    }
-
-    // Kiểm tra quyền cấu hình sự kiện cụ thể
     if ($id_sk > 0) {
         return kiem_tra_quyen_su_kien($conn, $id_tk, $id_sk, 'cauhinh_sukien');
     }
@@ -375,7 +369,13 @@ function btc_cap_nhat_su_kien(
     $ngay_dong_dk,
     $ngay_bat_dau,
     $ngay_ket_thuc,
-    $is_active
+    $is_active,
+    $so_thanh_vien_toi_thieu = null,
+    $so_thanh_vien_toi_da    = null,
+    $so_gvhd_toi_da          = false,
+    $so_nhom_toi_da_gvhd     = false,
+    $yeu_cau_co_gvhd         = null,
+    $cho_phep_gv_tao_nhom    = null
 ) {
     $id_nguoi_thuc_hien = (int) $id_nguoi_thuc_hien;
     $id_su_kien = (int) $id_su_kien;
@@ -423,9 +423,51 @@ function btc_cap_nhat_su_kien(
     $ngay_bat_dau = !empty($ngay_bat_dau) ? $ngay_bat_dau : null;
     $ngay_ket_thuc = !empty($ngay_ket_thuc) ? $ngay_ket_thuc : null;
 
+    // Validate cấu hình nhóm thi
+    if ($so_thanh_vien_toi_thieu !== null && $so_thanh_vien_toi_thieu < 1) {
+        return ['status' => false, 'message' => 'Số thành viên tối thiểu phải >= 1'];
+    }
+    if ($so_thanh_vien_toi_da !== null && $so_thanh_vien_toi_da < 1) {
+        return ['status' => false, 'message' => 'Số thành viên tối đa phải >= 1'];
+    }
+    if ($so_thanh_vien_toi_thieu !== null && $so_thanh_vien_toi_da !== null
+        && $so_thanh_vien_toi_thieu > $so_thanh_vien_toi_da) {
+        return ['status' => false, 'message' => 'Số thành viên tối thiểu không được lớn hơn tối đa'];
+    }
+    if ($so_gvhd_toi_da !== false && $so_gvhd_toi_da !== null && $so_gvhd_toi_da < 1) {
+        return ['status' => false, 'message' => 'Số GVHD tối đa phải >= 1 hoặc để trống (không giới hạn)'];
+    }
+    if ($so_nhom_toi_da_gvhd !== false && $so_nhom_toi_da_gvhd !== null && $so_nhom_toi_da_gvhd < 1) {
+        return ['status' => false, 'message' => 'Số nhóm tối đa GVHD hướng dẫn phải >= 1 hoặc để trống (không giới hạn)'];
+    }
+
     try {
-        $fields = ['tenSK', 'moTa', 'idCap', 'ngayMoDangKy', 'ngayDongDangKy', 'ngayBatDau', 'ngayKetThuc', 'isActive'];
         $values = [$ten_su_kien, $mo_ta, $id_cap, $ngay_mo_dk, $ngay_dong_dk, $ngay_bat_dau, $ngay_ket_thuc, $is_active];
+
+        if ($so_thanh_vien_toi_thieu !== null) {
+            $fields[] = 'soThanhVienToiThieu';
+            $values[] = $so_thanh_vien_toi_thieu;
+        }
+        if ($so_thanh_vien_toi_da !== null) {
+            $fields[] = 'soThanhVienToiDa';
+            $values[] = $so_thanh_vien_toi_da;
+        }
+        if ($so_gvhd_toi_da !== false) {
+            $fields[] = 'soGVHDToiDa';
+            $values[] = $so_gvhd_toi_da;
+        }
+        if ($so_nhom_toi_da_gvhd !== false) {
+            $fields[] = 'soNhomToiDaGVHD';
+            $values[] = $so_nhom_toi_da_gvhd;
+        }
+        if ($yeu_cau_co_gvhd !== null) {
+            $fields[] = 'yeuCauCoGVHD';
+            $values[] = $yeu_cau_co_gvhd;
+        }
+        if ($cho_phep_gv_tao_nhom !== null) {
+            $fields[] = 'choPhepGVTaoNhom';
+            $values[] = $cho_phep_gv_tao_nhom;
+        }
 
         $updated = _update_info($conn, 'sukien', $fields, $values, ['idSK' => ['=', $id_su_kien, '']]);
 
