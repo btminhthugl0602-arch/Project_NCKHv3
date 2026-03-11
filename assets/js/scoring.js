@@ -978,10 +978,11 @@
             ? parseFloat(baiThiMeta.diemTrungBinh).toFixed(2)
             : overallAvg;
 
-        // Tỉ lệ đồng thuận hiển thị
-        const irrPercent = irr?.icc !== undefined
-            ? (parseFloat(irr.icc) * 100).toFixed(1)
-            : maxDeviation > 0 ? (100 - Math.min(maxDeviation, 100)).toFixed(1) : '100.0';
+        // Tỉ lệ đồng thuận hiển thị = % tiêu chí KHÔNG lệch cao (dễ hiểu với BTC/GK)
+        const okCriteria  = totalCriteria - problemCriteria;
+        const irrPercent  = totalCriteria > 0
+            ? ((okCriteria / totalCriteria) * 100).toFixed(1)
+            : '100.0';
 
         // ── Bảng điểm chi tiết ────────────────────────────────────────────
         const judgeHeaders = judges.map(j =>
