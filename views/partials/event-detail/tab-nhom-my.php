@@ -7,14 +7,15 @@
 
 $idNhom        = isset($_GET['id_nhom']) ? (int) $_GET['id_nhom'] : 0;
 $quanLyTab     = 'thanh-vien';
-$allowedQLTabs = ['thanh-vien', 'yeu-cau', 'cai-dat'];
+$allowedQLTabs = ['thanh-vien', 'yeu-cau', 'nop-tai-lieu', 'cai-dat'];
 if ($idNhom > 0 && isset($_GET['quan_ly_tab']) && in_array($_GET['quan_ly_tab'], $allowedQLTabs, true)) {
     $quanLyTab = $_GET['quan_ly_tab'];
 }
 $qlTabTitles = [
-    'thanh-vien' => 'Thành viên',
-    'yeu-cau'    => 'Yêu cầu tham gia',
-    'cai-dat'    => 'Cài đặt nhóm',
+    'thanh-vien'   => 'Thành viên',
+    'yeu-cau'      => 'Yêu cầu tham gia',
+    'nop-tai-lieu' => 'Nộp tài liệu',
+    'cai-dat'      => 'Cài đặt nhóm',
 ];
 ?>
 
@@ -178,47 +179,6 @@ $qlTabTitles = [
             </div>
             <p class="text-xs text-slate-400 mb-3">Hiển thị 20 giảng viên đầu tiên — nhập tên để tìm kiếm</p>
             <div id="gvSearchResults" class="max-h-64 overflow-y-auto space-y-1 border border-slate-100 rounded-lg"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Nộp bài -->
-<div id="modalNopBai" class="fixed inset-0 z-50 hidden bg-black/50">
-    <div class="flex items-center justify-center min-h-full p-4">
-        <div class="bg-white rounded-2xl border border-slate-200 w-full max-w-lg p-6">
-            <div class="flex items-center justify-between mb-5">
-                <p class="text-sm font-bold text-slate-700">Nộp bài / Sản phẩm nghiên cứu</p>
-                <button id="btnCloseNopBai" class="text-slate-400 hover:text-slate-600">
-                    <span class="material-symbols-outlined text-[20px]">close</span>
-                </button>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tên đề tài <span class="text-rose-500">*</span></label>
-                    <input type="text" id="inputTenDeTai"
-                        class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-primary">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Mô tả</label>
-                    <textarea id="inputMoTaNopBai" rows="3"
-                        class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-primary resize-none"></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Link tài liệu / GitHub</label>
-                    <input type="url" id="inputLinkTL" placeholder="https://..."
-                        class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-primary">
-                </div>
-                <div class="flex gap-3 pt-1">
-                    <button id="btnHuyNopBai"
-                        class="flex-1 px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
-                        Huỷ
-                    </button>
-                    <button id="btnSubmitNopBai"
-                        class="flex-1 px-4 py-2 text-sm font-bold text-white bg-gradient-to-tl from-purple-700 to-pink-500 rounded-lg hover:opacity-90 transition-opacity">
-                        <span class="material-symbols-outlined text-[15px] align-middle mr-1">send</span> Nộp bài
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 </div>

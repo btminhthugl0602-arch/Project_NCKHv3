@@ -856,8 +856,8 @@ function lay_tat_ca_nhom(PDO $conn, int $idSK): array
             CASE WHEN tk_chu.idLoaiTK = 3 THEN sv_chu.tenSV
                  WHEN tk_chu.idLoaiTK = 2 THEN gv_chu.tenGV END AS ten_chu_nhom,
             CASE WHEN tk_truong.idLoaiTK = 3 THEN sv_truong.tenSV END AS ten_truong_nhom,
-            COUNT(DISTINCT tv.idTK) AS so_thanh_vien,
-            COUNT(DISTINCT gvhd.idTK) AS so_gvhd
+            (SELECT COUNT(*) FROM thanhviennhom WHERE idNhom = n.idNhom) AS so_thanh_vien,
+            (SELECT COUNT(*) FROM nhom_gvhd WHERE idNhom = n.idNhom) AS so_gvhd
         FROM nhom n
         LEFT JOIN thongtinnhom tn        ON tn.idnhom = n.idNhom
         LEFT JOIN sukien sk              ON sk.idSK = n.idSK
@@ -866,10 +866,7 @@ function lay_tat_ca_nhom(PDO $conn, int $idSK): array
         LEFT JOIN giangvien gv_chu       ON gv_chu.idTK = n.idChuNhom
         LEFT JOIN taikhoan tk_truong     ON tk_truong.idTK = n.idTruongNhom
         LEFT JOIN sinhvien sv_truong     ON sv_truong.idTK = n.idTruongNhom
-        LEFT JOIN thanhviennhom tv       ON tv.idNhom = n.idNhom
-        LEFT JOIN nhom_gvhd gvhd        ON gvhd.idNhom = n.idNhom
         WHERE n.idSK = :idSK AND n.isActive = 1
-        GROUP BY n.idNhom
         ORDER BY n.ngayTao DESC"
     );
     $stmt->execute([':idSK' => $idSK]);
@@ -1209,7 +1206,10 @@ function nop_tai_lieu_vong(PDO $conn, int $idTK, int $idNhom, int $idVongThi, ar
         return ['status' => false, 'message' => 'Vòng thi không tồn tại'];
     }
 
-    // Check deadline
+    // Check deadline (thủ công hoặc theo thời gian)
+    if ((int)($vongthi['dongNopThuCong'] ?? 0) === 1) {
+        return ['status' => false, 'message' => 'Vòng thi đã đóng nộp bài'];
+    }
     if (!empty($vongthi['thoiGianDongNop']) && strtotime($vongthi['thoiGianDongNop']) <= time()) {
         return ['status' => false, 'message' => 'Đã quá hạn nộp bài'];
     }
@@ -1293,14 +1293,15 @@ function nop_tai_lieu_vong(PDO $conn, int $idTK, int $idNhom, int $idVongThi, ar
                 continue;
             }
 
-            $sql = "INSERT INTO sanpham_field_value (idSanPham, idField, giaTriText, duongDanFile)
-                    VALUES (?, ?, ?, ?)
+            $sql = "INSERT INTO sanpham_field_value (idSanPham, idField, idVongThi, giaTriText, duongDanFile)
+                    VALUES (?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE
-                        giaTriText = VALUES(giaTriText),
+                        idVongThi    = VALUES(idVongThi),
+                        giaTriText   = VALUES(giaTriText),
                         duongDanFile = VALUES(duongDanFile),
                         ngayNop = CURRENT_TIMESTAMP";
             $stmtInsert = $conn->prepare($sql);
-            $stmtInsert->execute([$sanpham['idSanPham'], $idField, $giaTriText, $duongDanFile]);
+            $stmtInsert->execute([$sanpham['idSanPham'], $idField, $idVongThi, $giaTriText, $duongDanFile]);
         }
         $conn->commit();
         return ['status' => true, 'message' => 'Nộp tài liệu thành công'];
@@ -1318,9 +1319,10 @@ function nop_tai_lieu_vong(PDO $conn, int $idTK, int $idNhom, int $idVongThi, ar
 function lay_san_pham_nhom(PDO $conn, int $idNhom, int $idSK): ?array
 {
     $stmt = $conn->prepare(
-        'SELECT sp.*, cs.tenChuDe
+        'SELECT sp.*, c.tenChuDe
          FROM sanpham sp
          LEFT JOIN chude_sukien cs ON cs.idChuDeSK = sp.idChuDeSK
+         LEFT JOIN chude c ON c.idChuDe = cs.idchude
          WHERE sp.idNhom = :idNhom AND sp.idSK = :idSK
          LIMIT 1'
     );

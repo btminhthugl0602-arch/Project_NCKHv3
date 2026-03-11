@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## [Unreleased] — Part B: Giao diện Nộp tài liệu (Sinh viên/Nhóm)
+
+### Tính năng mới
+- **`api/nhom/lay_tai_lieu.php`** *(mới)*: GET endpoint trả về toàn bộ dữ liệu cần cho tab Nộp tài liệu:
+  - `sanpham` (null nếu chưa tạo), `chuDeSK`, `vongThi` (mảng, gồm `soField`, `daNop`, `daQiaHan`, `khongCanNop`)
+  - Khi có `?id_vong_thi=`: trả thêm `formFields` và `daNopValues` (keyed by `idField`)
+  - Auth: thành viên hoặc GVHD của nhóm
+- **`views/partials/event-detail/tab-nhom-my.php`**: Thêm sub-tab `nop-tai-lieu` (Nộp tài liệu)
+- **`assets/js/nhom_thi.js`** — thêm 6 hàm mới:
+  - `renderNopTaiLieuSkeleton()`: placeholder loading
+  - `loadNopTaiLieu(nhom)`: async fetch + render toàn bộ tab
+  - `buildNopTaiLieuUI()`: render layout 2 cột (vòng thi | form)
+  - `buildFormHTML()`: render dynamic form theo `kieuTruong` (TEXT/TEXTAREA/URL/FILE/SELECT/CHECKBOX) với giá trị đã nộp pre-fill
+  - `loadVongThiForm()`: async load form + giá trị đã nộp khi click vòng thi
+  - `bindNtlSubmit()`: submit via `FormData` (hỗ trợ cả text và file upload)
+  - `bindNopTaiLieu()`: bind toàn bộ event listeners (modal tạo/sửa đề tài, chọn vòng thi)
+
+### Bug fixes
+- **`api/nhom/quan_ly_nhom.php` — `nop_tai_lieu_vong()`**: Sửa lỗi INSERT thiếu cột `idVongThi` vào `sanpham_field_value` — giờ lưu đúng `idVongThi` để đảm bảo tính nhất quán dữ liệu
+
+---
+
 ## 2026-03-11 — Sửa lỗi đồng bộ Code ↔ Database Schema
 
 ### Bug fixes
