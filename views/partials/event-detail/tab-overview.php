@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Partial: tab-overview.php
  * Dữ liệu load qua JS fetch từ /api/su_kien/overview_su_kien.php?id_sk=X
@@ -135,7 +136,7 @@
         $statCards = [
             ['id' => 'ov-stat-nhom', 'icon' => 'group',     'label' => 'Tổng số nhóm'],
             ['id' => 'ov-stat-gv',   'icon' => 'school',    'label' => 'Tổng số giảng viên'],
-            ['id' => 'ov-stat-cd',   'icon' => 'menu_book', 'label' => 'Số chủ đề nghiên cứu'],
+            ['id' => 'ov-stat-cd',   'icon' => 'description', 'label' => 'Số bài đã nộp'],
         ];
         foreach ($statCards as $card): ?>
         <div class="ov-stat-card bg-white rounded-2xl p-6 relative overflow-hidden"
@@ -231,7 +232,7 @@
         if (!list || list.length === 0) return;
         $el.innerHTML = list.map(c =>
             `<span style="padding:4px 10px;background:rgba(146,19,236,.08);color:#7c3aed;font-size:11px;font-weight:600;border-radius:6px;">#${c.tenChuDe}</span>`
-            ).join('');
+        ).join('');
     }
 
     function renderAction(dangKy, trangThai) {
@@ -360,13 +361,13 @@
 
             document.getElementById('ov-stat-nhom').textContent = thong_ke.so_nhom ?? 0;
             document.getElementById('ov-stat-gv').textContent = thong_ke.so_giang_vien ?? 0;
-            document.getElementById('ov-stat-cd').textContent = chu_de.length ?? 0;
+            document.getElementById('ov-stat-cd').textContent = thong_ke.so_bai_nop ?? 0;
             document.getElementById('ov-stat-nhom-sub').innerHTML =
                 `<span class="material-symbols-outlined" style="font-size:13px;">groups</span>${thong_ke.so_vong_thi ?? 0} vòng thi`;
             document.getElementById('ov-stat-gv-sub').innerHTML =
                 `<span class="material-symbols-outlined" style="font-size:13px;">check_circle</span>${thong_ke.so_gv_huong_dan ?? 0} GVHD`;
             document.getElementById('ov-stat-cd-sub').innerHTML =
-                `<span class="material-symbols-outlined" style="font-size:13px;">category</span>${chu_de.length} chủ đề`;
+                `<span class="material-symbols-outlined" style="font-size:13px;">check_circle</span>${thong_ke.so_bai_nop ?? 0} sản phẩm`;
 
             renderVongThi(vong_thi);
 

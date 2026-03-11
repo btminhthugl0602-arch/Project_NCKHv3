@@ -121,11 +121,14 @@ try {
     $vongThis = lay_ds_vong_thi($conn, $idSk);
 
     // ── 7. Chủ đề ─────────────────────────────────────────
+    // Đọc qua chude_sukien — bảng trung gian chính tắc gán chủ đề vào sự kiện.
+    // chude là ngân hàng chung, không query trực tiếp theo idSK.
     $stmt = $conn->prepare("
-        SELECT idChuDe, tenChuDe
-        FROM chude
-        WHERE idSK = ? AND isActive = 1
-        ORDER BY idChuDe ASC
+        SELECT c.idChuDe, c.tenChuDe
+        FROM chude_sukien cs
+        JOIN chude c ON c.idChuDe = cs.idchude
+        WHERE cs.idSK = ? AND cs.isActive = 1
+        ORDER BY cs.idChuDeSK ASC
     ");
     $stmt->execute([$idSk]);
     $chuDes = $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -39,9 +39,9 @@ function cham_diem_lay_danh_sach_san_pham($conn, $idSK, $idVongThi)
 {
     $sql = "SELECT 
                 sp.idSanPham,
-                sp.tensanpham,
-                sp.TrangThai,
-                n.manhom,
+                sp.tenSanPham AS tensanpham,
+                sp.trangThai,
+                n.maNhom AS manhom,
                 ttn.tennhom,
                 tkNT.tenTK as tenNhomTruong,
                 CASE WHEN sv.tenSV IS NOT NULL THEN sv.tenSV ELSE gv.tenGV END as hoTenNhomTruong,
@@ -624,7 +624,7 @@ function cham_diem_lay_danh_sach_canh_bao($conn, $idSK, $idVongThi)
         if ($irr['canhBao']) {
             $canhBaoList[] = [
                 'idSanPham'  => $sp['idSanPham'],
-                'tensanpham' => $sp['tensanpham'],
+                'tensanpham' => $sp['tensanpham'], // alias từ SQL: tenSanPham AS tensanpham
                 'tennhom'    => $sp['tennhom'],
                 'soGiamKhao' => $sp['soGiamKhao'],
                 'irr'        => $irr,
@@ -936,16 +936,16 @@ function cham_diem_lay_bang_xep_hang($conn, $idSK, $idVongThi)
 {
     $sql = "SELECT 
                 sp.idSanPham,
-                sp.tensanpham,
-                n.manhom,
+                sp.tenSanPham AS tensanpham,
+                n.maNhom AS manhom,
                 ttn.tennhom,
                 spv.diemTrungBinh,
                 spv.trangThai,
                 spv.xepLoai,
                 (SELECT GROUP_CONCAT(sv2.tenSV SEPARATOR ', ') 
                  FROM thanhviennhom tvn 
-                 INNER JOIN sinhvien sv2 ON tvn.idtk = sv2.idTK 
-                 WHERE tvn.idnhom = n.idnhom AND tvn.trangthai = 1
+                 INNER JOIN sinhvien sv2 ON tvn.idTK = sv2.idTK 
+                 WHERE tvn.idNhom = n.idNhom
                 ) as thanhVien
             FROM sanpham_vongthi spv
             INNER JOIN sanpham sp ON spv.idSanPham = sp.idSanPham
@@ -992,9 +992,9 @@ function cham_diem_lay_tat_ca_bai_thi($conn, $idSK, $idVongThi)
 {
     $sql = "SELECT 
                 sp.idSanPham,
-                sp.tensanpham,
-                sp.TrangThai as trangThaiSP,
-                n.manhom,
+                sp.tenSanPham AS tensanpham,
+                sp.trangThai as trangThaiSP,
+                n.maNhom AS manhom,
                 ttn.tennhom,
                 spv.diemTrungBinh,
                 spv.trangThai as trangThaiVongThi,
@@ -1039,7 +1039,7 @@ function cham_diem_lay_tat_ca_bai_thi($conn, $idSK, $idVongThi)
                     ELSE 4
                 END,
                 spv.diemTrungBinh DESC,
-                sp.tensanpham ASC";
+                sp.tenSanPham ASC";
 
     $stmt = $conn->prepare($sql);
     $stmt->execute([
