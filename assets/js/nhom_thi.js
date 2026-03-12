@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function () {
             formWrapper?.classList.add('hidden');
             document.getElementById('inputTenNhom').value = '';
             document.getElementById('inputMoTa').value = '';
-            document.getElementById('inputSoLuong').value = '5';
             document.getElementById('inputDangTuyen').value = '1';
         }
 
@@ -187,7 +186,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             function renderThanhVien(nhom) {
                 const svList = (nhom.thanh_vien || []).filter(tv => parseInt(tv.idvaitronhom) !== 3);
-                const gvhd = (nhom.thanh_vien || []).find(tv => parseInt(tv.idvaitronhom) === 3);
+                const gvhdList = (nhom.thanh_vien || []).filter(tv => parseInt(tv.idvaitronhom) === 3);
+                const soGVHDToiDa = nhom.so_gvhd_toi_da ?? null;
+                const coTheMotGVHD = soGVHDToiDa === null || gvhdList.length < soGVHDToiDa;
 
                 const roleLabel = r => {
                     if (r == 1) return '<span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-semibold">Trưởng nhóm</span>';
@@ -195,7 +196,22 @@ document.addEventListener('DOMContentLoaded', function () {
                     return '<span class="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">Thành viên</span>';
                 };
 
-                const memberRows = (nhom.thanh_vien || []).map(tv => `
+                const memberRows = (nhom.thanh_vien || []).map(tv => {
+                    const isSV = parseInt(tv.idvaitronhom) !== 3;
+                    const isChuNhom = parseInt(tv.idtk) === parseInt(nhom.idChuNhom);
+                    const isTruongNhom = parseInt(tv.idvaitronhom) === 1;
+                    const actionBtns = nhom.is_chu_nhom && !isChuNhom ? `
+                        <div class="flex items-center gap-1">
+                            ${isSV && !isTruongNhom ? `
+                                <button onclick="setTruongNhom(${tv.idtk}, '${esc(tv.ten)}')" title="Chỉ định trưởng nhóm"
+                                    class="text-xs text-purple-500 hover:text-purple-700 transition"><i class="fas fa-crown"></i></button>
+                                <button onclick="chuyenChuNhom(${tv.idtk}, '${esc(tv.ten)}')" title="Chuyển quyền chủ nhóm"
+                                    class="text-xs text-amber-500 hover:text-amber-700 transition"><i class="fas fa-key"></i></button>
+                            ` : ''}
+                            <button onclick="kickMember(${tv.idtk}, '${esc(tv.ten)}')"
+                                class="text-xs text-rose-500 hover:text-rose-700 transition"><i class="fas fa-times-circle"></i></button>
+                        </div>` : '';
+                    return `
                     <div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
                         <div class="flex items-center gap-3">
                             <div class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-400 flex items-center justify-center text-white text-sm font-bold shrink-0">
@@ -208,20 +224,18 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                         <div class="flex items-center gap-2">
                             ${roleLabel(tv.idvaitronhom)}
-                            ${nhom.is_chu_nhom && parseInt(tv.idvaitronhom) !== 1
-                        ? `<button onclick="kickMember(${tv.idtk}, '${esc(tv.ten)}')"
-                                       class="text-xs text-rose-500 hover:text-rose-700 transition"><i class="fas fa-times-circle"></i></button>`
-                        : ''}
+                            ${actionBtns}
                         </div>
-                    </div>`).join('');
+                    </div>`;
+                }).join('');
 
                 return `<div class="divide-y-0">${memberRows}</div>
-                    ${nhom.is_chu_nhom ? `<div class="mt-4 flex gap-2">
+                    ${nhom.is_chu_nhom ? `<div class="mt-4 flex gap-2 flex-wrap">
                         <button onclick="openMoiTV()"
                             class="inline-flex items-center gap-1 px-4 py-2 text-xs font-semibold text-white rounded-lg bg-blue-600 hover:bg-blue-700 transition">
                             <i class="fas fa-user-plus"></i> Mời thành viên
                         </button>
-                        ${!gvhd ? `<button onclick="openMoiGVHD()"
+                        ${coTheMotGVHD ? `<button onclick="openMoiGVHD()"
                             class="inline-flex items-center gap-1 px-4 py-2 text-xs font-semibold text-white rounded-lg bg-orange-500 hover:bg-orange-600 transition">
                             <i class="fas fa-chalkboard-teacher"></i> Mời GVHD
                         </button>` : ''}
@@ -680,7 +694,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         const d = await apiFetch(`/api/nhom/san_pham.php?id_nhom=${qlNhomId}`);
                         if (d.status !== 'success') return;
                         _formFieldsMacDinh = d.data.formFields || [];
-                        const daNopValues  = d.data.daNopValues || {};
+                        const daNopValues = d.data.daNopValues || {};
                         if (!_formFieldsMacDinh.length || !formFieldsWrap) return;
 
                         formFieldsWrap.innerHTML = `
@@ -688,50 +702,50 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <p class="text-xs font-bold uppercase text-slate-400 mb-3">Thông tin bổ sung</p>
                                 <div class="space-y-3" id="ntlDynamicFields">
                                     ${_formFieldsMacDinh.map(f => {
-                                        const cfg = f.cauHinhJson ? JSON.parse(f.cauHinhJson) : {};
-                                        const existing = daNopValues[f.idField];
-                                        const val = existing?.giaTriText || '';
-                                        const required = parseInt(f.batBuoc) === 1;
-                                        const reqMark = required ? '<span class="text-red-500 ml-0.5">*</span>' : '';
-                                        let inputHTML;
-                                        switch (f.kieuTruong) {
-                                            case 'TEXTAREA':
-                                                inputHTML = `<textarea name="ff_${f.idField}" rows="${cfg.rows || 3}"
+                            const cfg = f.cauHinhJson ? JSON.parse(f.cauHinhJson) : {};
+                            const existing = daNopValues[f.idField];
+                            const val = existing?.giaTriText || '';
+                            const required = parseInt(f.batBuoc) === 1;
+                            const reqMark = required ? '<span class="text-red-500 ml-0.5">*</span>' : '';
+                            let inputHTML;
+                            switch (f.kieuTruong) {
+                                case 'TEXTAREA':
+                                    inputHTML = `<textarea name="ff_${f.idField}" rows="${cfg.rows || 3}"
                                                     placeholder="${esc(cfg.placeholder || '')}" ${required ? 'required' : ''}
                                                     class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none resize-y">${esc(val)}</textarea>`;
-                                                break;
-                                            case 'URL':
-                                                inputHTML = `<input type="url" name="ff_${f.idField}" value="${esc(val)}"
+                                    break;
+                                case 'URL':
+                                    inputHTML = `<input type="url" name="ff_${f.idField}" value="${esc(val)}"
                                                     placeholder="${esc(cfg.placeholder || 'https://')}" ${required ? 'required' : ''}
                                                     class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />`;
-                                                break;
-                                            case 'SELECT': {
-                                                const opts = (cfg.options || []).map(o =>
-                                                    `<option value="${esc(o)}" ${val === o ? 'selected' : ''}>${esc(o)}</option>`
-                                                ).join('');
-                                                inputHTML = `<select name="ff_${f.idField}" ${required ? 'required' : ''}
+                                    break;
+                                case 'SELECT': {
+                                    const opts = (cfg.options || []).map(o =>
+                                        `<option value="${esc(o)}" ${val === o ? 'selected' : ''}>${esc(o)}</option>`
+                                    ).join('');
+                                    inputHTML = `<select name="ff_${f.idField}" ${required ? 'required' : ''}
                                                     class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none">
                                                     <option value="">— Chọn —</option>${opts}
                                                 </select>`;
-                                                break;
-                                            }
-                                            case 'CHECKBOX':
-                                                inputHTML = `<label class="flex items-center gap-2 cursor-pointer">
+                                    break;
+                                }
+                                case 'CHECKBOX':
+                                    inputHTML = `<label class="flex items-center gap-2 cursor-pointer">
                                                     <input type="checkbox" name="ff_${f.idField}" value="1" ${val === '1' ? 'checked' : ''} ${required ? 'required' : ''}
                                                         class="w-4 h-4 rounded border-slate-300 text-fuchsia-500" />
                                                     <span class="text-sm text-slate-700">${esc(cfg.label || f.tenTruong)}</span>
                                                 </label>`;
-                                                break;
-                                            default: // TEXT
-                                                inputHTML = `<input type="text" name="ff_${f.idField}" value="${esc(val)}"
+                                    break;
+                                default: // TEXT
+                                    inputHTML = `<input type="text" name="ff_${f.idField}" value="${esc(val)}"
                                                     maxlength="${cfg.maxLength || 200}" placeholder="${esc(cfg.placeholder || '')}" ${required ? 'required' : ''}
                                                     class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />`;
-                                        }
-                                        return `<div>
+                            }
+                            return `<div>
                                             <label class="block mb-1 text-xs font-semibold text-slate-700">${esc(f.tenTruong)}${reqMark}</label>
                                             ${inputHTML}
                                         </div>`;
-                                    }).join('')}
+                        }).join('')}
                                 </div>
                             </div>`;
                     } catch { /* form mặc định không bắt buộc phải load được */ }
@@ -873,6 +887,41 @@ document.addEventListener('DOMContentLoaded', function () {
                 Swal.fire({ icon: res.status === 'success' ? 'success' : 'error', title: res.message, timer: 1500, showConfirmButton: false });
             };
 
+            // Chuyển quyền chủ nhóm
+            window.chuyenChuNhom = async function (idTk, ten) {
+                const c = await Swal.fire({
+                    title: `Chuyển quyền chủ nhóm cho ${ten}?`,
+                    text: 'Bạn sẽ trở thành thành viên thường sau khi chuyển.',
+                    icon: 'warning', showCancelButton: true,
+                    confirmButtonText: 'Xác nhận', cancelButtonText: 'Huỷ',
+                    confirmButtonColor: '#f59e0b',
+                });
+                if (!c.isConfirmed) return;
+                const res = await apiPost('/api/nhom/nhuong_quyen.php', { id_sk: idSk, id_nhom: qlNhomId, action: 'chu_nhom', id_nguoi_nhan: idTk });
+                if (res.status === 'success') {
+                    Swal.fire({ icon: 'success', title: res.message, timer: 1500, showConfirmButton: false }).then(() => location.reload());
+                } else {
+                    Swal.fire({ icon: 'error', title: res.message });
+                }
+            };
+
+            // Chỉ định trưởng nhóm
+            window.setTruongNhom = async function (idTk, ten) {
+                const c = await Swal.fire({
+                    title: `Chỉ định ${ten} làm trưởng nhóm?`,
+                    icon: 'question', showCancelButton: true,
+                    confirmButtonText: 'Xác nhận', cancelButtonText: 'Huỷ',
+                    confirmButtonColor: '#8b5cf6',
+                });
+                if (!c.isConfirmed) return;
+                const res = await apiPost('/api/nhom/nhuong_quyen.php', { id_sk: idSk, id_nhom: qlNhomId, action: 'truong_nhom', id_nguoi_nhan: idTk });
+                if (res.status === 'success') {
+                    Swal.fire({ icon: 'success', title: res.message, timer: 1500, showConfirmButton: false }).then(() => loadQL());
+                } else {
+                    Swal.fire({ icon: 'error', title: res.message });
+                }
+            };
+
             loadQL();
             return; // không chạy tiếp load danh sách
         }
@@ -884,8 +933,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const elContent = document.getElementById('myGroupContent');
 
         function renderGroupCard(nhom) {
-            const gvhd = (nhom.thanh_vien || []).find(tv => parseInt(tv.idvaitronhom) === 3);
-            const hasGvhd = !!gvhd;
+            const gvhdList = (nhom.thanh_vien || []).filter(tv => parseInt(tv.idvaitronhom) === 3);
+            const hasGvhd = gvhdList.length > 0;
+            const yeuCauCoGVHD = parseInt(nhom.yeu_cau_co_gvhd) === 1;
+            const soGVHDToiDa = nhom.so_gvhd_toi_da ?? null;
+            const coTheMotGVHD = soGVHDToiDa === null || gvhdList.length < soGVHDToiDa;
+            const showCanhBao = yeuCauCoGVHD && !hasGvhd;
             const open = parseInt(nhom.dangtuyen) === 1;
             const svList = (nhom.thanh_vien || []).filter(tv => parseInt(tv.idvaitronhom) !== 3);
 
@@ -902,27 +955,31 @@ document.addEventListener('DOMContentLoaded', function () {
                     : `<span class="inline-flex items-center px-2 py-0.5 text-xs text-slate-600 bg-slate-100 rounded-full">${esc(tv.ten)}</span>`;
             }).join('');
 
+            // GVHD row: hiện danh sách nếu có, cảnh báo chỉ khi bắt buộc mà chưa có
             const gvhdRow = hasGvhd
-                ? `<div class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600">
-                       <i class="fas fa-chalkboard-teacher"></i> GVHD: ${esc(gvhd.ten)}
-                   </div>`
-                : `<div class="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
-                       <i class="fas fa-exclamation-triangle text-amber-500 text-sm"></i>
-                       <span class="text-xs font-semibold text-amber-700">Nhóm cần có GVHD</span>
-                   </div>`;
+                ? gvhdList.map(gv => `
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600">
+                        <i class="fas fa-chalkboard-teacher"></i> GVHD: ${esc(gv.ten)}
+                    </div>`).join('')
+                : showCanhBao
+                    ? `<div class="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                           <i class="fas fa-exclamation-triangle text-amber-500 text-sm"></i>
+                           <span class="text-xs font-semibold text-amber-700">Nhóm cần có GVHD</span>
+                       </div>`
+                    : '';
 
             const qlUrl = `/event-detail?id_sk=${idSk}&tab=nhom-my&id_nhom=${nhom.idNhom}&quan_ly_tab=thanh-vien`;
             const moiUrl = `/event-detail?id_sk=${idSk}&tab=nhom-my&id_nhom=${nhom.idNhom}&quan_ly_tab=thanh-vien`;
             const nopUrl = `/event-detail?id_sk=${idSk}&tab=nhom-my&id_nhom=${nhom.idNhom}&quan_ly_tab=nop-tai-lieu`;
 
             return `
-            <div class="bg-white border ${hasGvhd ? 'border-slate-200' : 'border-orange-300 border-l-4 border-l-orange-400'} rounded-xl p-4 flex flex-col gap-3 shadow-soft-sm">
+            <div class="bg-white border ${showCanhBao ? 'border-orange-300 border-l-4 border-l-orange-400' : 'border-slate-200'} rounded-xl p-4 flex flex-col gap-3 shadow-soft-sm">
                 <div class="flex items-center justify-between gap-2">
                     <span class="font-bold text-slate-800 text-sm">${esc(nhom.tennhom)}</span>
                     ${statusBadge}
                 </div>
                 <div class="flex flex-wrap gap-1.5">${chips}</div>
-                ${gvhdRow}
+                ${gvhdRow ? `<div class="flex flex-wrap gap-2">${gvhdRow}</div>` : ''}
                 ${nhom.mota ? `<p class="text-xs text-slate-500"><span class="font-semibold text-slate-600">Lĩnh vực:</span> ${esc(nhom.mota)}</p>` : ''}
                 <div class="flex flex-wrap gap-2 pt-1">
                     <a href="${qlUrl}"
@@ -933,7 +990,7 @@ document.addEventListener('DOMContentLoaded', function () {
                        class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white rounded-lg bg-blue-600 hover:bg-blue-700 transition">
                        <i class="fas fa-user-plus"></i> Mời
                     </a>
-                    ${!hasGvhd ? `<a href="/event-detail?id_sk=${idSk}&tab=nhom-my&id_nhom=${nhom.idNhom}&quan_ly_tab=thanh-vien"
+                    ${coTheMotGVHD ? `<a href="/event-detail?id_sk=${idSk}&tab=nhom-my&id_nhom=${nhom.idNhom}&quan_ly_tab=thanh-vien"
                         class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white rounded-lg bg-orange-500 hover:bg-orange-600 transition">
                         <i class="fas fa-chalkboard-teacher"></i> Mời GVHD
                     </a>` : ''}
@@ -1095,7 +1152,6 @@ document.addEventListener('DOMContentLoaded', function () {
     async function submitTaoNhom() {
         const tenNhom = document.getElementById('inputTenNhom')?.value.trim();
         const moTa = document.getElementById('inputMoTa')?.value.trim();
-        const soLuong = parseInt(document.getElementById('inputSoLuong')?.value || 5);
         const dangTuyen = parseInt(document.getElementById('inputDangTuyen')?.value ?? 1);
 
         if (!tenNhom) {
@@ -1109,7 +1165,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const res = await apiPost('/api/nhom/taonhom.php', {
             id_sk: idSk, ten_nhom: tenNhom, mo_ta: moTa,
-            so_luong_toi_da: soLuong, dang_tuyen: dangTuyen
+            dang_tuyen: dangTuyen
         });
 
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Tạo nhóm'; }
@@ -1137,19 +1193,38 @@ document.addEventListener('DOMContentLoaded', function () {
         el.innerHTML = '<p class="text-xs text-slate-400 p-2"><i class="fas fa-circle-notch fa-spin mr-1"></i>Đang tải...</p>';
         const d = await apiFetch(`/api/nhom/tim_kiem_user.php?loai=${loai}&q=${encodeURIComponent(q)}&id_sk=${idSk}`);
         const list = d.data || [];
+        const meta = d.meta || {};
         if (!list.length) { el.innerHTML = '<p class="text-xs text-slate-400 p-2">Không tìm thấy kết quả</p>'; return; }
         el.innerHTML = list.map(u => {
             const name = esc(u.tenSV || u.tenGV || '');
             const sub = loai === 'sv' ? esc(u.MSV || '') : '';
             const loaiYeuCau = loai === 'gv' ? 'GVHD' : 'SV';
-            return `<button onclick="sendInvite(${u.idTK}, '${loaiYeuCau}')"
-                class="w-full flex items-center gap-3 px-3 py-2 text-left text-sm hover:bg-slate-50 rounded-lg transition">
+
+            // Xác định trạng thái disable
+            let disableReason = '';
+            if (loai === 'sv') {
+                if (!u.da_dang_ky_sk) disableReason = 'Chưa đăng ký sự kiện';
+                else if (u.da_co_nhom == 1) disableReason = 'Đã có nhóm';
+            } else {
+                if (!u.da_dang_ky_sk) disableReason = 'Chưa đăng ký sự kiện';
+                else if (meta.so_nhom_toi_da_gvhd !== null && meta.so_nhom_toi_da_gvhd !== undefined
+                    && parseInt(u.so_nhom_dang_huong_dan) >= parseInt(meta.so_nhom_toi_da_gvhd)) {
+                    disableReason = 'Đã đủ số nhóm hướng dẫn';
+                }
+            }
+            const isDisabled = disableReason !== '';
+
+            return `<button ${isDisabled ? 'disabled' : `onclick="sendInvite(${u.idTK}, '${loaiYeuCau}')"`}
+                title="${isDisabled ? disableReason : ''}"
+                class="w-full flex items-center gap-3 px-3 py-2 text-left text-sm rounded-lg transition
+                    ${isDisabled ? 'opacity-50 cursor-not-allowed bg-slate-50' : 'hover:bg-slate-50'}">
                 <div class="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
                     ${name.charAt(0).toUpperCase()}
                 </div>
-                <div>
+                <div class="flex-1 min-w-0">
                     <p class="font-medium text-slate-700 mb-0">${name}</p>
                     ${sub ? `<p class="text-xs text-slate-400">${sub}</p>` : ''}
+                    ${isDisabled ? `<p class="text-xs text-rose-400 mt-0.5"><i class="fas fa-ban mr-1"></i>${disableReason}</p>` : ''}
                 </div>
             </button>`;
         }).join('');

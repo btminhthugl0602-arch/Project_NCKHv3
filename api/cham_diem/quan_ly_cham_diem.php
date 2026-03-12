@@ -107,7 +107,10 @@ function cham_diem_lay_danh_sach_giang_vien($conn, $idSK = null)
                 gv.tenGV,
                 tk.tenTK,
                 k.tenKhoa,
-                (SELECT COUNT(*) FROM phancong_doclap pd WHERE pd.idGV = gv.idGV) as soBaiDangCham
+                (SELECT COUNT(*) FROM phancong_doclap pd
+                 INNER JOIN sanpham sp ON sp.idSanPham = pd.idSanPham
+                 WHERE pd.idGV = gv.idGV AND (:idSK IS NULL OR sp.idSK = :idSK2)
+                ) as soBaiDangCham
             FROM giangvien gv
             INNER JOIN taikhoan tk ON gv.idTK = tk.idTK
             LEFT JOIN khoa k ON gv.idKhoa = k.idKhoa
@@ -115,7 +118,7 @@ function cham_diem_lay_danh_sach_giang_vien($conn, $idSK = null)
             ORDER BY gv.tenGV ASC";
 
     $stmt = $conn->prepare($sql);
-    $stmt->execute();
+    $stmt->execute([':idSK' => $idSK, ':idSK2' => $idSK]);
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
@@ -184,14 +187,30 @@ function cham_diem_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi)
             return ['success' => false, 'message' => 'Giám khảo này đã được phân công cho bài thi'];
         }
 
-        // 2. Lấy idSK từ sản phẩm
-        $stmtSP = $conn->prepare("SELECT idSK FROM sanpham WHERE idSanPham = :idSanPham AND isActive = 1 LIMIT 1");
+        // 2. Lấy idSK + idNhom từ sản phẩm
+        $stmtSP = $conn->prepare("SELECT idSK, idNhom FROM sanpham WHERE idSanPham = :idSanPham AND trangThai != 'BI_LOAI' LIMIT 1");
         $stmtSP->execute([':idSanPham' => $idSanPham]);
         $spRow = $stmtSP->fetch(PDO::FETCH_ASSOC);
         if (!$spRow) {
             return ['success' => false, 'message' => 'Sản phẩm không tồn tại hoặc đã bị xóa'];
         }
-        $idSK = (int) $spRow['idSK'];
+        $idSK   = (int) $spRow['idSK'];
+        $idNhom = (int) $spRow['idNhom'];
+
+        // 2.5. Kiểm tra xung đột GVHD — GV không được chấm nhóm mà họ đang hướng dẫn
+        $stmtGVHD = $conn->prepare(
+            "SELECT 1 FROM nhom_gvhd ng
+             INNER JOIN giangvien gv ON gv.idTK = ng.idTK
+             WHERE ng.idNhom = :idNhom AND gv.idGV = :idGV"
+        );
+        $stmtGVHD->execute([':idNhom' => $idNhom, ':idGV' => $idGV]);
+        if ($stmtGVHD->fetch()) {
+            return [
+                'success' => false,
+                'message' => 'Không thể phân công: Giảng viên này đang là GVHD của nhóm nộp sản phẩm này. '
+                    . 'Quy tắc phản biện độc lập không cho phép GVHD chấm điểm nhóm của chính mình.',
+            ];
+        }
 
         // 3. Lấy bộ tiêu chí cấu hình cho vòng thi này
         $stmtBTC = $conn->prepare(
@@ -377,6 +396,26 @@ function cham_diem_moi_trong_tai($conn, $idSanPham, $idGV, $idVongThi)
         $stmtCheckTT->execute([':idSanPham' => $idSanPham, ':idGV' => $idGV, ':idVongThi' => $idVongThi]);
         if ($stmtCheckTT->fetch()) {
             return ['success' => false, 'message' => 'Giám khảo này đã được mời làm Trọng tài phúc khảo cho bài thi này rồi'];
+        }
+
+        // Kiểm tra xung đột GVHD — trọng tài cũng không được là GVHD của nhóm nộp sản phẩm
+        $stmtNhom = $conn->prepare("SELECT idNhom FROM sanpham WHERE idSanPham = :idSanPham LIMIT 1");
+        $stmtNhom->execute([':idSanPham' => $idSanPham]);
+        $nhomRow = $stmtNhom->fetch(PDO::FETCH_ASSOC);
+        if ($nhomRow) {
+            $stmtCheckGVHD = $conn->prepare(
+                "SELECT 1 FROM nhom_gvhd ng
+                 INNER JOIN giangvien gv ON gv.idTK = ng.idTK
+                 WHERE ng.idNhom = :idNhom AND gv.idGV = :idGV"
+            );
+            $stmtCheckGVHD->execute([':idNhom' => $nhomRow['idNhom'], ':idGV' => $idGV]);
+            if ($stmtCheckGVHD->fetch()) {
+                return [
+                    'success' => false,
+                    'message' => 'Không thể mời: Giảng viên này đang là GVHD của nhóm nộp sản phẩm này. '
+                        . 'Quy tắc phản biện độc lập không cho phép GVHD làm trọng tài phúc khảo cho nhóm của chính mình.',
+                ];
+            }
         }
 
         $conn->beginTransaction();
@@ -908,13 +947,31 @@ function cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemCho
  */
 function dk_lay_du_lieu_spv($conn, $idSanPham, $idVongThi)
 {
-    $sql = "SELECT spv.diemTrungBinh, spv.xepLoai, spv.trangThai
+    // Fetch cả sanpham_vongthi (VONGTHI attributes) + sanpham (SANPHAM attributes)
+    // để dk_evaluate() có thể resolve mọi loaiApDung khi kiểm tra quy chế
+    $sql = "SELECT spv.diemTrungBinh,
+                   spv.xepLoai,
+                   spv.trangThai,
+                   sp.trangThai AS trangThaiSanPham
             FROM sanpham_vongthi spv
+            INNER JOIN sanpham sp ON sp.idSanPham = spv.idSanPham
             WHERE spv.idSanPham = :idSanPham AND spv.idVongThi = :idVongThi
             LIMIT 1";
     $stmt = $conn->prepare($sql);
     $stmt->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
-    return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    if (empty($row)) return [];
+
+    // Flatten: thuoctinh_kiemtra dùng tenTruongDL làm key để tra
+    // VONGTHI: diemTrungBinh, xepLoai, trangThai (= sanpham_vongthi.trangThai)
+    // SANPHAM: trangThai (= sanpham.trangThai) — alias tránh xung đột với VONGTHI
+    return [
+        'diemTrungBinh'    => $row['diemTrungBinh'],
+        'xepLoai'          => $row['xepLoai'],
+        'trangThai'        => $row['trangThai'],          // VONGTHI state
+        'trangThaiSanPham' => $row['trangThaiSanPham'],  // SANPHAM.trangThai
+    ];
 }
 
 /**

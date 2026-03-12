@@ -875,7 +875,7 @@ CREATE TABLE `sanpham_vongthi` (
   `idVongThi` int NOT NULL,
   `diemTrungBinh` decimal(7,2) DEFAULT NULL COMMENT 'Điểm trung bình chốt của vòng thi (2 chữ số thập phân)',
   `xepLoai` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Đạt/Không đạt/Xuất sắc',
-  `trangThai` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Chờ chấm/Đã chấm/Bị loại',
+  `trangThai` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'State machine: NULL(chờ xét lại) / Đã nộp / Đã phân công / Đang xét / Đã duyệt / Bị loại / Đã phúc khảo',
   `ngayCapNhat` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1224,9 +1224,9 @@ INSERT INTO `thuoctinh_kiemtra` (`idThuocTinhKiemTra`, `tenThuocTinh`, `tenTruon
 (3, 'Điểm trung bình vòng thi', 'diemTrungBinh', 'sanpham_vongthi', 'VONGTHI'),
 (4, 'Xếp loại vòng thi', 'xepLoai', 'sanpham_vongthi', 'VONGTHI'),
 (5, 'Trạng thái vòng thi', 'trangThai', 'sanpham_vongthi', 'VONGTHI'),
-(6, 'Trạng thái sản phẩm', 'TrangThai', 'sanpham', 'SANPHAM'),
+(6, 'Trạng thái sản phẩm', 'trangThaiSanPham', 'sanpham', 'SANPHAM'),
 (7, 'Loại tài liệu', 'idloaitailieu', 'sanpham', 'SANPHAM'),
-(8, 'Kích hoạt sản phẩm', 'isActive', 'sanpham', 'SANPHAM'),
+-- row #8 (isActive) đã bị xóa — cột này không tồn tại trong bảng sanpham
 (9, 'Điểm tổng kết', 'diemTongKet', 'ketqua', 'GIAITHUONG'),
 (10, 'Xếp hạng', 'xepHang', 'ketqua', 'GIAITHUONG'),
 (11, 'Đã có giải', 'idGiaiThuong', 'ketqua', 'GIAITHUONG');

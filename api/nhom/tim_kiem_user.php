@@ -39,10 +39,17 @@ if ($keyword !== '' && mb_strlen($keyword) < 2) {
 }
 
 try {
-    $data = ($loai === 'sv')
-        ? tim_kiem_sinh_vien($conn, $keyword, $idSk)
-        : tim_kiem_giang_vien($conn, $keyword, $idSk);
-    echo json_encode(['status' => 'success', 'message' => 'OK', 'data' => $data], JSON_UNESCAPED_UNICODE);
+    if ($loai === 'sv') {
+        $data = tim_kiem_sinh_vien($conn, $keyword, $idSk);
+        echo json_encode(['status' => 'success', 'message' => 'OK', 'data' => $data], JSON_UNESCAPED_UNICODE);
+    } else {
+        $data = tim_kiem_giang_vien($conn, $keyword, $idSk);
+        $sk = truy_van_mot_ban_ghi($conn, 'sukien', 'idSK', $idSk);
+        $meta = [
+            'so_nhom_toi_da_gvhd' => $sk ? ($sk['soNhomToiDaGVHD'] !== null ? (int)$sk['soNhomToiDaGVHD'] : null) : null,
+        ];
+        echo json_encode(['status' => 'success', 'message' => 'OK', 'data' => $data, 'meta' => $meta], JSON_UNESCAPED_UNICODE);
+    }
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['status' => 'error', 'message' => 'Lỗi hệ thống', 'data' => null], JSON_UNESCAPED_UNICODE);

@@ -1,4 +1,9 @@
 <?php
+/**
+ * @deprecated DEPRECATED — File này không còn được sử dụng.
+ * Dùng api/nhom/san_pham.php thay thế.
+ * File giữ lại để tham khảo, không xóa để tránh ảnh hưởng đến các reference cũ.
+ */
 define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../core/auth_guard.php';

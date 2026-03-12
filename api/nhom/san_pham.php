@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $idSK  = (int) $nhom['idSK'];
 
     // Chỉ thành viên nhóm mới được xem
-    if (!la_thanh_vien_sv($conn, $idTK, $idNhom) && !la_truong_nhom($conn, $idTK, $idNhom)) {
+    if (!la_thanh_vien_sv($conn, $idTK, $idNhom) && !la_truong_nhom($conn, $idTK, $idNhom) && !la_chu_nhom($conn, $idTK, $idNhom)) {
         http_response_code(403);
         echo json_encode(['status' => 'error', 'message' => 'Bạn không phải thành viên nhóm này', 'data' => null], JSON_UNESCAPED_UNICODE);
         exit;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Partial: Tab "Tất cả nhóm thi"
  * Biến từ event-detail.php: $idSk, $tab, $basePath
@@ -34,17 +35,12 @@
                 Tên nhóm <span class="text-rose-500">*</span>
             </label>
             <input type="text" id="inputTenNhom" placeholder="Nhập tên nhóm..."
-                   class="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-primary">
-        </div>
-        <div>
-            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Số thành viên tối đa</label>
-            <input type="number" id="inputSoLuong" value="5" min="2" max="20"
-                   class="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-primary">
+                class="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-primary">
         </div>
         <div>
             <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Chế độ nhóm</label>
             <select id="inputDangTuyen"
-                    class="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-primary">
+                class="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-primary">
                 <option value="1">🌐 Công khai — hiển thị trong danh sách</option>
                 <option value="0">🔒 Riêng tư — chỉ thành viên biết</option>
             </select>
@@ -52,7 +48,7 @@
         <div>
             <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Mô tả / Chủ đề nghiên cứu</label>
             <textarea id="inputMoTa" rows="2" placeholder="Mô tả ngắn về nhóm..."
-                      class="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-primary resize-none"></textarea>
+                class="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-primary resize-none"></textarea>
         </div>
     </div>
     <div class="flex gap-3 mt-4">
@@ -71,7 +67,7 @@
 <div class="relative mb-5 max-w-sm">
     <span class="material-symbols-outlined text-[16px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">search</span>
     <input type="text" id="searchInput" placeholder="Tìm theo tên, mã nhóm..."
-           class="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-primary">
+        class="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-primary">
 </div>
 
 <!-- States -->
@@ -96,6 +92,6 @@
 <div id="groupsGrid" class="hidden grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
 
 <script>
-window.NHOM_THI_ID_SK = <?= (int) $idSk ?>;
-window.NHOM_THI_TAB   = 'tat-ca';
+    window.NHOM_THI_ID_SK = <?= (int) $idSk ?>;
+    window.NHOM_THI_TAB = 'tat-ca';
 </script>

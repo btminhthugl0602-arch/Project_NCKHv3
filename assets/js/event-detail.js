@@ -1185,6 +1185,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // State phân công phản biện
+    let reviewSelectedSanPham = null; // { idSanPham, tenSanPham }
+    let reviewSelectedVongThi = null;
+    let reviewGiangVienList = [];   // cache toàn bộ GV đã load
+
     function renderReviewAssignInterface(giangVien, vongThi) {
         const reviewAssignContainer = document.querySelector('#reviewAssignContainer') ||
             document.querySelector('[data-tab="review-assign"]') ||
@@ -1192,26 +1197,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!reviewAssignContainer) return;
 
+        reviewGiangVienList = giangVien;
+
         reviewAssignContainer.innerHTML = `
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <!-- Left panel: Assignment interface -->
+                <!-- Panel trái: Danh sách sản phẩm -->
                 <div class="p-4 border rounded-xl border-slate-200 bg-white">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
                         <div>
                             <p class="mb-0 text-sm font-bold text-slate-700">
-                                <i class="fas fa-user-plus mr-2 text-slate-400"></i>Phân công phản biện
+                                <i class="fas fa-file-alt mr-2 text-slate-400"></i>Danh sách bài nộp
                             </p>
-                            <p class="mb-0 text-xs text-slate-500">
-                                Gán giảng viên phản biện cho bài nộp trong sự kiện
-                            </p>
+                            <p class="mb-0 text-xs text-slate-500">Chọn bài nộp → chọn GV phản biện</p>
                         </div>
                         <select id="reviewVongThiSelect" class="px-3 py-2 text-sm border rounded-lg border-slate-300">
                             <option value="">-- Chọn vòng thi --</option>
                             ${vongThi.map(v => `<option value="${v.idVongThi}">${v.tenVongThi}</option>`).join('')}
                         </select>
                     </div>
-                    
-                    <div id="reviewAssignmentList" class="space-y-2 max-h-[400px] overflow-y-auto">
+
+                    <div id="reviewAssignmentList" class="space-y-2 max-h-[420px] overflow-y-auto">
                         <div class="px-4 py-8 text-center text-slate-400">
                             <i class="fas fa-hand-pointer text-2xl mb-2"></i>
                             <p class="text-sm">Chọn vòng thi để xem danh sách bài nộp</p>
@@ -1219,35 +1224,24 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 </div>
 
-                <!-- Right panel: Reviewer list -->
+                <!-- Panel phải: Danh sách GV -->
                 <div class="p-4 border rounded-xl border-slate-200 bg-white">
-                    <p class="mb-3 text-sm font-bold text-slate-700">
-                        <i class="fas fa-users mr-2 text-slate-400"></i>Danh sách giảng viên phản biện (${giangVien.length})
+                    <p class="mb-2 text-sm font-bold text-slate-700">
+                        <i class="fas fa-users mr-2 text-slate-400"></i>Giảng viên phản biện (${giangVien.length})
                     </p>
-                    
-                    <div class="space-y-2 max-h-[400px] overflow-y-auto">
-                        ${giangVien.map(gv => `
-                            <div class="p-3 border rounded-lg border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors">
-                                <p class="mb-1 text-sm font-semibold text-slate-700">${gv.tenGV || gv.tenTK || 'N/A'}</p>
-                                <p class="mb-1 text-xs text-slate-500">
-                                    ${gv.tenKhoa ? `Khoa: ${gv.tenKhoa}` : `Tài khoản: ${gv.tenTK || 'N/A'}`}
-                                </p>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs text-slate-400">
-                                        Đã chấm: ${gv.soBaiDangCham || 0} bài
-                                    </span>
-                                    <button type="button" data-reviewer-id="${gv.idGV}" 
-                                            class="reviewer-select-btn px-2 py-1 text-xs font-semibold text-purple-600 bg-purple-100 rounded hover:bg-purple-200 transition-colors">
-                                        Chọn
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
+
+                    <!-- WARNING #5: Search box -->
+                    <input type="text" id="reviewGVSearch"
+                           placeholder="Tìm theo tên giảng viên..."
+                           class="w-full mb-3 px-3 py-2 text-sm border rounded-lg border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-300" />
+
+                    <div id="reviewGVList" class="space-y-2 max-h-[370px] overflow-y-auto">
+                        ${renderGVListHTML(giangVien)}
                     </div>
                 </div>
             </div>
 
-            <!-- Statistics panel -->
+            <!-- Panel thống kê -->
             <div class="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <div class="p-4 border rounded-xl border-slate-200 bg-gradient-to-br from-blue-50 to-cyan-50">
                     <p class="text-xs font-bold uppercase text-blue-600">Tổng bài nộp</p>
@@ -1258,30 +1252,133 @@ document.addEventListener('DOMContentLoaded', function () {
                     <p id="statDaPhanCongReview" class="mb-0 text-2xl font-bold text-amber-700">--</p>
                 </div>
                 <div class="p-4 border rounded-xl border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50">
-                    <p class="text-xs font-bold uppercase text-emerald-600">Đã review</p>
+                    <p class="text-xs font-bold uppercase text-emerald-600">Đã chấm</p>
                     <p id="statDaReview" class="mb-0 text-2xl font-bold text-emerald-700">--</p>
                 </div>
                 <div class="p-4 border rounded-xl border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
-                    <p class="text-xs font-bold uppercase text-purple-600">Giảng viên tham gia</p>
+                    <p class="text-xs font-bold uppercase text-purple-600">GV tham gia</p>
                     <p class="mb-0 text-2xl font-bold text-purple-700">${giangVien.length}</p>
                 </div>
             </div>
         `;
 
-        // Add event listeners
-        const vongThiSelect = document.getElementById('reviewVongThiSelect');
-        if (vongThiSelect) {
-            vongThiSelect.addEventListener('change', loadSubmissionsForReview);
-        }
+        // Dropdown vòng thi
+        document.getElementById('reviewVongThiSelect')
+            ?.addEventListener('change', loadSubmissionsForReview);
 
-        // Add reviewer selection event listeners
-        reviewAssignContainer.addEventListener('click', function (event) {
-            if (event.target.matches('.reviewer-select-btn')) {
-                const reviewerId = event.target.getAttribute('data-reviewer-id');
-                // Handle reviewer selection logic here
-                console.log('Selected reviewer:', reviewerId);
+        // WARNING #5: Live search GV
+        document.getElementById('reviewGVSearch')
+            ?.addEventListener('input', function () {
+                const keyword = this.value.toLowerCase().trim();
+                const filtered = reviewGiangVienList.filter(gv =>
+                    (gv.tenGV || '').toLowerCase().includes(keyword) ||
+                    (gv.tenTK || '').toLowerCase().includes(keyword)
+                );
+                const container = document.getElementById('reviewGVList');
+                if (container) container.innerHTML = renderGVListHTML(filtered);
+            });
+
+        // CRITICAL #3: Click "Phân công" GV
+        reviewAssignContainer.addEventListener('click', async function (event) {
+            const btn = event.target.closest('.reviewer-select-btn');
+            if (!btn) return;
+
+            if (!reviewSelectedSanPham || !reviewSelectedVongThi) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Chưa chọn bài nộp',
+                    text: 'Vui lòng chọn một bài nộp ở panel bên trái trước khi chọn giảng viên phản biện.',
+                    confirmButtonText: 'Đã hiểu'
+                });
+                return;
+            }
+
+            const idGV = parseInt(btn.getAttribute('data-reviewer-id'), 10);
+            const tenGV = btn.getAttribute('data-reviewer-name');
+            const confirmed = await Swal.fire({
+                icon: 'question',
+                title: 'Xác nhận phân công',
+                html: `Phân công <strong>${tenGV}</strong> chấm phản biện bài:<br>
+                       <em>${reviewSelectedSanPham.tenSanPham}</em>?`,
+                showCancelButton: true,
+                confirmButtonText: 'Phân công',
+                cancelButtonText: 'Huỷ',
+                confirmButtonColor: '#7c3aed'
+            });
+
+            if (!confirmed.isConfirmed) return;
+
+            btn.disabled = true;
+            btn.textContent = '...';
+
+            try {
+                const res = await fetch(`${BASE_PATH}/api/cham_diem/phan_cong_giam_khao.php`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'assign_doclap',
+                        id_sk: idSk,
+                        id_san_pham: reviewSelectedSanPham.idSanPham,
+                        id_gv: idGV,
+                        id_vong_thi: reviewSelectedVongThi
+                    })
+                }).then(r => r.json());
+
+                if (res.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'Thành công', text: res.message, timer: 2000, showConfirmButton: false });
+                    // Refresh danh sách sản phẩm và stat counters
+                    await loadSubmissionsForReview();
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Không thể phân công', text: res.message });
+                    btn.disabled = false;
+                    btn.textContent = 'Chọn';
+                }
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Lỗi hệ thống', text: err.message });
+                btn.disabled = false;
+                btn.textContent = 'Chọn';
             }
         });
+
+        // Click chọn sản phẩm
+        reviewAssignContainer.addEventListener('click', function (event) {
+            const card = event.target.closest('.sp-select-card');
+            if (!card) return;
+            document.querySelectorAll('.sp-select-card').forEach(c => {
+                c.classList.remove('border-purple-400', 'bg-purple-50');
+                c.classList.add('border-slate-200', 'bg-slate-50');
+            });
+            card.classList.remove('border-slate-200', 'bg-slate-50');
+            card.classList.add('border-purple-400', 'bg-purple-50');
+            reviewSelectedSanPham = {
+                idSanPham: parseInt(card.getAttribute('data-sp-id'), 10),
+                tenSanPham: card.getAttribute('data-sp-ten')
+            };
+        });
+    }
+
+    function renderGVListHTML(list) {
+        if (!list.length) {
+            return `<div class="px-4 py-6 text-center text-slate-400 text-sm">Không tìm thấy giảng viên</div>`;
+        }
+        return list.map(gv => `
+            <div class="p-3 border rounded-lg border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors">
+                <p class="mb-0.5 text-sm font-semibold text-slate-700">${gv.tenGV || gv.tenTK || 'N/A'}</p>
+                <p class="mb-1 text-xs text-slate-500">
+                    ${gv.tenKhoa ? `Khoa: ${gv.tenKhoa}` : `TK: ${gv.tenTK || 'N/A'}`}
+                </p>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-400">Đã chấm trong SK: ${gv.soBaiDangCham || 0} bài</span>
+                    <button type="button"
+                            data-reviewer-id="${gv.idGV}"
+                            data-reviewer-name="${gv.tenGV || gv.tenTK || ''}"
+                            class="reviewer-select-btn px-2 py-1 text-xs font-semibold text-purple-600 bg-purple-100 rounded hover:bg-purple-200 transition-colors">
+                        Chọn
+                    </button>
+                </div>
+            </div>
+        `).join('');
     }
 
     async function loadSubmissionsForReview() {
@@ -1291,48 +1388,116 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!vongThiSelect || !listContainer) return;
 
         const selectedVongThi = vongThiSelect.value;
+        reviewSelectedVongThi = selectedVongThi || null;
+        reviewSelectedSanPham = null; // Reset khi đổi vòng
 
         if (!selectedVongThi) {
             listContainer.innerHTML = `
                 <div class="px-4 py-8 text-center text-slate-400">
                     <i class="fas fa-hand-pointer text-2xl mb-2"></i>
                     <p class="text-sm">Chọn vòng thi để xem danh sách bài nộp</p>
-                </div>
-            `;
+                </div>`;
+            updateReviewStats(null);
             return;
         }
 
-        try {
-            listContainer.innerHTML = `
-                <div class="px-4 py-8 text-center text-slate-400">
-                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                    <p class="text-sm">Đang tải danh sách bài nộp...</p>
-                </div>
-            `;
+        listContainer.innerHTML = `
+            <div class="px-4 py-8 text-center text-slate-400">
+                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                <p class="text-sm">Đang tải danh sách bài nộp...</p>
+            </div>`;
 
-            // This is a placeholder - you'll need to create appropriate API endpoints
-            // For now, showing a message that the feature needs API implementation
-            listContainer.innerHTML = `
-                <div class="p-4 border rounded-lg border-yellow-200 bg-yellow-50 text-yellow-800">
-                    <i class="fas fa-info-circle mr-2"></i>
-                    <strong>Đã chọn vòng thi ${selectedVongThi}</strong>
-                    <p class="mt-2 text-sm">
-                        API endpoint để lấy danh sách bài nộp theo vòng thi cần được tạo. 
-                        Vui lòng tham khảo API có sẵn trong thư mục <code>/api/</code> để tạo endpoint phù hợp.
-                    </p>
-                    <p class="mt-1 text-xs text-yellow-600">
-                        Gợi ý: <code>GET /api/su_kien/danh_sach_bai_nop.php?id_sk=${idSk}&id_vong_thi=${selectedVongThi}</code>
-                    </p>
-                </div>
-            `;
+        try {
+            // CRITICAL #2: fetch API thực tế
+            const res = await fetch(
+                `${BASE_PATH}/api/cham_diem/phan_cong_giam_khao.php?action=list_san_pham` +
+                `&id_sk=${encodeURIComponent(idSk)}&id_vong_thi=${encodeURIComponent(selectedVongThi)}`,
+                { credentials: 'same-origin' }
+            ).then(r => r.json());
+
+            if (res.status !== 'success') throw new Error(res.message || 'Không thể lấy danh sách bài nộp');
+
+            const sanPhamList = res.data || [];
+
+            // TECH DEBT #6: Cập nhật stat counters
+            updateReviewStats(sanPhamList);
+
+            if (!sanPhamList.length) {
+                listContainer.innerHTML = `
+                    <div class="px-4 py-8 text-center text-slate-400">
+                        <i class="fas fa-inbox text-2xl mb-2"></i>
+                        <p class="text-sm">Không có bài nộp nào trong vòng thi này</p>
+                    </div>`;
+                return;
+            }
+
+            listContainer.innerHTML = sanPhamList.map(sp => {
+                const soGK = parseInt(sp.soGiamKhao || 0, 10);
+                const soGKCham = parseInt(sp.soGKDaCham || 0, 10);
+                const tenSP = sp.tensanpham || sp.tenSanPham || 'Không có tên';
+                const maNhom = sp.manhom || sp.maNhom || '';
+                const tenNhom = sp.tennhom || '';
+                const hoTen = sp.hoTenNhomTruong || sp.tenNhomTruong || '';
+
+                let badgeClass = 'bg-slate-100 text-slate-500';
+                let badgeText = 'Chưa phân công';
+                if (soGK > 0 && soGKCham >= soGK) {
+                    badgeClass = 'bg-emerald-100 text-emerald-700';
+                    badgeText = `Đã chấm (${soGKCham}/${soGK})`;
+                } else if (soGK > 0) {
+                    badgeClass = 'bg-amber-100 text-amber-700';
+                    badgeText = `Đang chấm (${soGKCham}/${soGK} GK)`;
+                }
+
+                return `
+                    <div class="sp-select-card p-3 border rounded-lg border-slate-200 bg-slate-50 cursor-pointer transition-colors"
+                         data-sp-id="${sp.idSanPham}"
+                         data-sp-ten="${tenSP.replace(/"/g, '&quot;')}">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0 flex-1">
+                                <p class="mb-0.5 text-sm font-semibold text-slate-700 truncate">${tenSP}</p>
+                                <p class="mb-1 text-xs text-slate-500">
+                                    ${maNhom}${tenNhom ? ` · ${tenNhom}` : ''}${hoTen ? ` · TN: ${hoTen}` : ''}
+                                </p>
+                            </div>
+                            <span class="shrink-0 px-2 py-0.5 text-xs font-semibold rounded-full ${badgeClass}">${badgeText}</span>
+                        </div>
+                    </div>`;
+            }).join('');
+
         } catch (error) {
             listContainer.innerHTML = `
                 <div class="p-4 border rounded-lg border-rose-200 bg-rose-50 text-rose-600">
                     <i class="fas fa-exclamation-triangle mr-2"></i>
                     ${error.message || 'Không thể tải danh sách bài nộp'}
-                </div>
-            `;
+                </div>`;
         }
+    }
+
+    // TECH DEBT #6: Cập nhật 3 stat counter từ dữ liệu thực
+    function updateReviewStats(sanPhamList) {
+        const elTong = document.getElementById('statTongBaiNop');
+        const elPhanCong = document.getElementById('statDaPhanCongReview');
+        const elDaCham = document.getElementById('statDaReview');
+
+        if (!sanPhamList) {
+            if (elTong) elTong.textContent = '--';
+            if (elPhanCong) elPhanCong.textContent = '--';
+            if (elDaCham) elDaCham.textContent = '--';
+            return;
+        }
+
+        const tong = sanPhamList.length;
+        const daPhanCong = sanPhamList.filter(sp => parseInt(sp.soGiamKhao || 0, 10) > 0).length;
+        const daCham = sanPhamList.filter(sp => {
+            const soGK = parseInt(sp.soGiamKhao || 0, 10);
+            const soGKCham = parseInt(sp.soGKDaCham || 0, 10);
+            return soGK > 0 && soGKCham >= soGK;
+        }).length;
+
+        if (elTong) elTong.textContent = tong;
+        if (elPhanCong) elPhanCong.textContent = daPhanCong;
+        if (elDaCham) elDaCham.textContent = daCham;
     }
 
     async function reloadRuleTypeContext(nextType) {
@@ -2544,7 +2709,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let _currentVongThi = undefined; // undefined = chưa chọn lần nào; null = Thông tin chung
         let _vongThiOptions = [];
-        let _currentFields  = [];
+        let _currentFields = [];
 
         // ── DOM refs ──────────────────────────────────────────
         const elVongThiList = document.getElementById('tlVongThiList');

@@ -137,9 +137,17 @@ function handleGetRequest($conn) {
             $allItems = cham_diem_lay_tat_ca_bai_thi($conn, $idSK, $idVongThi);
             
             $daDuyet = array_filter($allItems, fn($i) => $i['trangThaiVongThi'] === 'Đã duyệt');
-            $biLoai = array_filter($allItems, fn($i) => $i['trangThaiVongThi'] === 'Bị loại');
+            $biLoai  = array_filter($allItems, fn($i) => $i['trangThaiVongThi'] === 'Bị loại');
             $dangXet = array_filter($allItems, fn($i) => $i['trangThaiVongThi'] === 'Đang xét');
-            $chuaDuyet = array_filter($allItems, fn($i) => !in_array($i['trangThaiVongThi'], ['Đã duyệt', 'Bị loại', 'Đang xét']));
+
+            // Bài sẵn sàng duyệt = đã chấm xong (soGKDaCham >= soGiamKhao > 0)
+            // và chưa ở trạng thái cuối ('Đã duyệt' / 'Bị loại')
+            // Không dùng bucket 'chuaDuyet' cũ vì nó bao gồm cả bài chưa chấm xong
+            $sanSangDuyet = array_filter($allItems, fn($i) =>
+                $i['soGiamKhao'] > 0
+                && $i['soGKDaCham'] >= $i['soGiamKhao']
+                && !in_array($i['trangThaiVongThi'], ['Đã duyệt', 'Bị loại'])
+            );
             
             // Tính điểm trung bình của các bài đã duyệt
             $diemDaDuyet = array_column($daDuyet, 'diemTrungBinh');
@@ -152,10 +160,10 @@ function handleGetRequest($conn) {
                 'message' => 'Thống kê kết quả thành công',
                 'data' => [
                     'tongSanPham' => count($allItems),
-                    'daDuyet' => count($daDuyet),
-                    'biLoai' => count($biLoai),
-                    'dangXet' => count($dangXet),
-                    'chuaDuyet' => count($chuaDuyet),
+                    'daDuyet'      => count($daDuyet),
+                    'biLoai'       => count($biLoai),
+                    'dangXet'      => count($dangXet),
+                    'sanSangDuyet' => count($sanSangDuyet),
                     'diemTBChung' => round($diemTBChung, 2),
                     'diemCaoNhat' => $diemCaoNhat,
                     'diemThapNhat' => $diemThapNhat

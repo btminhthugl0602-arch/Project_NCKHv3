@@ -246,7 +246,7 @@ function tao_nhom_moi(PDO $conn, int $idTK, int $idSK, string $tenNhom, string $
         $okThongTin = _insert_info(
             $conn,
             'thongtinnhom',
-            ['idnhom', 'tennhom', 'mota', 'dangTuyen'],
+            ['idnhom', 'tennhom', 'mota', 'dangtuyen'],
             [$idNhomMoi, $tenNhom, $moTa, 1]
         );
         if (!$okThongTin) {
@@ -325,7 +325,7 @@ function gui_yeu_cau_nhom(PDO $conn, int $idTKThucHien, int $idNhom, int $idTKDo
         'WHERE' => ['idnhom', '=', $idNhom, ''],
         'LIMIT' => [1],
     ]);
-    $dangTuyen = !empty($thongtinnhom) ? (int) $thongtinnhom[0]['dangTuyen'] : 0;
+    $dangTuyen = !empty($thongtinnhom) ? (int) $thongtinnhom[0]['dangtuyen'] : 0;
 
     // 5. Validate quyền gửi
     if ($chieuMoi === 0) {
@@ -371,7 +371,8 @@ function gui_yeu_cau_nhom(PDO $conn, int $idTKThucHien, int $idNhom, int $idTKDo
 
     // 9. Validate config SK
     if ($loaiYeuCau === 'SV') {
-        if ($dangTuyen !== 1) {
+        // Chỉ check dangTuyen khi SV tự xin vào, không áp dụng khi chủ nhóm chủ động mời
+        if ($chieuMoi === 1 && $dangTuyen !== 1) {
             return ['status' => false, 'message' => 'Nhóm hiện không mở tuyển thành viên'];
         }
         if (so_thanh_vien_sv($conn, $idNhom) >= (int) $sukien['soThanhVienToiDa']) {
@@ -490,7 +491,7 @@ function duyet_yeu_cau_nhom(PDO $conn, int $idNguoiDuyet, int $idYeuCau, int $tr
                 'WHERE' => ['idnhom', '=', $idNhom, ''],
                 'LIMIT' => [1],
             ]);
-            $dangTuyen = !empty($thongtinnhom) ? (int) $thongtinnhom[0]['dangTuyen'] : 0;
+            $dangTuyen = !empty($thongtinnhom) ? (int) $thongtinnhom[0]['dangtuyen'] : 0;
             if ($dangTuyen !== 1) {
                 $conn->rollBack();
                 return ['status' => false, 'message' => 'Nhóm hiện không mở tuyển thành viên'];
@@ -910,8 +911,10 @@ function lay_nhom_cua_toi(PDO $conn, int $idTK, int $idSK): ?array
     $stmtNhom = $conn->prepare(
         'SELECT n.idNhom, n.maNhom, n.ngayTao, n.isActive,
                 n.idChuNhom, n.idTruongNhom,
-                tn.tennhom, tn.mota, tn.dangTuyen,
-                sk.soThanhVienToiDa
+                tn.tennhom, tn.mota, tn.dangtuyen,
+                sk.soThanhVienToiDa,
+                sk.yeuCauCoGVHD,
+                sk.soGVHDToiDa
          FROM nhom n
          LEFT JOIN thongtinnhom tn ON tn.idnhom = n.idNhom
          LEFT JOIN sukien sk ON sk.idSK = n.idSK
@@ -924,7 +927,9 @@ function lay_nhom_cua_toi(PDO $conn, int $idTK, int $idSK): ?array
     $nhom['is_chu_nhom'] = ($idTK === (int) $nhom['idChuNhom']);
     $nhom['is_truong_nhom'] = ($nhom['idTruongNhom'] !== null && $idTK === (int) $nhom['idTruongNhom']);
     $nhom['so_thanh_vien_toi_da'] = $nhom['soThanhVienToiDa'] !== null ? (int) $nhom['soThanhVienToiDa'] : null;
-    unset($nhom['soThanhVienToiDa']);
+    $nhom['yeu_cau_co_gvhd'] = isset($nhom['yeuCauCoGVHD']) ? (int) $nhom['yeuCauCoGVHD'] : 0;
+    $nhom['so_gvhd_toi_da'] = isset($nhom['soGVHDToiDa']) ? (int) $nhom['soGVHDToiDa'] : null;
+    unset($nhom['soThanhVienToiDa'], $nhom['yeuCauCoGVHD'], $nhom['soGVHDToiDa']);
 
     // Lấy thành viên SV
     $stmtSV = $conn->prepare(
@@ -963,7 +968,7 @@ function lay_nhom_cua_toi(PDO $conn, int $idTK, int $idSK): ?array
              LEFT JOIN giangvien gv ON tk.idTK = gv.idTK
              WHERE yc.idNhom = :idNhom
                AND yc.trangThai = 0
-               AND (yc.ChieuMoi = 1 OR yc.loaiYeuCau = \'SV\')
+               AND yc.ChieuMoi = 1
              ORDER BY yc.ngayGui DESC'
         );
         $stmtYC->execute([':idNhom' => $idNhom]);
@@ -1047,7 +1052,7 @@ function lay_chi_tiet_nhom(PDO $conn, int $idNhom, int $idTKNguoiXem): ?array
     $stmtNhom = $conn->prepare(
         'SELECT n.idNhom, n.maNhom, n.ngayTao, n.isActive,
                 n.idChuNhom, n.idTruongNhom,
-                tn.tennhom, tn.mota, tn.dangTuyen,
+                tn.tennhom, tn.mota, tn.dangtuyen,
                 sk.soThanhVienToiDa
          FROM nhom n
          LEFT JOIN thongtinnhom tn ON tn.idnhom = n.idNhom
@@ -1482,7 +1487,7 @@ function cap_nhat_thong_tin_nhom(PDO $conn, int $idTK, int $idNhom, string $tenN
     $ok = _update_info(
         $conn,
         'thongtinnhom',
-        ['tennhom', 'mota', 'dangTuyen'],
+        ['tennhom', 'mota', 'dangtuyen'],
         [$tenNhom, $moTa, $dangTuyen],
         ['idnhom' => ['=', $idNhom, '']]
     );

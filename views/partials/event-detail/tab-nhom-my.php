@@ -114,11 +114,6 @@ $qlTabTitles = [
                         class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-primary resize-none"></textarea>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Số thành viên tối đa</label>
-                    <input type="number" id="inputSoLuong" value="5" min="2" max="20"
-                        class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-primary">
-                </div>
-                <div>
                     <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Chế độ nhóm</label>
                     <select id="inputDangTuyen"
                         class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-primary">

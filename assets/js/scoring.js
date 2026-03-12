@@ -1308,7 +1308,7 @@
                 const d = result.data;
                 if (elements.statKQDaDuyet) elements.statKQDaDuyet.textContent = d.daDuyet ?? '--';
                 if (elements.statKQBiLoai) elements.statKQBiLoai.textContent = d.biLoai ?? '--';
-                if (elements.statKQChoDuyet) elements.statKQChoDuyet.textContent = (d.dangXet || 0) + (d.chuaDuyet || 0);
+                if (elements.statKQChoDuyet) elements.statKQChoDuyet.textContent = d.sanSangDuyet ?? '--';
                 if (elements.statKQDiemTB) elements.statKQDiemTB.textContent = d.diemTBChung ?? '--';
             }
         } catch (error) {
