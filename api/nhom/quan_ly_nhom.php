@@ -1133,7 +1133,7 @@ function _merge_thanh_vien(array $svList, array $gvhdList, ?int $idTruongNhom): 
  * Tạo hoặc cập nhật sản phẩm của nhóm trong SK.
  * Chỉ Trưởng nhóm mới được thực hiện.
  */
-function tao_hoac_cap_nhat_san_pham(PDO $conn, int $idTK, int $idNhom, string $tenSanPham, ?int $idChuDeSK): array
+function tao_hoac_cap_nhat_san_pham(PDO $conn, int $idTK, int $idNhom, string $tenSanPham, ?int $idChuDeSK, array $fieldValues = []): array
 {
     $tenSanPham = trim($tenSanPham);
     if ($tenSanPham === '' || mb_strlen($tenSanPham) > 200) {
@@ -1162,26 +1162,73 @@ function tao_hoac_cap_nhat_san_pham(PDO $conn, int $idTK, int $idNhom, string $t
         }
     }
 
+    // Validate field values theo form mặc định SK
+    $formFields = lay_form_mac_dinh_sk($conn, $idSK);
+    foreach ($formFields as $field) {
+        $idField  = (int) $field['idField'];
+        $batBuoc  = (bool) $field['batBuoc'];
+        $val      = trim((string) ($fieldValues[$idField] ?? ''));
+        if ($batBuoc && $val === '') {
+            return ['status' => false, 'message' => "Trường '{$field['tenTruong']}' là bắt buộc"];
+        }
+        if ($field['kieuTruong'] === 'URL' && $val !== '' && !filter_var($val, FILTER_VALIDATE_URL)) {
+            return ['status' => false, 'message' => "Trường '{$field['tenTruong']}' phải là URL hợp lệ"];
+        }
+    }
+
     // Check đã có sản phẩm chưa
     $stmt = $conn->prepare('SELECT idSanPham FROM sanpham WHERE idNhom = :idNhom AND idSK = :idSK LIMIT 1');
     $stmt->execute([':idNhom' => $idNhom, ':idSK' => $idSK]);
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($existing) {
-        $okUpdate = $conn->prepare('UPDATE sanpham SET tenSanPham = :ten, idChuDeSK = :chuDe WHERE idSanPham = :id');
-        $okUpdate->execute([':ten' => $tenSanPham, ':chuDe' => $idChuDeSK, ':id' => $existing['idSanPham']]);
-        return ['status' => true, 'message' => 'Cập nhật sản phẩm thành công', 'idSanPham' => (int) $existing['idSanPham']];
-    } else {
-        $ok = _insert_info(
-            $conn,
-            'sanpham',
-            ['idNhom', 'idSK', 'idChuDeSK', 'tenSanPham', 'trangThai', 'ngayTao'],
-            [$idNhom, $idSK, $idChuDeSK, $tenSanPham, 'CHO_DUYET', date('Y-m-d H:i:s')]
-        );
-        if (!$ok) {
-            return ['status' => false, 'message' => 'Lỗi khi tạo sản phẩm'];
+    try {
+        $conn->beginTransaction();
+
+        if ($existing) {
+            $okUpdate = $conn->prepare('UPDATE sanpham SET tenSanPham = :ten, idChuDeSK = :chuDe WHERE idSanPham = :id');
+            $okUpdate->execute([':ten' => $tenSanPham, ':chuDe' => $idChuDeSK, ':id' => $existing['idSanPham']]);
+            $idSanPham = (int) $existing['idSanPham'];
+        } else {
+            $ok = _insert_info(
+                $conn,
+                'sanpham',
+                ['idNhom', 'idSK', 'idChuDeSK', 'tenSanPham', 'trangThai', 'ngayTao'],
+                [$idNhom, $idSK, $idChuDeSK, $tenSanPham, 'CHO_DUYET', date('Y-m-d H:i:s')]
+            );
+            if (!$ok) {
+                $conn->rollBack();
+                return ['status' => false, 'message' => 'Lỗi khi tạo sản phẩm'];
+            }
+            $idSanPham = (int) $conn->lastInsertId();
         }
-        return ['status' => true, 'message' => 'Tạo sản phẩm thành công', 'idSanPham' => (int) $conn->lastInsertId()];
+
+        // Lưu field values (idVongThi = NULL = form mặc định SK)
+        if (!empty($formFields) && !empty($fieldValues)) {
+            $stmtFV = $conn->prepare(
+                'INSERT INTO sanpham_field_value (idSanPham, idField, idVongThi, giaTriText)
+                 VALUES (?, ?, NULL, ?)
+                 ON DUPLICATE KEY UPDATE
+                     giaTriText = VALUES(giaTriText),
+                     ngayNop = CURRENT_TIMESTAMP'
+            );
+            foreach ($formFields as $field) {
+                $idField = (int) $field['idField'];
+                $val     = trim((string) ($fieldValues[$idField] ?? ''));
+                // Chỉ lưu nếu có giá trị hoặc field đã tồn tại (để clear)
+                $stmtFV->execute([$idSanPham, $idField, $val]);
+            }
+        }
+
+        $conn->commit();
+        return [
+            'status'    => true,
+            'message'   => $existing ? 'Cập nhật sản phẩm thành công' : 'Tạo sản phẩm thành công',
+            'idSanPham' => $idSanPham,
+        ];
+    } catch (Throwable $e) {
+        if ($conn->inTransaction()) $conn->rollBack();
+        error_log('tao_hoac_cap_nhat_san_pham: ' . $e->getMessage());
+        return ['status' => false, 'message' => 'Lỗi hệ thống khi lưu sản phẩm'];
     }
 }
 
@@ -1361,6 +1408,37 @@ function lay_form_vong_thi(PDO $conn, int $idVongThi): array
          ORDER BY thuTu ASC'
     );
     $stmt->execute([':idVongThi' => $idVongThi]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Lấy form mặc định của sự kiện (idVongThi IS NULL).
+ */
+function lay_form_mac_dinh_sk(PDO $conn, int $idSK): array
+{
+    $stmt = $conn->prepare(
+        'SELECT * FROM form_field
+         WHERE idSK = :idSK AND idVongThi IS NULL AND isActive = 1
+         ORDER BY thuTu ASC'
+    );
+    $stmt->execute([':idSK' => $idSK]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Lấy giá trị form mặc định SK đã nộp của 1 sản phẩm.
+ */
+function lay_field_value_mac_dinh(PDO $conn, int $idSanPham): array
+{
+    $stmt = $conn->prepare(
+        'SELECT sfv.*, ff.tenTruong, ff.kieuTruong, ff.thuTu
+         FROM sanpham_field_value sfv
+         JOIN form_field ff ON ff.idField = sfv.idField
+         WHERE sfv.idSanPham = :idSanPham
+           AND sfv.idVongThi IS NULL
+         ORDER BY ff.thuTu ASC'
+    );
+    $stmt->execute([':idSanPham' => $idSanPham]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 

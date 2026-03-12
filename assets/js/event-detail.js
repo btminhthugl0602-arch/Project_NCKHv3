@@ -2542,8 +2542,9 @@ document.addEventListener('DOMContentLoaded', function () {
     async function khoiTaoTabConfigTaiLieu() {
         if (currentTab !== 'config-tailieu') return;
 
-        let _currentVongThi = null;
+        let _currentVongThi = undefined; // undefined = chưa chọn lần nào; null = Thông tin chung
         let _vongThiOptions = [];
+        let _currentFields  = [];
 
         // ── DOM refs ──────────────────────────────────────────
         const elVongThiList = document.getElementById('tlVongThiList');
@@ -2597,9 +2598,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // ── Render vòng thi list ──────────────────────────────
         function renderVongThiList(tongQuan) {
             const vts = tongQuan.vongThi || [];
+            const soFieldMacDinh = parseInt(tongQuan.formMacDinh) || 0;
             _vongThiOptions = vts;
 
-            if (!vts.length) {
+            if (!vts.length && soFieldMacDinh === 0) {
                 elVongThiList.innerHTML = `<div class="px-3 py-2 text-xs text-slate-400 border rounded-lg border-slate-200 bg-white">
                     Sự kiện chưa có vòng thi nào. Hãy tạo vòng thi ở tab <strong>Cấu hình vòng thi</strong> trước.
                 </div>`;
@@ -2607,7 +2609,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            elVongThiList.innerHTML = vts.map(vt => `
+            // Row đặc biệt: Thông tin chung (idVongThi = null)
+            const macDinhRow = `
+                <button type="button" data-id="__mac_dinh__"
+                    class="tl-vt-btn w-full text-left px-3 py-2 rounded-lg border transition-all text-sm
+                           border-slate-200 bg-white text-slate-700 hover:border-fuchsia-300 hover:bg-fuchsia-50/50">
+                    <div class="flex items-center justify-between">
+                        <span><i class="fas fa-star mr-1.5 opacity-40 text-xs"></i>Thông tin chung</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full ${soFieldMacDinh > 0
+                    ? 'bg-fuchsia-100 text-fuchsia-600'
+                    : 'bg-slate-100 text-slate-400'}">
+                            ${soFieldMacDinh} trường
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-0.5">Hiển thị trong modal tạo/sửa đề tài của nhóm</p>
+                </button>`;
+
+            elVongThiList.innerHTML = macDinhRow + vts.map(vt => `
                 <button type="button" data-id="${vt.idVongThi}"
                     class="tl-vt-btn w-full text-left px-3 py-2 rounded-lg border transition-all text-sm
                            border-slate-200 bg-white text-slate-700 hover:border-fuchsia-300 hover:bg-fuchsia-50/50">
@@ -2622,23 +2640,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 </button>
             `).join('');
 
+            // Copy dropdowns — chỉ dùng vòng thi thật (không include "Thông tin chung")
             const optHTML = vts.map(vt =>
                 `<option value="${vt.idVongThi}">${escHtml(vt.tenVongThi)} (${vt.soField} trường)</option>`
             ).join('');
-            copySrc.innerHTML = optHTML;
-            copyDst.innerHTML = optHTML;
+            copySrc.innerHTML = optHTML || '<option value="">— Chưa có vòng thi —</option>';
+            copyDst.innerHTML = optHTML || '<option value="">— Chưa có vòng thi —</option>';
 
-            // Tự chọn vòng đầu nếu chỉ có 1 và chưa chọn gì
-            if (vts.length >= 1 && _currentVongThi === null) {
-                const first = vts[0];
-                selectVongThi(first.idVongThi, first.tenVongThi);
-                loadFormFields(first.idVongThi);
+            // Tự chọn "Thông tin chung" nếu chưa chọn gì lần nào
+            if (_currentVongThi === undefined) {
+                selectVongThi(null, 'Thông tin chung');
+                loadFormFields(null);
             }
 
             elVongThiList.querySelectorAll('.tl-vt-btn').forEach(btn => {
                 btn.addEventListener('click', function () {
-                    const id = parseInt(this.dataset.id);
-                    const ten = _vongThiOptions.find(v => v.idVongThi == id)?.tenVongThi || '';
+                    const raw = this.dataset.id;
+                    const id = raw === '__mac_dinh__' ? null : parseInt(raw);
+                    const ten = id === null
+                        ? 'Thông tin chung'
+                        : (_vongThiOptions.find(v => v.idVongThi == id)?.tenVongThi || '');
                     selectVongThi(id, ten);
                     loadFormFields(id);
                 });
@@ -2650,7 +2671,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (elCurrentName) elCurrentName.textContent = tenVT || '—';
             if (btnAddField) btnAddField.disabled = false;
             document.querySelectorAll('.tl-vt-btn').forEach(b => {
-                const isActive = parseInt(b.dataset.id) === idVT;
+                const raw = b.dataset.id;
+                const bId = raw === '__mac_dinh__' ? null : parseInt(raw);
+                const isActive = bId === idVT;
                 b.classList.toggle('border-fuchsia-400', isActive);
                 b.classList.toggle('bg-fuchsia-50', isActive);
                 b.classList.toggle('text-fuchsia-700', isActive);
@@ -2872,22 +2895,30 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!elFieldList) return;
             elFieldList.innerHTML = `<div class="p-4 text-sm text-slate-400 text-center border rounded-xl border-slate-200 bg-white">Đang tải...</div>`;
             try {
-                const res = await _get(`/api/su_kien/lay_form_field.php?id_sk=${idSk}&mode=fields&id_vong_thi=${idVT}`);
-                if (res.status === 'success') renderFieldList(res.data);
-                else elFieldList.innerHTML = `<p class="text-xs text-red-500 px-2">${escHtml(res.message)}</p>`;
+                const url = idVT === null
+                    ? `/api/su_kien/lay_form_field.php?id_sk=${idSk}&mode=fields`
+                    : `/api/su_kien/lay_form_field.php?id_sk=${idSk}&mode=fields&id_vong_thi=${idVT}`;
+                const res = await _get(url);
+                if (res.status === 'success') {
+                    _currentFields = res.data || [];
+                    renderFieldList(_currentFields);
+                } else {
+                    _currentFields = [];
+                    elFieldList.innerHTML = `<p class="text-xs text-red-500 px-2">${escHtml(res.message)}</p>`;
+                }
             } catch {
+                _currentFields = [];
                 elFieldList.innerHTML = `<p class="text-xs text-red-500 px-2">Lỗi tải danh sách trường.</p>`;
             }
         }
 
         // ── Handlers ──────────────────────────────────────────
         async function handleEditField(idField) {
-            try {
-                const res = await _get(`/api/su_kien/lay_form_field.php?id_sk=${idSk}&mode=fields&id_vong_thi=${_currentVongThi}`);
-                const field = (res.data || []).find(f => f.idField == idField);
-                if (field) showModal('Sửa trường', field);
-            } catch {
-                Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không tải được thông tin trường.' });
+            const field = _currentFields.find(f => f.idField == idField);
+            if (field) {
+                showModal('Sửa trường', field);
+            } else {
+                Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không tìm thấy thông tin trường.' });
             }
         }
 
@@ -2929,7 +2960,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         btnAddField?.addEventListener('click', function () {
-            if (_currentVongThi === null) return;
+            if (_currentVongThi === undefined) return;
             showModal('Thêm trường mới');
         });
 

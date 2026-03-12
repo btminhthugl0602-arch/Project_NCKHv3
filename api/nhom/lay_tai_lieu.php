@@ -10,7 +10,7 @@
  * Response:
  *   sanpham      — thông tin đề tài (null nếu chưa tạo)
  *   chuDeSK      — danh sách chủ đề của sự kiện (để chọn khi tạo/sửa)
- *   vongThi      — danh sách vòng thi kèm soField, daQiaHan, daNop
+ *   vongThi      — danh sách vòng thi kèm soField, daQuaHan, daNop
  *   formFields   — (nếu có id_vong_thi) danh sách field của vòng đó
  *   daNopValues  — (nếu có id_vong_thi + sanpham) giá trị đã nộp
  */
@@ -90,7 +90,7 @@ try {
 
     $vongThi = [];
     foreach ($vongThiRaw as $vt) {
-        $daQiaHan = ((int)($vt['dongNopThuCong'] ?? 0) === 1) ||
+        $daQuaHan = ((int)($vt['dongNopThuCong'] ?? 0) === 1) ||
             (!empty($vt['thoiGianDongNop']) && strtotime($vt['thoiGianDongNop']) <= time());
         $soField  = (int) $vt['soField'];
 
@@ -113,7 +113,7 @@ try {
             'thoiGianDongNop' => $vt['thoiGianDongNop'],
             'soField'         => $soField,
             'khongCanNop'     => $soField === 0,
-            'daQiaHan'        => $daQiaHan,
+            'daQuaHan'        => $daQuaHan,
             'daNop'           => $daNop,
         ];
     }

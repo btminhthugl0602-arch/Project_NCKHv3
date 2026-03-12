@@ -392,6 +392,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     ${chuDeOptions}
                                 </select>
                             </div>` : ''}
+                            <div id="ntlFormFieldsWrap"></div>
                         </div>
                         <div class="flex justify-end gap-2 px-6 py-4 border-t border-slate-200 bg-slate-50">
                             <button id="btnNtlModalDeTaiCancel" class="px-4 py-2 text-xs font-bold uppercase rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100">Hủy</button>
@@ -406,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         let statusBadge;
                         if (vt.khongCanNop) {
                             statusBadge = `<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Không cần nộp</span>`;
-                        } else if (vt.daQiaHan) {
+                        } else if (vt.daQuaHan) {
                             statusBadge = vt.daNop
                                 ? `<span class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700"><i class="fas fa-check mr-1"></i>Đã nộp</span>`
                                 : `<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500"><i class="fas fa-lock mr-1"></i>Đã đóng</span>`;
@@ -418,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         const deadline = vt.thoiGianDongNop
                             ? `<span class="text-xs text-slate-400 mt-0.5 block">Hạn: ${new Date(vt.thoiGianDongNop).toLocaleString('vi-VN')}</span>`
                             : '';
-                        const canSelect = !vt.khongCanNop && isTruongNhom && (!vt.daQiaHan || vt.daNop);
+                        const canSelect = !vt.khongCanNop && isTruongNhom && (!vt.daQuaHan || vt.daNop);
                         return `<button type="button" data-id="${vt.idVongThi}" ${!canSelect ? 'disabled' : ''}
                             class="ntl-vt-btn w-full text-left px-3 py-2.5 rounded-lg border transition-all text-sm
                                    border-slate-200 bg-white text-slate-700
@@ -669,13 +670,80 @@ document.addEventListener('DOMContentLoaded', function () {
                 const btnSave = document.getElementById('btnNtlModalDeTaiSave');
                 const inputTen = document.getElementById('ntlInputTenDeTai');
                 const inputCD = document.getElementById('ntlInputChuDe');
+                const formFieldsWrap = document.getElementById('ntlFormFieldsWrap');
 
-                const showModal = (tenHienTai, chuDeId) => {
+                // Load form mặc định SK vào modal
+                let _formFieldsMacDinh = [];
+                async function loadFormFieldsMacDinh(tenHienTai, chuDeId) {
+                    if (formFieldsWrap) formFieldsWrap.innerHTML = '';
+                    try {
+                        const d = await apiFetch(`/api/nhom/san_pham.php?id_nhom=${qlNhomId}`);
+                        if (d.status !== 'success') return;
+                        _formFieldsMacDinh = d.data.formFields || [];
+                        const daNopValues  = d.data.daNopValues || {};
+                        if (!_formFieldsMacDinh.length || !formFieldsWrap) return;
+
+                        formFieldsWrap.innerHTML = `
+                            <div class="pt-3 border-t border-slate-100">
+                                <p class="text-xs font-bold uppercase text-slate-400 mb-3">Thông tin bổ sung</p>
+                                <div class="space-y-3" id="ntlDynamicFields">
+                                    ${_formFieldsMacDinh.map(f => {
+                                        const cfg = f.cauHinhJson ? JSON.parse(f.cauHinhJson) : {};
+                                        const existing = daNopValues[f.idField];
+                                        const val = existing?.giaTriText || '';
+                                        const required = parseInt(f.batBuoc) === 1;
+                                        const reqMark = required ? '<span class="text-red-500 ml-0.5">*</span>' : '';
+                                        let inputHTML;
+                                        switch (f.kieuTruong) {
+                                            case 'TEXTAREA':
+                                                inputHTML = `<textarea name="ff_${f.idField}" rows="${cfg.rows || 3}"
+                                                    placeholder="${esc(cfg.placeholder || '')}" ${required ? 'required' : ''}
+                                                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none resize-y">${esc(val)}</textarea>`;
+                                                break;
+                                            case 'URL':
+                                                inputHTML = `<input type="url" name="ff_${f.idField}" value="${esc(val)}"
+                                                    placeholder="${esc(cfg.placeholder || 'https://')}" ${required ? 'required' : ''}
+                                                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />`;
+                                                break;
+                                            case 'SELECT': {
+                                                const opts = (cfg.options || []).map(o =>
+                                                    `<option value="${esc(o)}" ${val === o ? 'selected' : ''}>${esc(o)}</option>`
+                                                ).join('');
+                                                inputHTML = `<select name="ff_${f.idField}" ${required ? 'required' : ''}
+                                                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none">
+                                                    <option value="">— Chọn —</option>${opts}
+                                                </select>`;
+                                                break;
+                                            }
+                                            case 'CHECKBOX':
+                                                inputHTML = `<label class="flex items-center gap-2 cursor-pointer">
+                                                    <input type="checkbox" name="ff_${f.idField}" value="1" ${val === '1' ? 'checked' : ''} ${required ? 'required' : ''}
+                                                        class="w-4 h-4 rounded border-slate-300 text-fuchsia-500" />
+                                                    <span class="text-sm text-slate-700">${esc(cfg.label || f.tenTruong)}</span>
+                                                </label>`;
+                                                break;
+                                            default: // TEXT
+                                                inputHTML = `<input type="text" name="ff_${f.idField}" value="${esc(val)}"
+                                                    maxlength="${cfg.maxLength || 200}" placeholder="${esc(cfg.placeholder || '')}" ${required ? 'required' : ''}
+                                                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />`;
+                                        }
+                                        return `<div>
+                                            <label class="block mb-1 text-xs font-semibold text-slate-700">${esc(f.tenTruong)}${reqMark}</label>
+                                            ${inputHTML}
+                                        </div>`;
+                                    }).join('')}
+                                </div>
+                            </div>`;
+                    } catch { /* form mặc định không bắt buộc phải load được */ }
+                }
+
+                const showModal = async (tenHienTai, chuDeId) => {
                     if (inputTen) inputTen.value = tenHienTai || '';
                     if (inputCD) inputCD.value = chuDeId || '';
                     modal?.classList.remove('hidden');
                     modal?.classList.add('flex');
                     inputTen?.focus();
+                    await loadFormFieldsMacDinh(tenHienTai, chuDeId);
                 };
                 const hideModal = () => { modal?.classList.add('hidden'); modal?.classList.remove('flex'); };
 
@@ -689,11 +757,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 btnSave?.addEventListener('click', async function () {
                     const tenDeTai = inputTen?.value.trim() || '';
                     if (!tenDeTai) { Swal.fire({ icon: 'warning', title: 'Vui lòng nhập tên đề tài' }); return; }
+
+                    // Collect dynamic field values
+                    const fieldValues = {};
+                    _formFieldsMacDinh.forEach(f => {
+                        const el = document.querySelector(`[name="ff_${f.idField}"]`);
+                        if (!el) return;
+                        if (f.kieuTruong === 'CHECKBOX') {
+                            fieldValues[f.idField] = el.checked ? '1' : '0';
+                        } else {
+                            fieldValues[f.idField] = el.value;
+                        }
+                    });
+
                     this.disabled = true; this.textContent = 'Đang lưu...';
                     const res = await apiPost('/api/nhom/san_pham.php', {
                         id_nhom: qlNhomId,
                         ten_san_pham: tenDeTai,
                         id_chu_de_sk: inputCD?.value ? parseInt(inputCD.value) : null,
+                        field_values: fieldValues,
                     });
                     this.disabled = false; this.textContent = 'Lưu';
                     if (res.status === 'success') {
