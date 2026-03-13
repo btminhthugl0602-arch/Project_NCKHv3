@@ -2801,7 +2801,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Vòng thi + Bộ tiêu chí
                 '<div class="grid grid-cols-2 gap-3">' +
-                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Thuộc vòng thi <span class="text-rose-500">*</span></label>' +
+                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Thuộc vòng thi <span class="text-slate-400 font-normal">(Tùy chọn)</span></label>' +
                 `<select id="sw-vt" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-purple-400"><option value="">-- Chọn vòng thi --</option>${vtOpts}</select></div>` +
                 '<div><label class="block text-xs font-bold text-slate-700 mb-1">Bộ tiêu chí <span class="text-slate-400 font-normal">(Tùy chọn)</span></label>' +
                 `<select id="sw-btc" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-purple-400"><option value="">-- Dùng chung theo Vòng --</option>${btcOpts}</select></div>` +
@@ -2836,7 +2836,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 const ten = document.getElementById('sw-ten').value.trim();
                 const vt  = document.getElementById('sw-vt').value;
                 if (!ten) { Swal.showValidationMessage('Vui lòng nhập tên tiểu ban'); return false; }
-                if (!vt)  { Swal.showValidationMessage('Vui lòng chọn vòng thi'); return false; }
                 const selectedGvIds = Array.from(document.querySelectorAll('.sw-gv-cb:checked')).map(cb => parseInt(cb.value));
                 return {
                     ten_tieu_ban:   ten,
