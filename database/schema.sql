@@ -1096,7 +1096,7 @@ CREATE TABLE `taikhoan_vaitro_sukien` (
   `idTK` int NOT NULL,
   `idSK` int NOT NULL,
   `idVaiTro` int NOT NULL,
-  `nguonTao` enum('BTC_THEM','PHANCONG_CHAM','QUA_NHOM','DANG_KY') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'BTC_THEM: BTC thêm | PHANCONG_CHAM: qua phân công chấm | QUA_NHOM: GV vào nhóm | DANG_KY: SV tự đăng ký',
+  `nguonTao` enum('BTC_THEM','PHANCONG_CHAM','QUA_NHOM','DANG_KY','PHAN_CONG_PHAN_BIEN') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'BTC_THEM: BTC thêm | PHANCONG_CHAM: qua phân công chấm | QUA_NHOM: GV vào nhóm | DANG_KY: SV tự đăng ký',
   `idNguoiCap` int DEFAULT NULL COMMENT 'idTK người thực hiện, NULL nếu tự động',
   `ngayCap` datetime DEFAULT CURRENT_TIMESTAMP,
   `isActive` tinyint DEFAULT '1'
@@ -1370,6 +1370,23 @@ INSERT INTO `tieuban_sanpham` (`idTieuBan`, `idSanPham`) VALUES
 (2, 2),
 (801, 801),
 (802, 802);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tieuban_phan_bien`
+--
+
+CREATE TABLE `tieuban_phan_bien` (
+  `idPhanBien` int NOT NULL,
+  `idSanPham` int NOT NULL COMMENT 'Bài báo cáo được phân công phản biện',
+  `idGV` int NOT NULL COMMENT 'Giảng viên phản biện (phải trong tiểu ban chứa bài)',
+  `idSK` int NOT NULL COMMENT 'Sự kiện',
+  `trangThaiCham` enum('Chờ chấm','Đang chấm','Đã nộp') NOT NULL DEFAULT 'Chờ chấm',
+  `ngayPhanCong` datetime DEFAULT CURRENT_TIMESTAMP,
+  `ngayNop` datetime DEFAULT NULL COMMENT 'Thời điểm GV nộp phiếu chấm'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Phân công phản biện offline trong tiểu ban. Tách biệt với phancong_doclap (online).';
 
 -- --------------------------------------------------------
 
@@ -2051,6 +2068,16 @@ ALTER TABLE `tieuban_sanpham`
   ADD KEY `tieuban_sanpham_ibfk_2` (`idSanPham`);
 
 --
+-- Indexes for table `tieuban_phan_bien`
+--
+ALTER TABLE `tieuban_phan_bien`
+  ADD PRIMARY KEY (`idPhanBien`),
+  ADD UNIQUE KEY `uq_sp_gv_sk` (`idSanPham`,`idGV`,`idSK`),
+  ADD KEY `idx_tpb_idSK` (`idSK`),
+  ADD KEY `idx_tpb_idGV` (`idGV`),
+  ADD KEY `idx_tpb_idSanPham` (`idSanPham`);
+
+--
 -- Indexes for table `tieuchi`
 --
 ALTER TABLE `tieuchi`
@@ -2324,6 +2351,12 @@ ALTER TABLE `thuoctinh_kiemtra`
 --
 ALTER TABLE `tieuban`
   MODIFY `idTieuBan` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=803;
+
+--
+-- AUTO_INCREMENT for table `tieuban_phan_bien`
+--
+ALTER TABLE `tieuban_phan_bien`
+  MODIFY `idPhanBien` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `tieuchi`

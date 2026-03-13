@@ -95,7 +95,7 @@ function _sb_link_if(array $tabAccess, string $section, string $current, int $id
                           || !empty($_sbTabAccess['review-results']);
                 if ($hasBaiNop):
                 ?>
-                <?php echo _sb_section_label('Quản lý bài nộp'); ?>
+                <?php echo _sb_section_label('Phản biện & Kết quả'); ?>
                 <?php echo _sb_link_if($_sbTabAccess, 'review-assign',  $eventSidebarSection, $eventSidebarEventId, 'person_check', 'Phân công phản biện'); ?>
                 <?php echo _sb_link_if($_sbTabAccess, 'review-results', $eventSidebarSection, $eventSidebarEventId, 'bar_chart',    'Kết quả Review'); ?>
                 <?php endif; ?>
