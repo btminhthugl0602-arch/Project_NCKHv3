@@ -11,6 +11,7 @@ define('_AUTHEN', true);
 
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../core/auth_guard.php';
+require_once __DIR__ . '/../thong_bao/notification_service.php';
 
 require_once __DIR__ . '/quan_ly_cham_diem.php';
 
@@ -32,7 +33,7 @@ try {
     if ($method === 'GET') {
         handleGetRequest($conn);
     } elseif ($method === 'POST') {
-        handlePostRequest($conn);
+        handlePostRequest($conn, $actor);
     } else {
         http_response_code(405);
         echo json_encode([
@@ -125,7 +126,7 @@ function handleGetRequest($conn)
 /**
  * Xử lý POST request
  */
-function handlePostRequest($conn)
+function handlePostRequest($conn, array $actor)
 {
     // Dùng lại body đã parse từ bước xác thực — php://input chỉ đọc được 1 lần.
     // Nếu auth không cần đọc body (id_sk đến từ GET), parse lần đầu ở đây.
@@ -164,6 +165,28 @@ function handlePostRequest($conn)
         case 'assign_doclap':
             // Phân công giám khảo chấm độc lập
             $result = cham_diem_phan_cong_giam_khao($conn, $idSanPham, $idGV, $idVongThi);
+
+            if (!empty($result['success']) && notification_feature_enabled('scoring')) {
+                try {
+                    $idSK = isset($input['id_sk']) ? (int) $input['id_sk'] : 0;
+                    $idTKReviewer = lay_id_tk_theo_id_gv($conn, $idGV);
+                    if ($idTKReviewer > 0) {
+                        dispatch_personal($conn, [
+                            'tieuDe' => 'Ban vua duoc phan cong cham diem',
+                            'noiDung' => 'Ban vua duoc phan cong cham mot bai thi. Vui long vao muc Cham diem de xu ly.',
+                            'loaiThongBao' => 'CA_NHAN',
+                            'idSK' => $idSK,
+                            'loaiDoiTuong' => 'SANPHAM',
+                            'idDoiTuong' => $idSanPham,
+                            'nguoiGui' => (int) ($actor['idTK'] ?? 0),
+                            'recipients' => [$idTKReviewer],
+                        ]);
+                    }
+                } catch (Throwable $notifyError) {
+                    error_log('assign_doclap notify error: ' . $notifyError->getMessage());
+                }
+            }
+
             echo json_encode([
                 'status' => $result['success'] ? 'success' : 'error',
                 'message' => $result['message'],
@@ -184,6 +207,28 @@ function handlePostRequest($conn)
         case 'add_3rd_judge':
             // Mời giám khảo thứ 3 (Trọng tài phúc khảo)
             $result = cham_diem_moi_trong_tai($conn, $idSanPham, $idGV, $idVongThi);
+
+            if (!empty($result['success']) && notification_feature_enabled('scoring')) {
+                try {
+                    $idSK = isset($input['id_sk']) ? (int) $input['id_sk'] : 0;
+                    $idTKReviewer = lay_id_tk_theo_id_gv($conn, $idGV);
+                    if ($idTKReviewer > 0) {
+                        dispatch_personal($conn, [
+                            'tieuDe' => 'Ban vua duoc moi lam trong tai phuc khao',
+                            'noiDung' => 'Ban vua duoc moi cham phuc khao mot bai thi.',
+                            'loaiThongBao' => 'CA_NHAN',
+                            'idSK' => $idSK,
+                            'loaiDoiTuong' => 'SANPHAM',
+                            'idDoiTuong' => $idSanPham,
+                            'nguoiGui' => (int) ($actor['idTK'] ?? 0),
+                            'recipients' => [$idTKReviewer],
+                        ]);
+                    }
+                } catch (Throwable $notifyError) {
+                    error_log('add_3rd_judge notify error: ' . $notifyError->getMessage());
+                }
+            }
+
             echo json_encode([
                 'status' => $result['success'] ? 'success' : 'error',
                 'message' => $result['message'],
@@ -210,6 +255,27 @@ function handlePostRequest($conn)
                 $result = cham_diem_phan_cong_giam_khao($conn, $idSanPham, (int) $gvId, $idVongThi);
                 if ($result['success']) {
                     $successCount++;
+
+                    if (notification_feature_enabled('scoring')) {
+                        try {
+                            $idSK = isset($input['id_sk']) ? (int) $input['id_sk'] : 0;
+                            $idTKReviewer = lay_id_tk_theo_id_gv($conn, (int) $gvId);
+                            if ($idTKReviewer > 0) {
+                                dispatch_personal($conn, [
+                                    'tieuDe' => 'Ban vua duoc phan cong cham diem',
+                                    'noiDung' => 'Ban vua duoc phan cong cham mot bai thi.',
+                                    'loaiThongBao' => 'CA_NHAN',
+                                    'idSK' => $idSK,
+                                    'loaiDoiTuong' => 'SANPHAM',
+                                    'idDoiTuong' => $idSanPham,
+                                    'nguoiGui' => (int) ($actor['idTK'] ?? 0),
+                                    'recipients' => [$idTKReviewer],
+                                ]);
+                            }
+                        } catch (Throwable $notifyError) {
+                            error_log('assign_multiple notify error: ' . $notifyError->getMessage());
+                        }
+                    }
                 } else {
                     $errors[] = "GV $gvId: " . $result['message'];
                 }
@@ -230,4 +296,15 @@ function handlePostRequest($conn)
                 'data' => null
             ], JSON_UNESCAPED_UNICODE);
     }
+}
+
+function lay_id_tk_theo_id_gv(PDO $conn, int $idGV): int
+{
+    if ($idGV <= 0) {
+        return 0;
+    }
+
+    $stmt = $conn->prepare('SELECT idTK FROM giangvien WHERE idGV = :idGV LIMIT 1');
+    $stmt->execute([':idGV' => $idGV]);
+    return (int) $stmt->fetchColumn();
 }

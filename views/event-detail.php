@@ -64,7 +64,9 @@ $tabAccess = [
     'scoring-gv'      => $perm['nhap_diem'],
     'nhom-my'         => $perm['xem_nhom'],
     'nhom-all'        => $perm['xem_nhom'],
-    'nhom-request'    => $perm['xem_nhom'],
+    // Cho phep user dang nhap truy cap tab loi moi/yeu cau
+    // de xu ly invitation truoc khi duoc gan quyen xem_nhom.
+    'nhom-request'    => $isLoggedIn,
 ];
 
 // ── Validate & gate tab ───────────────────────────────────────

@@ -3,6 +3,7 @@ define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../core/auth_guard.php';
 require_once __DIR__ . '/quan_ly_nhom.php';
+require_once __DIR__ . '/../thong_bao/notification_service.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -45,6 +46,62 @@ $idTK  = $actor['idTK'];
 try {
     $result = duyet_yeu_cau_nhom($conn, $idTK, $idYeuCau, $trangThai);
     if ($result['status'] === true) {
+        if (notification_feature_enabled('group')) {
+            try {
+                $chieuMoi = (int) ($ycCheck['ChieuMoi'] ?? 1);
+                // chieu_moi = 1: user xin vao nhom -> thong bao ket qua cho nguoi xin
+                // chieu_moi = 0: nhom moi user     -> thong bao ket qua cho Chu/Truong nhom
+                $recipients = [];
+                if ($chieuMoi === 1) {
+                    $idNguoiXin = (int) ($ycCheck['idTK'] ?? 0);
+                    if ($idNguoiXin > 0) {
+                        $recipients[] = $idNguoiXin;
+                    }
+                } else {
+                    $idChuNhom = (int) ($nhomCheck['idChuNhom'] ?? 0);
+                    $idTruongNhom = (int) ($nhomCheck['idTruongNhom'] ?? 0);
+                    if ($idChuNhom > 0) {
+                        $recipients[] = $idChuNhom;
+                    }
+                    if ($idTruongNhom > 0) {
+                        $recipients[] = $idTruongNhom;
+                    }
+                    $recipients = array_values(array_unique($recipients));
+                }
+
+                if (!empty($recipients)) {
+                    $isAccepted = $trangThai === 1;
+                    $tieuDe = '';
+                    $noiDung = '';
+
+                    if ($chieuMoi === 1) {
+                        $tieuDe = $isAccepted ? 'Yeu cau da duoc chap nhan' : 'Yeu cau da bi tu choi';
+                        $noiDung = $isAccepted
+                            ? 'Yeu cau tham gia nhom cua ban da duoc chap nhan.'
+                            : 'Yeu cau tham gia nhom cua ban da bi tu choi.';
+                    } else {
+                        $tieuDe = $isAccepted ? 'Loi moi da duoc chap nhan' : 'Loi moi da bi tu choi';
+                        $noiDung = $isAccepted
+                            ? 'Loi moi tham gia nhom cua ban da duoc chap nhan.'
+                            : 'Loi moi tham gia nhom cua ban da bi tu choi.';
+                    }
+
+                    dispatch_personal($conn, [
+                        'tieuDe' => $tieuDe,
+                        'noiDung' => $noiDung,
+                        'loaiThongBao' => 'NHOM',
+                        'idSK' => $idSk,
+                        'loaiDoiTuong' => 'YEUCAU',
+                        'idDoiTuong' => $idYeuCau,
+                        'nguoiGui' => $idTK,
+                        'recipients' => $recipients,
+                    ]);
+                }
+            } catch (Throwable $notifyError) {
+                error_log('duyet_yeu_cau notify error: ' . $notifyError->getMessage());
+            }
+        }
+
         echo json_encode(['status' => 'success', 'message' => $result['message'], 'data' => null], JSON_UNESCAPED_UNICODE);
     } else {
         http_response_code(400);

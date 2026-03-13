@@ -8,6 +8,7 @@ define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../core/auth_guard.php';
 require_once __DIR__ . '/quan_ly_nhom.php';
+require_once __DIR__ . '/../thong_bao/notification_service.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -37,12 +38,31 @@ if ($tenDeTai === '') {
 // Chỉ yêu cầu đăng nhập (quyền đã được gán qua role)
 $actor = auth_require_login();
 $idTK  = $actor['idTK'];
+$idSk  = (int) ($nhomCheck['idSK'] ?? 0);
 
 try {
     $idChuDeSK = isset($input['id_chu_de_sk']) ? (int) $input['id_chu_de_sk'] : null;
     $result = tao_hoac_cap_nhat_san_pham($conn, $idTK, $idNhom, $tenDeTai, $idChuDeSK ?: null);
 
     if ($result['status'] === true) {
+        if (notification_feature_enabled('group')) {
+            try {
+                dispatch_group($conn, [
+                    'tieuDe' => 'Nhom da nop/cap nhat bai',
+                    'noiDung' => 'Mot nhom vua nop hoac cap nhat san pham. Vui long kiem tra trong su kien.',
+                    'loaiThongBao' => 'NHOM',
+                    'idSK' => $idSk,
+                    'loaiDoiTuong' => 'SANPHAM',
+                    'nguoiGui' => $idTK,
+                    'recipientGroups' => [
+                        ['loaiNhom' => 'SU_KIEN', 'idNhom' => $idSk, 'idVaiTro' => 1],
+                    ],
+                ]);
+            } catch (Throwable $notifyError) {
+                error_log('nop_bai notify error: ' . $notifyError->getMessage());
+            }
+        }
+
         echo json_encode(['status' => 'success', 'message' => $result['message'], 'data' => null], JSON_UNESCAPED_UNICODE);
     } else {
         http_response_code(400);

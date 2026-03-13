@@ -40,6 +40,18 @@
         thongBaoGK: BASE_PATH + '/api/thong_bao/giam_khao.php'
     };
 
+    function refreshNotificationBell() {
+        try {
+            if (window.NotificationCenter && typeof window.NotificationCenter.refresh === 'function') {
+                window.NotificationCenter.refresh();
+                return;
+            }
+            window.dispatchEvent(new CustomEvent('notification:refresh'));
+        } catch (error) {
+            console.warn('Cannot refresh notification bell', error);
+        }
+    }
+
     /**
      * Initialize module
      */
@@ -517,6 +529,7 @@
                 await loadSanPham();
                 await loadPanelPhanCong(idSanPham);
                 await loadThongKe();
+                refreshNotificationBell();
             } else {
                 showToast(result.message || 'Lỗi phân công', 'error');
             }
@@ -560,6 +573,7 @@
                 await loadSanPham();
                 await loadPanelPhanCong(idSanPham);
                 await loadThongKe();
+                refreshNotificationBell();
             } else {
                 showToast(result.message || 'Lỗi gỡ phân công', 'error');
             }
@@ -1286,6 +1300,7 @@
                 if (apiResult.status === 'success') {
                     showToast('Đã mời trọng tài thành công', 'success');
                     await loadAllData();
+                    refreshNotificationBell();
                 } else {
                     showToast(apiResult.message || 'Lỗi mời trọng tài', 'error');
                 }
@@ -1487,6 +1502,7 @@
                 ]);
                 // Cập nhật bảng tiến độ nếu đang ở Tab 2
                 if (state.currentSubTab === 'tien-do') loadTienDoCham();
+                refreshNotificationBell();
             } else {
                 showToast(result.message || 'Lỗi duyệt điểm', 'error');
             }
@@ -1533,6 +1549,7 @@
                     loadCanDuyet()
                 ]);
                 if (state.currentSubTab === 'tien-do') loadTienDoCham();
+                refreshNotificationBell();
             } else {
                 showToast(result.message || 'Lỗi đánh rớt', 'error');
             }
@@ -1626,6 +1643,7 @@
                 await loadCanDuyet();
                 await loadBangVang();
                 await loadThongKe();
+                refreshNotificationBell();
             } else {
                 showToast(result.message || 'Có lỗi xảy ra', 'warning');
             }
@@ -1732,6 +1750,7 @@
                 } else {
                     showToast(`Đã gửi nhắc nhở tới ${so} giám khảo`, 'success');
                 }
+                refreshNotificationBell();
             } else {
                 showToast(result.message || 'Gửi thông báo thất bại', 'error');
             }
@@ -1793,6 +1812,7 @@
                 showToast('Duyệt điểm thành công!', 'success');
                 closeIRRModal();
                 await loadAllData();
+                refreshNotificationBell();
             } else {
                 showToast(result.message || 'Lỗi duyệt điểm', 'error');
             }
@@ -1832,6 +1852,7 @@
                 showToast('Đã đánh rớt bài thi', 'success');
                 closeIRRModal();
                 await loadAllData();
+                refreshNotificationBell();
             } else {
                 showToast(result.message || 'Lỗi đánh rớt', 'error');
             }
@@ -1890,6 +1911,7 @@
                 // Tải lại dữ liệu rồi mở lại modal — sẽ hiển thị trạng thái "Đang chờ Trọng tài"
                 await loadAllData();
                 await showIRRDetailModal(idSanPham);
+                refreshNotificationBell();
             } else {
                 showToast(result.message || 'Lỗi mời trọng tài', 'error');
                 // Mở lại modal khi có lỗi

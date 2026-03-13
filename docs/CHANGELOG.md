@@ -1,5 +1,166 @@
 # CHANGELOG
 
+## 2026-03-13 — Fix luong thong bao nhom (sai nguoi nhan)
+
+- Sua [api/nhom/gui_yeu_cau.php](api/nhom/gui_yeu_cau.php):
+  - Khi user tu xin vao nhom (`chieu_moi=1`), thong bao gui den Chu nhom thay vi gui nguoc lai cho nguoi xin.
+  - Khi nhom moi user (`chieu_moi=0`), thong bao gui den user duoc moi nhu dung nghiep vu.
+- Sua [api/nhom/duyet_yeu_cau.php](api/nhom/duyet_yeu_cau.php):
+  - Ket qua duyet theo `ChieuMoi` de gui dung nguoi:
+    - `ChieuMoi=1`: gui cho nguoi xin vao nhom.
+    - `ChieuMoi=0`: gui cho Chu nhom (nguoi da gui loi moi).
+  - Dieu chinh noi dung thong bao theo 2 ngu canh "yeu cau" va "loi moi".
+
+## 2026-03-13 — Fix hien thi tab Loi moi (nhom-request)
+
+- Mo rong [api/nhom/quan_ly_nhom.php](api/nhom/quan_ly_nhom.php) trong ham `lay_yeu_cau_cua_toi`:
+  - Bo sung du lieu `yeu_cau_den_nhom_cua_toi` (yeu cau `ChieuMoi=1`, pending) cho cac nhom ma user la Chu nhom.
+- Cap nhat [assets/js/nhom_thi.js](assets/js/nhom_thi.js):
+  - Subtab `loi-moi` hien thi dong thoi:
+    - Loi moi user nhan duoc.
+    - Yeu cau xin vao nhom cua user (neu user la Chu nhom).
+  - Bo sung card xu ly chap nhan/tu choi ngay tren danh sach.
+- Cap nhat wording giao dien o [views/partials/event-detail/tab-nhom-request.php](views/partials/event-detail/tab-nhom-request.php) de phu hop voi luong moi.
+
+## 2026-03-13 — Fix bo sung: role Chu nhom/Truong nhom trong luong yeu cau
+
+- Dieu chinh [api/nhom/quan_ly_nhom.php](api/nhom/quan_ly_nhom.php):
+  - `lay_yeu_cau_cua_toi`: tra yeu cau den nhom khi user la `idChuNhom` hoac `idTruongNhom`.
+  - `duyet_yeu_cau_nhom`: cho phep Chu nhom hoac Truong nhom duyet yeu cau `ChieuMoi=1`.
+- Dieu chinh [api/nhom/gui_yeu_cau.php](api/nhom/gui_yeu_cau.php):
+  - Khi xin vao nhom (`chieu_moi=1`), gui thong bao den ca Chu nhom va Truong nhom (neu khac nhau).
+- Dieu chinh [api/nhom/duyet_yeu_cau.php](api/nhom/duyet_yeu_cau.php):
+  - Nhanh `ChieuMoi=0` gui ket qua den ca Chu nhom va Truong nhom de tranh sot nguoi nhan.
+- Hotfix [api/nhom/quan_ly_nhom.php](api/nhom/quan_ly_nhom.php):
+  - Sua bind parameter trong query `yeu_cau_den_nhom_cua_toi` (tach `:idTKChu`, `:idTKTruong`) de tranh loi PDO va trang thai "Loi he thong" o tab `nhom-request`.
+
+## 2026-03-13 — Fix truy cap khu vuc nhom cho giang vien duoc moi
+
+- Cap nhat [views/event-detail.php](views/event-detail.php):
+  - Mo tab `nhom-request` cho moi user da dang nhap (`$isLoggedIn`) de xu ly loi moi/yeu cau nhom ngay ca khi chua co quyen `xem_nhom`.
+- Cap nhat [api/thong_bao/inbox.php](api/thong_bao/inbox.php):
+  - Deep-link thong bao `NHOM` voi `loaiDoiTuong=YEUCAU` tro thang den `tab=nhom-request` thay vi `tab=nhom-my`.
+
+## 2026-03-13 — Dashboard: Thong bao ca nhan hoa
+
+- Cap nhat [views/dashboard.php](views/dashboard.php) de bo phan "Thong bao moi" su dung du lieu dong thay vi hardcode.
+- Them [assets/js/dashboard-notifications.js](assets/js/dashboard-notifications.js) de goi API inbox va render danh sach thong bao theo tai khoan dang nhap.
+- Ho tro deep-link tu tung thong bao den trang lien quan, dong bo voi module chuong thong bao tren navbar.
+
+## 2026-03-13 — Notification Phase 4-5: Frontend sync + test/rollout
+
+### Phase 4 - Frontend sync va deep-link
+- `assets/js/notifications.js`:
+  - Bo sung timeout-safe fetch de tranh treo request.
+  - Ho tro uu tien dieu huong theo `deepLink` tu API.
+  - Expose `window.NotificationCenter.refresh()` va event `notification:refresh`.
+- `api/thong_bao/inbox.php`:
+  - Them `inbox_attach_deep_link()` de enrich du lieu inbox cho dieu huong ngu canh.
+- `assets/js/event-detail.js` va `assets/js/scoring.js`:
+  - Goi refresh chuong thong bao sau cac action thanh cong (phan cong, moi trong tai, duyet/loai, nhac nho, toggle trang thai).
+
+### Phase 5 - Test va van hanh
+- Them test moi:
+  - `tests/unit/notification_payload_validation_test.php`
+  - `tests/unit/notification_recipient_resolver_test.php`
+  - `tests/integration/notification_inbox_contract_test.php`
+  - `tests/regression/notification_legacy_giam_khao_actions_test.php`
+- Cap nhat `tests/run.php` de chay day du bo test thong bao cung test baseline.
+- Them playbook rollout + kill-switch:
+  - `docs/user-guide/notification-rollout-kill-switch.md`
+
+## 2026-03-13 — Notification Phase 0-1: Contract + Service trung tam
+
+### Phase 0 - Chuan hoa contract thong bao
+- Them helper contract JSON thong nhat cho API thong bao:
+  - `status`, `message`, `data`, `meta`
+  - contract id: `notification.v1`
+- Chuan hoa payload event thong bao tai service trung tam:
+  - `loaiThongBao`, `phamVi`, `idSK`, `loaiDoiTuong`, `idDoiTuong`, `nguoiGui`, `recipients`
+- Dong goi quy tac resolve recipient vao mot noi duy nhat, tranh roi rac tai tung endpoint.
+
+### Phase 1 - Notification Service backend dung chung
+- Them file moi: `api/thong_bao/notification_service.php`
+- Expose cac ham dung chung:
+  - `create_notification`
+  - `dispatch_personal`
+  - `dispatch_group`
+  - `dispatch_broadcast`
+  - `mark_read`
+  - `list_inbox`
+- Refactor API cu `api/thong_bao/giam_khao.php` sang goi service trung tam,
+  giu nguyen hanh vi action cu (`lay_chua_doc`, `danh_dau_da_doc`, `gui_nhac_nho`).
+- Refactor diem phat thong bao su kien moi trong
+  `api/su_kien/quan_ly_su_kien.php` sang `dispatch_broadcast`.
+
+### Tieu chi tuong thich
+- API cu van giu endpoint va action nhu hien tai.
+- Khong thay doi business flow nghiep vu, chi chuan hoa contract va noi gom logic thong bao.
+
+## 2026-03-13 — Notification Phase 2: Inbox tong + chuong thong bao frontend
+
+### Backend
+- Mo rong service `api/thong_bao/notification_service.php`:
+  - `count_unread_notifications`
+  - `mark_all_read`
+- Them API moi `api/thong_bao/inbox.php`:
+  - `GET action=list` (inbox tong, kem `unreadCount`)
+  - `GET action=unread_count`
+  - `POST action=mark_all_read`
+  - `POST action=mark_read`
+
+### Frontend
+- Nang cap navbar thong bao trong `layouts/navbar.php`:
+  - Them dropdown danh sach thong bao
+  - Them badge so luong chua doc + red dot dong
+  - Them context script `window.NOTIFICATION_CONTEXT`
+- Them JS global moi `assets/js/notifications.js`:
+  - Tai inbox tong
+  - Polling unread count
+  - Mark read / mark all read
+  - Dieu huong den su kien lien quan
+- Nap script global thong bao qua `layouts/scripts.php`
+
+### Tieu chi tuong thich
+- Khong thay doi endpoint API cu dang dung.
+- Module thong bao giang khao va cac module nghiep vu cu van hoat dong binh thuong.
+
+## 2026-03-13 — Notification Phase 3: Trigger theo nghiep vu + feature flag theo cum
+
+### Feature flag theo cum
+- Them cau hinh feature flag trong `configs/config.php`:
+  - `NOTIFICATION_FLAG_EVENT_CLUSTER`
+  - `NOTIFICATION_FLAG_GROUP_CLUSTER`
+  - `NOTIFICATION_FLAG_SCORING_CLUSTER`
+- Them helper check flag trong `api/thong_bao/notification_service.php`:
+  - `notification_feature_enabled('event'|'group'|'scoring')`
+
+### Cum su kien
+- `api/su_kien/quan_ly_su_kien.php`:
+  - Trigger thong bao khi tao su kien (co flag `event`)
+  - Trigger thong bao khi thay doi trang thai active/inactive cua su kien
+- `api/su_kien/toggle_vong_thi.php`:
+  - Trigger thong bao khi dong/mo nop bai vong thi
+
+### Cum nhom
+- `api/nhom/gui_yeu_cau.php`: Trigger khi gui loi moi/yeu cau tham gia nhom
+- `api/nhom/duyet_yeu_cau.php`: Trigger khi chap nhan/tu choi yeu cau
+- `api/nhom/nhuong_quyen.php`: Trigger khi nhuong quyen chu nhom/truong nhom
+- `api/nhom/roinhom.php`: Trigger khi roi nhom/kick thanh vien
+- `api/nhom/san_pham.php` va `api/nhom/nop_bai.php`: Trigger khi nop/cap nhat san pham
+
+### Cum cham diem
+- `api/cham_diem/phan_cong_giam_khao.php`:
+  - Trigger khi phan cong giang khao / moi trong tai / phan cong hang loat
+- `api/cham_diem/xet_ket_qua.php`:
+  - Trigger khi duyet diem / loai bai / duyet hang loat
+- `api/thong_bao/giam_khao.php`:
+  - Trigger `gui_nhac_nho` duoc guard boi flag `scoring`
+
+### Nguyen tac an toan
+- Tat ca trigger thong bao duoc boc trong `try/catch` va khong chan nghiep vu chinh.
+- Co the bat/tat tung cum trigger doc lap bang feature flag.
+
 ## 2026-03-13 — Phase 5: Van hanh, kiem thu, giam sat
 
 ### Test baseline

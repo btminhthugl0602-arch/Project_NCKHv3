@@ -8,6 +8,7 @@
  */
 
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/../thong_bao/notification_service.php';
 
 // ==========================================
 // CONSTANTS
@@ -335,22 +336,20 @@ function _gui_thong_bao_su_kien_moi($conn, int $id_sk, string $ten_su_kien, int 
         return;
     }
 
-    $created = _insert_info(
-        $conn,
-        'thongbao',
-        ['idSK', 'tieuDe', 'noiDung', 'loaiThongBao', 'phamVi', 'nguoiGui'],
-        [
-            $id_sk,
-            'Sự kiện mới: ' . $ten_su_kien,
-            'Sự kiện "' . $ten_su_kien . '" vừa được công bố. Hãy xem chi tiết và đăng ký tham gia!',
-            'SU_KIEN',
-            'TAT_CA',
-            $id_nguoi_tao,
-        ]
-    );
-
-    if (!$created) {
+    if (!notification_feature_enabled('event')) {
         return;
+    }
+
+    $result = dispatch_broadcast($conn, [
+        'tieuDe' => 'Sự kiện mới: ' . $ten_su_kien,
+        'noiDung' => 'Sự kiện "' . $ten_su_kien . '" vừa được công bố. Hãy xem chi tiết và đăng ký tham gia!',
+        'loaiThongBao' => 'SU_KIEN',
+        'idSK' => $id_sk,
+        'nguoiGui' => $id_nguoi_tao,
+    ]);
+
+    if (empty($result['success'])) {
+        error_log('Thong bao su kien moi that bai: ' . ($result['message'] ?? 'unknown error'));
     }
 }
 
@@ -477,6 +476,25 @@ function btc_cap_nhat_su_kien(
 
         if (!$updated) {
             return ['status' => false, 'message' => 'Lỗi cập nhật sự kiện. Vui lòng thử lại.'];
+        }
+
+        $trangThaiCu = (int) ($su_kien['isActive'] ?? 0);
+        if (
+            notification_feature_enabled('event')
+            && $trangThaiCu !== $is_active
+        ) {
+            $statusText = $is_active === 1 ? 'kich hoat' : 'tam dung';
+            dispatch_group($conn, [
+                'tieuDe' => 'Cap nhat trang thai su kien',
+                'noiDung' => 'Su kien "' . $ten_su_kien . '" da duoc ' . $statusText . '.',
+                'loaiThongBao' => 'SU_KIEN',
+                'idSK' => $id_su_kien,
+                'loaiDoiTuong' => 'SANPHAM',
+                'nguoiGui' => $id_nguoi_thuc_hien,
+                'recipientGroups' => [
+                    ['loaiNhom' => 'SU_KIEN', 'idNhom' => $id_su_kien],
+                ],
+            ]);
         }
 
         $response = [

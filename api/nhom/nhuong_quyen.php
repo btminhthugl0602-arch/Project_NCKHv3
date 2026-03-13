@@ -3,6 +3,7 @@ define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../core/auth_guard.php';
 require_once __DIR__ . '/quan_ly_nhom.php';
+require_once __DIR__ . '/../thong_bao/notification_service.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -48,6 +49,27 @@ try {
     $result = nhuong_quyen_nhom($conn, $idTK, $idNhom, $action, $idNguoiNhan);
 
     if ($result['status'] === true) {
+        if (notification_feature_enabled('group')) {
+            try {
+                $tieuDe = $action === 'chu_nhom'
+                    ? 'Ban da duoc nhuong quyen Chu nhom'
+                    : 'Ban da duoc giao vai tro Truong nhom';
+
+                dispatch_personal($conn, [
+                    'tieuDe' => $tieuDe,
+                    'noiDung' => 'Quyen trong nhom cua ban da duoc cap nhat. Vui long kiem tra lai nhom.',
+                    'loaiThongBao' => 'NHOM',
+                    'idSK' => $idSk,
+                    'loaiDoiTuong' => 'NHOM',
+                    'idDoiTuong' => $idNhom,
+                    'nguoiGui' => $idTK,
+                    'recipients' => [$idNguoiNhan],
+                ]);
+            } catch (Throwable $notifyError) {
+                error_log('nhuong_quyen notify error: ' . $notifyError->getMessage());
+            }
+        }
+
         echo json_encode(['status' => 'success', 'message' => $result['message'], 'data' => null], JSON_UNESCAPED_UNICODE);
     } else {
         http_response_code(400);

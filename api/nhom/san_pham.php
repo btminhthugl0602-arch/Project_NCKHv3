@@ -3,6 +3,7 @@ define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../core/auth_guard.php';
 require_once __DIR__ . '/quan_ly_nhom.php';
+require_once __DIR__ . '/../thong_bao/notification_service.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -82,11 +83,31 @@ if (!$nhomCheck) {
 
 $actor = auth_require_login();
 $idTK  = $actor['idTK'];
+$idSk  = (int) ($nhomCheck['idSK'] ?? 0);
 
 try {
     $result = tao_hoac_cap_nhat_san_pham($conn, $idTK, $idNhom, $tenSanPham, $idChuDeSK, $fieldValues);
 
     if ($result['status'] === true) {
+        if (notification_feature_enabled('group')) {
+            try {
+                dispatch_group($conn, [
+                    'tieuDe' => 'Nhom da nop/cap nhat bai',
+                    'noiDung' => 'Mot nhom vua nop hoac cap nhat san pham. Vui long kiem tra trong su kien.',
+                    'loaiThongBao' => 'NHOM',
+                    'idSK' => $idSk,
+                    'loaiDoiTuong' => 'SANPHAM',
+                    'idDoiTuong' => isset($result['idSanPham']) ? (int) $result['idSanPham'] : null,
+                    'nguoiGui' => $idTK,
+                    'recipientGroups' => [
+                        ['loaiNhom' => 'SU_KIEN', 'idNhom' => $idSk, 'idVaiTro' => 1],
+                    ],
+                ]);
+            } catch (Throwable $notifyError) {
+                error_log('san_pham notify error: ' . $notifyError->getMessage());
+            }
+        }
+
         echo json_encode([
             'status'  => 'success',
             'message' => $result['message'],
