@@ -122,6 +122,16 @@ function _sb_link_if(array $tabAccess, string $section, string $current, int $id
                 <?php echo _sb_link_if($_sbTabAccess, 'nhom-request', $eventSidebarSection, $eventSidebarEventId, 'mail',   'Lời mời'); ?>
                 <?php endif; ?>
 
+                <?php
+                $hasLichTrinh = !empty($_sbTabAccess['lichtrinh'])
+                             || !empty($_sbTabAccess['lichtrinh-sv']);
+                if ($hasLichTrinh):
+                ?>
+                <?php echo _sb_section_label('Lịch trình & Điểm danh'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'lichtrinh',    $eventSidebarSection, $eventSidebarEventId, 'calendar_month', 'Quản lý lịch trình'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'lichtrinh-sv', $eventSidebarSection, $eventSidebarEventId, 'event_note',     'Lịch trình & Điểm danh'); ?>
+                <?php endif; ?>
+
             <?php else: ?>
                 <div class="mx-3 mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
                     <p class="text-xs text-slate-500 mb-2">Đăng nhập để xem đầy đủ tính năng của sự kiện.</p>

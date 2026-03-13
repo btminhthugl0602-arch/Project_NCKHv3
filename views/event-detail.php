@@ -49,6 +49,15 @@ if ($isLoggedIn && $idSk > 0) {
     }
 }
 
+// ── Check có trong sự kiện không (để xem tab lịch trình SV) ──
+$coRatrongSK = false;
+if ($isLoggedIn && $idSk > 0) {
+    $coRatrongSK = !empty(_select_info($conn, 'taikhoan_vaitro_sukien', ['id'], [
+        'WHERE' => ['idTK', '=', $idTKLogin, 'AND', 'idSK', '=', $idSk, 'AND', 'isActive', '=', 1, ''],
+        'LIMIT' => [1],
+    ]));
+}
+
 // ── Quyền vào từng tab ────────────────────────────────────────
 // Không có Admin bypass — phải được gán vai trò trong sự kiện
 $tabAccess = [
@@ -64,9 +73,10 @@ $tabAccess = [
     'scoring-gv'      => $perm['nhap_diem'],
     'nhom-my'         => $perm['xem_nhom'],
     'nhom-all'        => $perm['xem_nhom'],
-    // Cho phep user dang nhap truy cap tab loi moi/yeu cau
-    // de xu ly invitation truoc khi duoc gan quyen xem_nhom.
-    'nhom-request'    => $isLoggedIn,
+    'nhom-request'    => $perm['xem_nhom'],
+    // ── Lịch trình & Điểm danh ─────────────────────────────
+    'lichtrinh'       => $perm['cauhinh_sukien'],                                   // BTC
+    'lichtrinh-sv'    => $isLoggedIn && !$perm['cauhinh_sukien'],                   // SV + khán giả
 ];
 
 // ── Validate & gate tab ───────────────────────────────────────
@@ -97,6 +107,8 @@ $tabTitles = [
     'nhom-my'         => 'Nhóm của tôi',
     'nhom-all'        => 'Tất cả nhóm',
     'nhom-request'    => 'Lời mời tham gia',
+    'lichtrinh'       => 'Quản lý lịch trình',
+    'lichtrinh-sv'    => 'Lịch trình & Điểm danh',
 ];
 
 $pageTitle             = "Chi tiết sự kiện - ezManagement";
@@ -194,6 +206,9 @@ ob_start();
 <?php endif; ?>
 <?php if (in_array($tab, ['nhom-my', 'nhom-all', 'nhom-request'])): ?>
     <script src="<?php echo $basePath; ?>/assets/js/nhom_thi.js"></script>
+<?php endif; ?>
+<?php if (in_array($tab, ['lichtrinh', 'lichtrinh-sv'])): ?>
+    <script src="<?php echo $basePath; ?>/assets/js/lichtrinh.js?v=<?php echo file_exists(__DIR__ . '/../assets/js/lichtrinh.js') ? filemtime(__DIR__ . '/../assets/js/lichtrinh.js') : '1'; ?>"></script>
 <?php endif; ?>
 
 <?php
