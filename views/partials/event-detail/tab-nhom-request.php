@@ -38,8 +38,8 @@ $requestTabTitles = [
      Nhóm gửi lời mời đến user (ChieuMoi=0)
 ══════════════════════════════════════════ -->
 <div class="mb-4">
-    <p class="text-xs font-bold uppercase text-slate-400 mb-0.5">Lời mời đang chờ</p>
-    <p class="text-sm text-slate-500">Các nhóm đã gửi lời mời cho bạn tham gia</p>
+    <p class="text-xs font-bold uppercase text-slate-400 mb-0.5">Lời mời và yêu cầu đang chờ</p>
+    <p class="text-sm text-slate-500">Bao gồm lời mời bạn nhận được và yêu cầu xin vào nhóm do bạn làm chủ nhóm</p>
 </div>
 
 <div id="invitesLoading" class="py-4 text-sm text-slate-500">

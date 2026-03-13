@@ -7,6 +7,10 @@
 <?php $navSearchFile = __DIR__ . '/../assets/js/navbar-search.js'; ?>
 <script src="<?php echo $basePath; ?>/assets/js/navbar-search.js?v=<?php echo filemtime($navSearchFile) ?: time(); ?>"></script>
 
+<!-- Notifications (global inbox bell) -->
+<?php $notificationFile = __DIR__ . '/../assets/js/notifications.js'; ?>
+<script src="<?php echo $basePath; ?>/assets/js/notifications.js?v=<?php echo filemtime($notificationFile) ?: time(); ?>"></script>
+
 <!-- Plugin for charts -->
 <script src="<?php echo $basePath; ?>/assets/js/plugins/chartjs.min.js" defer></script>
 <!-- Plugin for scrollbar -->

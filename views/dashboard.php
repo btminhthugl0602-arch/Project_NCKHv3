@@ -14,6 +14,7 @@ if (!isset($_SESSION['idTK']) && !$_isGuest) {
 $pageTitle = "Dashboard - ezManagement";
 $currentPage = "dashboard";
 $pageHeading = "Dashboard";
+$pageJs = 'dashboard-notifications.js';
 $breadcrumbs = [
     ['title' => 'Dashboard']
 ];
@@ -132,45 +133,17 @@ ob_start();
                     <h6 class="mb-2">Thông báo mới</h6>
                     <p class="text-sm leading-normal">
                         <i class="fa fa-bell text-lime-500"></i>
-                        <span class="font-semibold">3 thông báo mới</span> hôm nay
+                        <span id="dashboardNotificationCount" class="font-semibold">Đang tải thông báo...</span>
                     </p>
                 </div>
                 <div class="flex-auto p-6">
-                    <div class="before:border-r-solid relative before:absolute before:top-0 before:left-4 before:h-full before:border-r-2 before:border-r-slate-100 before:content-[''] before:lg:-ml-px">
-                        <div class="relative mb-4 mt-0 after:clear-both after:table after:content-['']">
-                            <span class="w-6.5 h-6.5 text-base absolute left-4 z-10 inline-flex -translate-x-1/2 items-center justify-center rounded-full bg-white text-center font-semibold">
-                                <i class="relative z-10 leading-none text-transparent ni ni-bell-55 leading-pro bg-gradient-to-tl from-green-600 to-lime-400 bg-clip-text fill-transparent"></i>
+                    <div id="dashboardNotificationList" class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                                <i class="ni ni-bell-55 leading-none"></i>
                             </span>
-                            <div class="ml-11.252 pt-1.4 lg:max-w-120 relative -top-1.5 w-auto">
-                                <h6 class="mb-0 text-sm font-semibold leading-normal text-slate-700">Sự kiện mới được tạo</h6>
-                                <p class="mt-1 mb-0 text-xs font-semibold leading-tight text-slate-400">
-                                    <i class="mr-1 fa fa-clock"></i>
-                                    Vừa xong
-                                </p>
-                            </div>
-                        </div>
-                        <div class="relative mb-4 after:clear-both after:table after:content-['']">
-                            <span class="w-6.5 h-6.5 text-base absolute left-4 z-10 inline-flex -translate-x-1/2 items-center justify-center rounded-full bg-white text-center font-semibold">
-                                <i class="relative z-10 leading-none text-transparent ni ni-html5 leading-pro bg-gradient-to-tl from-red-600 to-rose-400 bg-clip-text fill-transparent"></i>
-                            </span>
-                            <div class="ml-11.252 pt-1.4 lg:max-w-120 relative -top-1.5 w-auto">
-                                <h6 class="mb-0 text-sm font-semibold leading-normal text-slate-700">Nhóm mới đăng ký</h6>
-                                <p class="mt-1 mb-0 text-xs font-semibold leading-tight text-slate-400">
-                                    <i class="mr-1 fa fa-clock"></i>
-                                    2 giờ trước
-                                </p>
-                            </div>
-                        </div>
-                        <div class="relative mb-0 after:clear-both after:table after:content-['']">
-                            <span class="w-6.5 h-6.5 text-base absolute left-4 z-10 inline-flex -translate-x-1/2 items-center justify-center rounded-full bg-white text-center font-semibold">
-                                <i class="relative z-10 leading-none text-transparent ni ni-cart leading-pro bg-gradient-to-tl from-blue-600 to-cyan-400 bg-clip-text fill-transparent"></i>
-                            </span>
-                            <div class="ml-11.252 pt-1.4 lg:max-w-120 relative -top-1.5 w-auto">
-                                <h6 class="mb-0 text-sm font-semibold leading-normal text-slate-700">Bài báo mới được nộp</h6>
-                                <p class="mt-1 mb-0 text-xs font-semibold leading-tight text-slate-400">
-                                    <i class="mr-1 fa fa-clock"></i>
-                                    5 giờ trước
-                                </p>
+                            <div>
+                                <h6 class="mb-0 text-sm font-semibold leading-normal text-slate-700">Đang tải thông báo cá nhân...</h6>
                             </div>
                         </div>
                     </div>

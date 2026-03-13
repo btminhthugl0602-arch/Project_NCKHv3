@@ -3,6 +3,7 @@ define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../core/auth_guard.php';
 require_once __DIR__ . '/quan_ly_nhom.php';
+require_once __DIR__ . '/../thong_bao/notification_service.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -51,6 +52,46 @@ if ($chieuMoi === 1) {
 try {
     $result = gui_yeu_cau_nhom($conn, $idTKSession, $idNhom, $idTKDoiPhuong, $chieuMoi, $loaiYeuCau, $loiNhan);
     if ($result['status'] === true) {
+        if (notification_feature_enabled('group')) {
+            try {
+                // chieu_moi = 1: user tu xin vao nhom -> thong bao cho Chu nhom
+                // chieu_moi = 0: nhom moi user             -> thong bao cho user duoc moi
+                $recipients = [];
+                if ($chieuMoi === 1) {
+                    $idChuNhom = (int) ($nhomCheck['idChuNhom'] ?? 0);
+                    $idTruongNhom = (int) ($nhomCheck['idTruongNhom'] ?? 0);
+                    if ($idChuNhom > 0) {
+                        $recipients[] = $idChuNhom;
+                    }
+                    if ($idTruongNhom > 0) {
+                        $recipients[] = $idTruongNhom;
+                    }
+                    $recipients = array_values(array_unique($recipients));
+                } else {
+                    $recipients = [$idTKDoiPhuong];
+                }
+
+                $tieuDe = $chieuMoi === 1 ? 'Co yeu cau xin tham gia nhom' : 'Loi moi tham gia nhom';
+                $noiDung = $chieuMoi === 1
+                    ? 'Nhom cua ban vua nhan mot yeu cau tham gia. Vui long vao muc Yeu cau de xu ly.'
+                    : 'Ban nhan duoc loi moi tham gia nhom. Vui long xem va phan hoi.';
+
+                if (!empty($recipients)) {
+                    dispatch_personal($conn, [
+                        'tieuDe' => $tieuDe,
+                        'noiDung' => $noiDung,
+                        'loaiThongBao' => 'NHOM',
+                        'idSK' => $idSk,
+                        'loaiDoiTuong' => 'YEUCAU',
+                        'nguoiGui' => $idTKSession,
+                        'recipients' => $recipients,
+                    ]);
+                }
+            } catch (Throwable $notifyError) {
+                error_log('gui_yeu_cau notify error: ' . $notifyError->getMessage());
+            }
+        }
+
         echo json_encode(['status' => 'success', 'message' => $result['message'], 'data' => null], JSON_UNESCAPED_UNICODE);
     } else {
         http_response_code(400);

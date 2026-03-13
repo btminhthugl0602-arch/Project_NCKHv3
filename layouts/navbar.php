@@ -50,8 +50,18 @@
             </div>
         </div>
 
+        <?php
+        $navIsGuest  = isset($_SESSION['role']) && $_SESSION['role'] === 'guest';
+        $navHoTen    = isset($_SESSION['hoTen'])    ? $_SESSION['hoTen']    : 'Tai khoan';
+        $navIdLoaiTK = isset($_SESSION['idLoaiTK']) ? (int)$_SESSION['idLoaiTK'] : 0;
+        $navIdTK     = isset($_SESSION['idTK']) ? (int)$_SESSION['idTK'] : 0;
+        $navLoaiMap  = [1 => 'Quản trị viên', 2 => 'Giảng viên', 3 => 'Sinh viên'];
+        $navLoaiLabel = $navLoaiMap[$navIdLoaiTK] ?? 'Người dùng';
+        $navInitial  = mb_strtoupper(mb_substr($navHoTen, 0, 1, 'UTF-8'), 'UTF-8');
+        ?>
+
         <!-- Notification bell -->
-        <div class="relative">
+        <div class="relative" id="notificationRoot" data-guest="<?php echo $navIsGuest ? '1' : '0'; ?>">
             <button type="button"
                 id="notificationBtn"
                 aria-label="Thông báo"
@@ -62,21 +72,36 @@
                 <span class="material-symbols-outlined text-xl">notifications</span>
             </button>
             <!-- Red dot -->
-            <span class="absolute top-1.5 right-1.5 size-2 bg-red-500 rounded-full ring-2 ring-white" aria-hidden="true"></span>
+            <span id="notificationDot" class="hidden absolute top-1.5 right-1.5 size-2 bg-red-500 rounded-full ring-2 ring-white" aria-hidden="true"></span>
+            <span id="notificationCountBadge" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1.5 rounded-full bg-rose-500 text-white text-[10px] font-bold leading-[18px] text-center" aria-hidden="true"></span>
+
+            <div id="notificationDropdown"
+                class="hidden absolute right-0 top-[calc(100%+8px)] w-96 max-w-[90vw] bg-white rounded-2xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.12),0_2px_8px_-2px_rgba(0,0,0,0.06)] border border-slate-100 z-50 overflow-hidden"
+                role="dialog"
+                aria-label="Danh sách thông báo"
+                aria-hidden="true">
+                <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-3">
+                    <div>
+                        <p class="text-sm font-semibold text-slate-800">Thong bao</p>
+                        <p id="notificationSubtitle" class="text-xs text-slate-500">Dang tai du lieu...</p>
+                    </div>
+                    <button type="button" id="markAllReadBtn" class="text-xs font-semibold text-primary hover:text-primary/80 disabled:opacity-50 disabled:pointer-events-none">
+                        Danh dau tat ca
+                    </button>
+                </div>
+                <div id="notificationList" class="max-h-[420px] overflow-y-auto divide-y divide-slate-100">
+                    <div class="px-4 py-6 text-sm text-slate-400 text-center">Dang tai thong bao...</div>
+                </div>
+                <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-100 text-right">
+                    <a href="/dashboard" class="text-xs font-semibold text-slate-600 hover:text-slate-800">Xem tong quan</a>
+                </div>
+            </div>
         </div>
 
         <!-- Divider -->
         <div class="h-8 w-px bg-slate-200" aria-hidden="true"></div>
 
         <!-- User info / Guest -->
-        <?php
-        $navIsGuest  = isset($_SESSION['role']) && $_SESSION['role'] === 'guest';
-        $navHoTen    = isset($_SESSION['hoTen'])    ? $_SESSION['hoTen']    : 'Tài khoản';
-        $navIdLoaiTK = isset($_SESSION['idLoaiTK']) ? (int)$_SESSION['idLoaiTK'] : 0;
-        $navLoaiMap  = [1 => 'Quản trị viên', 2 => 'Giảng viên', 3 => 'Sinh viên'];
-        $navLoaiLabel = $navLoaiMap[$navIdLoaiTK] ?? 'Người dùng';
-        $navInitial  = mb_strtoupper(mb_substr($navHoTen, 0, 1, 'UTF-8'), 'UTF-8');
-        ?>
         <?php if ($navIsGuest): ?>
             <a href="/sign-in"
                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl transition-all hover:scale-102 active:opacity-85"
@@ -104,4 +129,11 @@
         <?php endif; ?>
     </div>
 </header>
+
+<script>
+    window.NOTIFICATION_CONTEXT = {
+        isGuest: <?php echo $navIsGuest ? 'true' : 'false'; ?>,
+        idTK: <?php echo $navIdTK; ?>
+    };
+</script>
 <!-- End Navbar -->

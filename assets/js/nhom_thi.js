@@ -1089,6 +1089,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>`;
             }
 
+            function renderIncomingRequestCard(req) {
+                const roleBadge = req.loaiYeuCau === 'GVHD'
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700"><i class="fas fa-chalkboard-teacher"></i> Xin làm GVHD</span>`
+                    : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700"><i class="fas fa-user-plus"></i> Xin vào nhóm</span>`;
+
+                return `<div id="incoming-${req.idYeuCau}" class="bg-white border border-purple-200 rounded-xl p-4 flex flex-col gap-3 shadow-soft-sm">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="font-bold text-slate-800 text-sm">${esc(req.tennhom || req.maNhom || '')}</span>
+                        <span class="text-xs text-slate-400">${req.maNhom || ''}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-slate-600">
+                        <i class="fas fa-user text-slate-400"></i>
+                        <span><strong>${esc(req.tenNguoiGui || 'Thành viên')}</strong> gửi yêu cầu tham gia</span>
+                    </div>
+                    <div>${roleBadge}</div>
+                    ${req.loiNhan ? `<p class="text-xs text-slate-500 italic">"${esc(req.loiNhan)}"</p>` : ''}
+                    <div class="flex gap-2">
+                        <button onclick="respondInvite(${req.idYeuCau}, 1)"
+                            class="flex-1 py-1.5 text-xs font-semibold text-white rounded-lg bg-emerald-600 hover:bg-emerald-700 transition">
+                            <i class="fas fa-check mr-1"></i> Chấp nhận
+                        </button>
+                        <button onclick="respondInvite(${req.idYeuCau}, 2)"
+                            class="flex-1 py-1.5 text-xs font-semibold text-slate-600 rounded-lg bg-slate-100 hover:bg-slate-200 transition">
+                            <i class="fas fa-times mr-1"></i> Từ chối
+                        </button>
+                    </div>
+                </div>`;
+            }
+
             function showInvitesEmpty() {
                 elEmpty.innerHTML = `<div class="flex flex-col items-center justify-center py-16 text-center">
                     <svg class="w-16 h-16 mb-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1111,11 +1140,29 @@ document.addEventListener('DOMContentLoaded', function () {
                         elError.classList.remove('hidden');
                         return;
                     }
-                    const pending = d.data?.loi_moi_den || [];
-                    if (!pending.length) {
+                    const pendingInvites = d.data?.loi_moi_den || [];
+                    const incomingRequests = d.data?.yeu_cau_den_nhom_cua_toi || [];
+
+                    if (!pendingInvites.length && !incomingRequests.length) {
                         showInvitesEmpty();
                     } else {
-                        elList.innerHTML = pending.map(renderInviteCard).join('');
+                        let html = '';
+
+                        if (incomingRequests.length) {
+                            html += `<div class="mb-2">
+                                <p class="text-xs font-bold uppercase text-purple-500 mb-2">Yêu cầu vào nhóm của bạn</p>
+                                <div class="space-y-3">${incomingRequests.map(renderIncomingRequestCard).join('')}</div>
+                            </div>`;
+                        }
+
+                        if (pendingInvites.length) {
+                            html += `<div class="${incomingRequests.length ? 'pt-4 border-t border-slate-200 mt-4' : ''}">
+                                <p class="text-xs font-bold uppercase text-slate-400 mb-2">Lời mời bạn nhận được</p>
+                                <div class="space-y-3">${pendingInvites.map(renderInviteCard).join('')}</div>
+                            </div>`;
+                        }
+
+                        elList.innerHTML = html;
                         elList.classList.remove('hidden');
                     }
                 } catch (e) {

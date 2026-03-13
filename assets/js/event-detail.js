@@ -104,6 +104,18 @@ document.addEventListener('DOMContentLoaded', function () {
     let ruleTypeCatalogCodes = fallbackRuleTypeCatalog.map((item) => String(item.maLoai || '').toUpperCase()).filter((item) => item !== '');
     let activeRuleType = DEFAULT_RULE_TYPE;
 
+    function refreshNotificationBell() {
+        try {
+            if (window.NotificationCenter && typeof window.NotificationCenter.refresh === 'function') {
+                window.NotificationCenter.refresh();
+                return;
+            }
+            window.dispatchEvent(new CustomEvent('notification:refresh'));
+        } catch (error) {
+            console.warn('Cannot refresh notification bell', error);
+        }
+    }
+
     function formatDateTime(value) {
         if (!value) {
             return '--';
@@ -1651,6 +1663,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     Swal.fire({ icon: 'success', title: 'Thành công', text: res.message, timer: 2000, showConfirmButton: false });
                     // Refresh danh sách sản phẩm và stat counters
                     await loadSubmissionsForReview();
+                    refreshNotificationBell();
                 } else {
                     Swal.fire({ icon: 'error', title: 'Không thể phân công', text: res.message });
                     btn.disabled = false;
@@ -2163,6 +2176,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (result.status === 'success') {
                 await napDanhSachVongThi();
                 Swal.fire({ icon: 'success', title: 'Thành công', text: result.message, timer: 1500, showConfirmButton: false });
+                refreshNotificationBell();
             } else {
                 throw new Error(result.message);
             }
@@ -2494,6 +2508,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     title: 'Thành công',
                     text: nextStatus === 1 ? 'Đã mở sự kiện.' : 'Đã đóng sự kiện.',
                 });
+                refreshNotificationBell();
             } catch (error) {
                 Swal.fire({
                     icon: 'error',

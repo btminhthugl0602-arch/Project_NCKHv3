@@ -4,6 +4,7 @@ define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../core/auth_guard.php';
 require_once __DIR__ . '/quan_ly_vong_thi.php';
+require_once __DIR__ . '/../thong_bao/notification_service.php';
 /**
  * API Endpoint: Toggle đóng/mở nộp bài của vòng thi
  * Method: PUT/POST
@@ -53,6 +54,32 @@ try {
     $result = toggle_dong_nop_vong_thi($conn, $id_nguoi_thuc_hien, $id_vong_thi);
 
     if ($result['status']) {
+        if (notification_feature_enabled('event')) {
+            try {
+                $thongTinVong = lay_chi_tiet_vong_thi($conn, $id_vong_thi);
+                $tenVong = (string) ($thongTinVong['tenVongThi'] ?? ('Vong thi #' . $id_vong_thi));
+                $idSK = (int) ($thongTinVong['idSK'] ?? 0);
+                $dongNop = (int) ($result['dongNopThuCong'] ?? 0) === 1;
+                $message = $dongNop
+                    ? 'BTC da dong nop bai cho ' . $tenVong . '. Vui long theo doi thong bao tiep theo.'
+                    : 'BTC da mo lai nop bai cho ' . $tenVong . '. Ban co the tiep tuc nop/cap nhat bai.';
+
+                dispatch_group($conn, [
+                    'tieuDe' => 'Cap nhat nop bai vong thi',
+                    'noiDung' => $message,
+                    'loaiThongBao' => 'SU_KIEN',
+                    'idSK' => $idSK,
+                    'loaiDoiTuong' => 'SANPHAM',
+                    'nguoiGui' => $id_nguoi_thuc_hien,
+                    'recipientGroups' => [
+                        ['loaiNhom' => 'SU_KIEN', 'idNhom' => $idSK],
+                    ],
+                ]);
+            } catch (Throwable $notifyError) {
+                error_log('toggle_vong_thi notify error: ' . $notifyError->getMessage());
+            }
+        }
+
         echo json_encode([
             'status' => 'success',
             'message' => $result['message'],

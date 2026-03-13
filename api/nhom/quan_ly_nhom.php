@@ -448,9 +448,9 @@ function duyet_yeu_cau_nhom(PDO $conn, int $idNguoiDuyet, int $idYeuCau, int $tr
             return ['status' => false, 'message' => 'Bạn không phải người được mời'];
         }
     } else {
-        // Người xin vào: chỉ Chủ nhóm duyệt
-        if (!la_chu_nhom($conn, $idNguoiDuyet, $idNhom)) {
-            return ['status' => false, 'message' => 'Chỉ chủ nhóm mới được duyệt yêu cầu này'];
+        // Người xin vào: Chu nhom hoac Truong nhom duoc duyet
+        if (!la_chu_nhom($conn, $idNguoiDuyet, $idNhom) && !la_truong_nhom($conn, $idNguoiDuyet, $idNhom)) {
+            return ['status' => false, 'message' => 'Chi Chu nhom hoac Truong nhom moi duoc duyet yeu cau nay'];
         }
     }
 
@@ -1026,9 +1026,36 @@ function lay_yeu_cau_cua_toi(PDO $conn, int $idTK, int $idSK): array
     $stmtGui->execute([':idTK' => $idTK, ':idSK' => $idSK]);
     $yeuCauGuiDi = $stmtGui->fetchAll(PDO::FETCH_ASSOC);
 
+    // Yeu cau den nhom cua toi: user khac xin vao nhom ma toi la Chu nhom
+    $stmtYeuCauDen = $conn->prepare(
+        'SELECT yc.idYeuCau, yc.idNhom, yc.loaiYeuCau, yc.loiNhan, yc.ngayGui,
+                yc.idTK AS idTKNguoiGui,
+                tn.tennhom, n.maNhom,
+                CASE WHEN tk.idLoaiTK = 3 THEN sv.tenSV
+                     WHEN tk.idLoaiTK = 2 THEN gv.tenGV END AS tenNguoiGui
+         FROM yeucau_thamgia yc
+         JOIN nhom n ON yc.idNhom = n.idNhom
+         LEFT JOIN thongtinnhom tn ON tn.idnhom = n.idNhom
+         LEFT JOIN taikhoan tk ON tk.idTK = yc.idTK
+         LEFT JOIN sinhvien sv ON sv.idTK = yc.idTK
+         LEFT JOIN giangvien gv ON gv.idTK = yc.idTK
+                    WHERE (n.idChuNhom = :idTKChu OR n.idTruongNhom = :idTKTruong)
+           AND yc.ChieuMoi = 1
+           AND yc.trangThai = 0
+           AND n.idSK = :idSK
+         ORDER BY yc.ngayGui DESC'
+    );
+                $stmtYeuCauDen->execute([
+                   ':idTKChu' => $idTK,
+                   ':idTKTruong' => $idTK,
+                   ':idSK' => $idSK,
+                ]);
+    $yeuCauDenNhomCuaToi = $stmtYeuCauDen->fetchAll(PDO::FETCH_ASSOC);
+
     return [
         'loi_moi_den' => $loiMoiDen,
         'yeu_cau_gui_di' => $yeuCauGuiDi,
+        'yeu_cau_den_nhom_cua_toi' => $yeuCauDenNhomCuaToi,
     ];
 }
 

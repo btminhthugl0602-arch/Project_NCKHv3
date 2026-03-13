@@ -10,6 +10,7 @@ define('_AUTHEN', true);
 
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../../api/core/auth_guard.php';
+require_once __DIR__ . '/../thong_bao/notification_service.php';
 
 require_once __DIR__ . '/quan_ly_cham_diem.php';
 
@@ -25,7 +26,7 @@ try {
     if ($method === 'GET') {
         handleGetRequest($conn);
     } elseif ($method === 'POST') {
-        handlePostRequest($conn);
+        handlePostRequest($conn, $actor);
     } else {
         http_response_code(405);
         echo json_encode([
@@ -224,7 +225,7 @@ function handleGetRequest($conn) {
 /**
  * Xử lý POST request
  */
-function handlePostRequest($conn) {
+function handlePostRequest($conn, array $actor) {
     $input = json_decode(file_get_contents('php://input'), true);
     
     if (!$input) {
@@ -284,6 +285,17 @@ function handlePostRequest($conn) {
             
             $result = cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemChot, $idSK, 'DUYET_VONG_THI');
             $ketQuaHanMuc = cham_diem_ap_dung_han_muc_duyet($conn, $idVongThi, $hanMucDuyet);
+
+            if (!empty($result['success']) && notification_feature_enabled('scoring')) {
+                notify_ket_qua_san_pham($conn, [
+                    'idSanPham' => $idSanPham,
+                    'idSK' => $idSK,
+                    'trangThai' => (string) ($result['trangThai'] ?? ''),
+                    'nguoiGui' => (int) ($actor['idTK'] ?? 0),
+                    'diemChot' => $diemChot,
+                ]);
+            }
+
             echo json_encode([
                 'status' => !empty($result['success']) ? 'success' : 'error',
                 'message' => !empty($result['success']) ? 'Duyệt điểm thành công' : ($result['message'] ?? 'Lỗi khi duyệt điểm'),
@@ -323,6 +335,17 @@ function handlePostRequest($conn) {
             
             $result = cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemChot, $idSK, 'DUYET_VONG_THI');
             $ketQuaHanMuc = cham_diem_ap_dung_han_muc_duyet($conn, $idVongThi, $hanMucDuyet);
+
+            if (!empty($result['success']) && notification_feature_enabled('scoring')) {
+                notify_ket_qua_san_pham($conn, [
+                    'idSanPham' => $idSanPham,
+                    'idSK' => $idSK,
+                    'trangThai' => (string) ($result['trangThai'] ?? ''),
+                    'nguoiGui' => (int) ($actor['idTK'] ?? 0),
+                    'diemChot' => $diemChot,
+                ]);
+            }
+
             echo json_encode([
                 'status' => $result['success'] ? 'success' : 'error',
                 'message' => $result['message'],
@@ -338,6 +361,17 @@ function handlePostRequest($conn) {
         case 'reject_score':
             // Đánh rớt bài thi thủ công
             $result = cham_diem_danh_rot_thu_cong($conn, $idSanPham, $idVongThi, $diemChot);
+
+            if (!empty($result['success']) && notification_feature_enabled('scoring')) {
+                notify_ket_qua_san_pham($conn, [
+                    'idSanPham' => $idSanPham,
+                    'idSK' => $idSK,
+                    'trangThai' => 'Bị loại',
+                    'nguoiGui' => (int) ($actor['idTK'] ?? 0),
+                    'diemChot' => $diemChot,
+                ]);
+            }
+
             echo json_encode([
                 'status' => $result['success'] ? 'success' : 'error',
                 'message' => $result['message'],
@@ -396,11 +430,31 @@ function handlePostRequest($conn) {
                     $result = cham_diem_duyet_diem_voi_quyche($conn, $spId, $idVongThi, $diemTB, $idSK, 'DUYET_VONG_THI_HANG_LOAT');
                     if (!empty($result['success']) && (($result['trangThai'] ?? '') === 'Đã duyệt')) {
                         $successCount++;
+
+                        if (notification_feature_enabled('scoring')) {
+                            notify_ket_qua_san_pham($conn, [
+                                'idSanPham' => $spId,
+                                'idSK' => $idSK,
+                                'trangThai' => 'Đã duyệt',
+                                'nguoiGui' => (int) ($actor['idTK'] ?? 0),
+                                'diemChot' => $diemTB,
+                            ]);
+                        }
                     } elseif (!empty($result['success']) && (($result['trangThai'] ?? '') === 'Bị loại')) {
                         $viPhamQuyChe[] = [
                             'idSanPham' => $spId,
                             'quyChe' => $result['quyChe']['viPham'] ?? [],
                         ];
+
+                        if (notification_feature_enabled('scoring')) {
+                            notify_ket_qua_san_pham($conn, [
+                                'idSanPham' => $spId,
+                                'idSK' => $idSK,
+                                'trangThai' => 'Bị loại',
+                                'nguoiGui' => (int) ($actor['idTK'] ?? 0),
+                                'diemChot' => $diemTB,
+                            ]);
+                        }
                     } else {
                         $errors[] = "SP $spId: " . ($result['message'] ?? 'Lỗi khi duyệt theo quy chế');
                     }
@@ -444,5 +498,60 @@ function handlePostRequest($conn) {
                 'message' => 'Action không hợp lệ',
                 'data' => null
             ], JSON_UNESCAPED_UNICODE);
+    }
+}
+
+function lay_id_tk_nhom_truong_theo_san_pham(PDO $conn, int $idSanPham): int
+{
+    if ($idSanPham <= 0) {
+        return 0;
+    }
+
+    $stmt = $conn->prepare(
+        'SELECT COALESCE(n.idTruongNhom, n.idChuNhom) AS idTK
+         FROM sanpham sp
+         INNER JOIN nhom n ON n.idNhom = sp.idNhom
+         WHERE sp.idSanPham = :idSanPham
+         LIMIT 1'
+    );
+    $stmt->execute([':idSanPham' => $idSanPham]);
+    return (int) $stmt->fetchColumn();
+}
+
+function notify_ket_qua_san_pham(PDO $conn, array $ctx): void
+{
+    try {
+        $idSanPham = (int) ($ctx['idSanPham'] ?? 0);
+        $idSK = (int) ($ctx['idSK'] ?? 0);
+        $trangThai = trim((string) ($ctx['trangThai'] ?? ''));
+        $nguoiGui = (int) ($ctx['nguoiGui'] ?? 0);
+        $diemChot = isset($ctx['diemChot']) ? (float) $ctx['diemChot'] : null;
+
+        if ($idSanPham <= 0 || $idSK <= 0 || $nguoiGui <= 0 || $trangThai === '') {
+            return;
+        }
+
+        $idTKNhan = lay_id_tk_nhom_truong_theo_san_pham($conn, $idSanPham);
+        if ($idTKNhan <= 0) {
+            return;
+        }
+
+        $noiDung = 'Ket qua bai thi da duoc cap nhat: ' . $trangThai . '.';
+        if ($diemChot !== null) {
+            $noiDung .= ' Diem ghi nhan: ' . number_format($diemChot, 2) . '.';
+        }
+
+        dispatch_personal($conn, [
+            'tieuDe' => 'Cap nhat ket qua bai thi',
+            'noiDung' => $noiDung,
+            'loaiThongBao' => 'CA_NHAN',
+            'idSK' => $idSK,
+            'loaiDoiTuong' => 'SANPHAM',
+            'idDoiTuong' => $idSanPham,
+            'nguoiGui' => $nguoiGui,
+            'recipients' => [$idTKNhan],
+        ]);
+    } catch (Throwable $notifyError) {
+        error_log('notify_ket_qua_san_pham error: ' . $notifyError->getMessage());
     }
 }

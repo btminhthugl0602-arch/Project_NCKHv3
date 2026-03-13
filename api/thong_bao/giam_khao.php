@@ -10,6 +10,7 @@ define('_AUTHEN', true);
 
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../../api/core/auth_guard.php';
+require_once __DIR__ . '/notification_service.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -27,8 +28,10 @@ if ($method === 'GET') {
     $actor = auth_require_bat_ky_quyen_su_kien($idSK_auth, ['cauhinh_sukien', 'duyet_diem']);
     handlePostRequest($conn, $actor, $input);
 } else {
-    http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Phương thức không hỗ trợ', 'data' => null], JSON_UNESCAPED_UNICODE);
+    notification_api_response('error', 'Phuong thuc khong ho tro', null, 405, [
+        'api' => 'thong_bao.giam_khao',
+        'action' => 'unsupported_method',
+    ]);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,51 +43,42 @@ function handleGetRequest($conn, $actor) {
 
     switch ($action) {
         case 'lay_chua_doc':
-            // Lấy thông báo CA_NHAN chưa đọc gửi tới user này (tùy chọn lọc theo idSK)
-            $params = [':idTK' => $idTK];
-            $whereExtra = '';
-            if ($idSK > 0) {
-                $whereExtra = ' AND tb.idSK = :idSK';
-                $params[':idSK'] = $idSK;
-            }
-
-            $sql = "SELECT tb.idThongBao, tb.tieuDe, tb.noiDung, tb.loaiThongBao,
-                           tb.idSK, tb.ngayGui
-                    FROM thongbao tb
-                    INNER JOIN thongbao_ca_nhan tcn ON tcn.idThongBao = tb.idThongBao AND tcn.idTK = :idTK
-                    LEFT JOIN thongbao_da_doc tdd ON tdd.idThongBao = tb.idThongBao AND tdd.idTK = :idTK2
-                    WHERE tdd.idThongBao IS NULL{$whereExtra}
-                    ORDER BY tb.ngayGui DESC";
-            $params[':idTK2'] = $idTK;
-
-            $stmt = $conn->prepare($sql);
-            $stmt->execute($params);
-            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            echo json_encode([
-                'status'  => 'success',
-                'message' => 'Lấy thông báo thành công',
-                'data'    => $data
-            ], JSON_UNESCAPED_UNICODE);
+            $data = list_inbox($conn, $idTK, [
+                'idSK' => $idSK,
+                'chiLayChuaDoc' => true,
+                'includeBroadcast' => false,
+                'limit' => 100,
+            ]);
+            notification_api_response('success', 'Lay thong bao thanh cong', $data, 200, [
+                'api' => 'thong_bao.giam_khao',
+                'action' => $action,
+                'count' => count($data),
+            ]);
             break;
 
         case 'danh_dau_da_doc':
             // Đánh dấu một thông báo là đã đọc
             $idThongBao = isset($_GET['id_thong_bao']) ? (int)$_GET['id_thong_bao'] : 0;
             if ($idThongBao <= 0) {
-                http_response_code(400);
-                echo json_encode(['status' => 'error', 'message' => 'Thiếu id_thong_bao', 'data' => null], JSON_UNESCAPED_UNICODE);
+                notification_api_response('error', 'Thieu id_thong_bao', null, 400, [
+                    'api' => 'thong_bao.giam_khao',
+                    'action' => $action,
+                ]);
                 return;
             }
-            $sql = "INSERT IGNORE INTO thongbao_da_doc (idThongBao, idTK) VALUES (:idThongBao, :idTK)";
-            $stmt = $conn->prepare($sql);
-            $stmt->execute([':idThongBao' => $idThongBao, ':idTK' => $idTK]);
-            echo json_encode(['status' => 'success', 'message' => 'Đã đánh dấu đọc', 'data' => null], JSON_UNESCAPED_UNICODE);
+            mark_read($conn, $idThongBao, $idTK);
+            notification_api_response('success', 'Da danh dau doc', null, 200, [
+                'api' => 'thong_bao.giam_khao',
+                'action' => $action,
+                'idThongBao' => $idThongBao,
+            ]);
             break;
 
         default:
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Action không hợp lệ', 'data' => null], JSON_UNESCAPED_UNICODE);
+            notification_api_response('error', 'Action khong hop le', null, 400, [
+                'api' => 'thong_bao.giam_khao',
+                'action' => $action,
+            ]);
     }
 }
 
@@ -95,10 +89,23 @@ function handlePostRequest($conn, $actor, $input) {
 
     switch ($action) {
         case 'gui_nhac_nho':
+            if (!notification_feature_enabled('scoring')) {
+                notification_api_response('success', 'Trigger thong bao scoring dang tat theo feature flag', [
+                    'soGKNhanThongBao' => 0,
+                ], 200, [
+                    'api' => 'thong_bao.giam_khao',
+                    'action' => $action,
+                    'featureFlag' => 'NOTIFICATION_FLAG_SCORING_CLUSTER',
+                ]);
+                return;
+            }
+
             // BTC gửi nhắc nhở tới tất cả GK trong vòng thi chưa hoàn thành chấm điểm
             if ($idSK <= 0 || $idVongThi <= 0) {
-                http_response_code(400);
-                echo json_encode(['status' => 'error', 'message' => 'Thiếu id_sk hoặc id_vong_thi', 'data' => null], JSON_UNESCAPED_UNICODE);
+                notification_api_response('error', 'Thieu id_sk hoac id_vong_thi', null, 400, [
+                    'api' => 'thong_bao.giam_khao',
+                    'action' => $action,
+                ]);
                 return;
             }
 
@@ -126,57 +133,82 @@ function handlePostRequest($conn, $actor, $input) {
             $danhSachGK = $stmtGK->fetchAll(PDO::FETCH_ASSOC);
 
             if (empty($danhSachGK)) {
-                echo json_encode([
-                    'status'  => 'success',
-                    'message' => 'Tất cả giám khảo đã hoàn thành chấm điểm, không cần gửi nhắc nhở.',
-                    'data'    => ['soGKNhanThongBao' => 0]
-                ], JSON_UNESCAPED_UNICODE);
+                notification_api_response(
+                    'success',
+                    'Tat ca giam khao da hoan thanh cham diem, khong can gui nhac nho.',
+                    ['soGKNhanThongBao' => 0],
+                    200,
+                    [
+                        'api' => 'thong_bao.giam_khao',
+                        'action' => $action,
+                        'idSK' => $idSK,
+                        'idVongThi' => $idVongThi,
+                    ]
+                );
                 return;
             }
 
-            $conn->beginTransaction();
             try {
                 $tieuDe  = "Nhắc nhở: Hoàn thành chấm điểm — {$tenVongThi}";
                 $noiDung = "Bạn vẫn còn sản phẩm chưa chấm điểm trong {$tenVongThi}. Vui lòng đăng nhập và hoàn thành chấm điểm sớm.";
 
-                $sqlInsertTB = "INSERT INTO thongbao (tieuDe, noiDung, loaiThongBao, phamVi, idSK, nguoiGui)
-                                VALUES (:tieuDe, :noiDung, 'CA_NHAN', 'CA_NHAN', :idSK, :nguoiGui)";
-                $stmtInsertTB = $conn->prepare($sqlInsertTB);
-                $stmtInsertTB->execute([
-                    ':tieuDe'    => $tieuDe,
-                    ':noiDung'   => $noiDung,
-                    ':idSK'      => $idSK,
-                    ':nguoiGui'  => $actor['idTK']
-                ]);
-                $idThongBao = (int)$conn->lastInsertId();
+                $recipients = array_map(function ($gk) {
+                    return (int) ($gk['idTK'] ?? 0);
+                }, $danhSachGK);
 
-                $sqlInsertCN = "INSERT IGNORE INTO thongbao_ca_nhan (idThongBao, idTK) VALUES (:idThongBao, :idTK)";
-                $stmtInsertCN = $conn->prepare($sqlInsertCN);
-                foreach ($danhSachGK as $gk) {
-                    $stmtInsertCN->execute([':idThongBao' => $idThongBao, ':idTK' => (int)$gk['idTK']]);
+                $dispatchResult = dispatch_personal($conn, [
+                    'tieuDe' => $tieuDe,
+                    'noiDung' => $noiDung,
+                    'loaiThongBao' => 'CA_NHAN',
+                    'idSK' => $idSK,
+                    'loaiDoiTuong' => 'SANPHAM',
+                    'nguoiGui' => (int) $actor['idTK'],
+                    'recipients' => $recipients,
+                ]);
+
+                if (empty($dispatchResult['success'])) {
+                    throw new RuntimeException($dispatchResult['message'] ?? 'Khong the tao thong bao nhac nho');
                 }
 
-                $conn->commit();
+                $danhSachRutGon = array_map(function ($gk) {
+                    return [
+                        'tenGV' => $gk['tenGV'],
+                        'tongSP' => (int) $gk['tong_sp'],
+                        'daCham' => (int) $gk['da_cham'],
+                    ];
+                }, $danhSachGK);
 
-                echo json_encode([
-                    'status'  => 'success',
-                    'message' => 'Đã gửi thông báo nhắc nhở tới ' . count($danhSachGK) . ' giám khảo.',
-                    'data'    => [
-                        'idThongBao'       => $idThongBao,
+                notification_api_response(
+                    'success',
+                    'Da gui thong bao nhac nho toi ' . count($danhSachGK) . ' giam khao.',
+                    [
+                        'idThongBao' => (int) ($dispatchResult['idThongBao'] ?? 0),
                         'soGKNhanThongBao' => count($danhSachGK),
-                        'danhSachGK'       => array_map(fn($gk) => ['tenGV' => $gk['tenGV'], 'tongSP' => (int)$gk['tong_sp'], 'daCham' => (int)$gk['da_cham']], $danhSachGK)
+                        'danhSachGK' => $danhSachRutGon,
+                    ],
+                    200,
+                    [
+                        'api' => 'thong_bao.giam_khao',
+                        'action' => $action,
+                        'idSK' => $idSK,
+                        'idVongThi' => $idVongThi,
                     ]
-                ], JSON_UNESCAPED_UNICODE);
+                );
             } catch (Throwable $e) {
-                $conn->rollBack();
                 error_log('gui_nhac_nho error: ' . $e->getMessage());
-                http_response_code(500);
-                echo json_encode(['status' => 'error', 'message' => 'Lỗi hệ thống khi gửi thông báo', 'data' => null], JSON_UNESCAPED_UNICODE);
+                notification_api_response('error', 'Loi he thong khi gui thong bao', null, 500, [
+                    'api' => 'thong_bao.giam_khao',
+                    'action' => $action,
+                    'idSK' => $idSK,
+                    'idVongThi' => $idVongThi,
+                ]);
             }
             break;
 
         default:
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Action không hợp lệ', 'data' => null], JSON_UNESCAPED_UNICODE);
+            notification_api_response('error', 'Action khong hop le', null, 400, [
+                'api' => 'thong_bao.giam_khao',
+                'action' => $action,
+            ]);
     }
 }

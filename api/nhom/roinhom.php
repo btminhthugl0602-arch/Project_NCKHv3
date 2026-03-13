@@ -3,6 +3,7 @@ define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../core/auth_guard.php';
 require_once __DIR__ . '/quan_ly_nhom.php';
+require_once __DIR__ . '/../thong_bao/notification_service.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -41,6 +42,26 @@ $idTKBiXoa = isset($input['id_tk_bi_xoa']) ? (int) $input['id_tk_bi_xoa'] : $idT
 try {
     $result = roi_nhom($conn, $idTKSession, $idNhom, $idTKBiXoa);
     if ($result['status'] === true) {
+        if (notification_feature_enabled('group')) {
+            try {
+                $tuRoi = $idTKSession === $idTKBiXoa;
+                dispatch_personal($conn, [
+                    'tieuDe' => $tuRoi ? 'Ban da roi nhom' : 'Ban da bi loai khoi nhom',
+                    'noiDung' => $tuRoi
+                        ? 'Ban da roi nhom thanh cong.'
+                        : 'Ban da bi loai khoi nhom boi Chu nhom.',
+                    'loaiThongBao' => 'NHOM',
+                    'idSK' => $idSk,
+                    'loaiDoiTuong' => 'NHOM',
+                    'idDoiTuong' => $idNhom,
+                    'nguoiGui' => $idTKSession,
+                    'recipients' => [$idTKBiXoa],
+                ]);
+            } catch (Throwable $notifyError) {
+                error_log('roinhom notify error: ' . $notifyError->getMessage());
+            }
+        }
+
         echo json_encode(['status' => 'success', 'message' => $result['message'], 'data' => null], JSON_UNESCAPED_UNICODE);
     } else {
         http_response_code(400);
