@@ -87,30 +87,55 @@ function so_gvhd_nhom(PDO $conn, int $idNhom): int
 }
 
 /**
+ * Lấy giới hạn số nhóm SV được phép tham gia trong 1 sự kiện.
+ * Mặc định 1 để giữ hành vi cũ nếu sự kiện chưa cấu hình cột mới.
+ */
+function gioi_han_nhom_sv_theo_su_kien(array $sukien): int
+{
+    if (isset($sukien['soNhomToiDaSV']) && is_numeric($sukien['soNhomToiDaSV'])) {
+        return max(1, (int) $sukien['soNhomToiDaSV']);
+    }
+    return 1;
+}
+
+/**
+ * Đếm số nhóm SV đang tham gia trong một sự kiện.
+ */
+function so_nhom_sv_tham_gia(PDO $conn, int $idTK, int $idSK): int
+{
+    $stmt = $conn->prepare(
+        'SELECT COUNT(DISTINCT t.idNhom)
+         FROM (
+            SELECT n.idNhom
+            FROM nhom n
+            JOIN thanhviennhom tv ON tv.idNhom = n.idNhom
+            WHERE tv.idTK = :idTK AND n.idSK = :idSK AND n.isActive = 1
+
+            UNION
+
+            SELECT n.idNhom
+            FROM nhom n
+            WHERE n.idSK = :idSK2 AND n.isActive = 1
+              AND (n.idChuNhom = :idTK2 OR n.idTruongNhom = :idTK3)
+         ) t'
+    );
+    $stmt->execute([
+        ':idTK' => $idTK,
+        ':idSK' => $idSK,
+        ':idSK2' => $idSK,
+        ':idTK2' => $idTK,
+        ':idTK3' => $idTK,
+    ]);
+    return (int) $stmt->fetchColumn();
+}
+
+/**
  * Kiểm tra SV đã có nhóm trong sự kiện chưa.
  * Check cả thanhviennhom, idChuNhom, idTruongNhom.
  */
 function kiem_tra_sv_co_nhom(PDO $conn, int $idTK, int $idSK): bool
 {
-    // Check trong thanhviennhom
-    $stmt = $conn->prepare(
-        'SELECT 1 FROM thanhviennhom tv
-         JOIN nhom n ON n.idNhom = tv.idNhom
-         WHERE tv.idTK = :idTK AND n.idSK = :idSK AND n.isActive = 1
-         LIMIT 1'
-    );
-    $stmt->execute([':idTK' => $idTK, ':idSK' => $idSK]);
-    if ($stmt->fetchColumn()) return true;
-
-    // Check là Chủ nhóm hoặc Trưởng nhóm
-    $stmt2 = $conn->prepare(
-        'SELECT 1 FROM nhom
-         WHERE idSK = :idSK AND isActive = 1
-           AND (idChuNhom = :idTK1 OR idTruongNhom = :idTK2)
-         LIMIT 1'
-    );
-    $stmt2->execute([':idSK' => $idSK, ':idTK1' => $idTK, ':idTK2' => $idTK]);
-    return (bool) $stmt2->fetchColumn();
+    return so_nhom_sv_tham_gia($conn, $idTK, $idSK) > 0;
 }
 
 /**
@@ -193,8 +218,9 @@ function tao_nhom_moi(PDO $conn, int $idTK, int $idSK, string $tenNhom, string $
 
     // 7. Nếu SV: check đã có nhóm chưa
     if ($loaiTK === 3) {
-        if (kiem_tra_sv_co_nhom($conn, $idTK, $idSK)) {
-            return ['status' => false, 'message' => 'Bạn đã tham gia một nhóm trong sự kiện này rồi'];
+        $soNhomToiDaSV = gioi_han_nhom_sv_theo_su_kien($sukien);
+        if (so_nhom_sv_tham_gia($conn, $idTK, $idSK) >= $soNhomToiDaSV) {
+            return ['status' => false, 'message' => "Bạn đã đạt giới hạn tham gia {$soNhomToiDaSV} đội trong sự kiện này"]; 
         }
     }
 
@@ -388,8 +414,9 @@ function gui_yeu_cau_nhom(PDO $conn, int $idTKThucHien, int $idNhom, int $idTKDo
         if (so_thanh_vien_sv($conn, $idNhom) >= $soThanhVienToiDa) {
             return ['status' => false, 'message' => 'Nhóm đã đủ số lượng thành viên tối đa'];
         }
-        if (kiem_tra_sv_co_nhom($conn, $idTKDoiPhuong, $idSK)) {
-            return ['status' => false, 'message' => 'Sinh viên đã thuộc nhóm khác trong sự kiện'];
+        $soNhomToiDaSV = gioi_han_nhom_sv_theo_su_kien($sukien);
+        if (so_nhom_sv_tham_gia($conn, $idTKDoiPhuong, $idSK) >= $soNhomToiDaSV) {
+            return ['status' => false, 'message' => "Sinh viên đã đạt giới hạn tham gia {$soNhomToiDaSV} đội trong sự kiện"]; 
         }
     } else {
         // GVHD
@@ -533,9 +560,10 @@ function duyet_yeu_cau_nhom(PDO $conn, int $idNguoiDuyet, int $idYeuCau, int $tr
                 $conn->rollBack();
                 return ['status' => false, 'message' => 'Nhóm đã đủ số lượng thành viên tối đa'];
             }
-            if (kiem_tra_sv_co_nhom($conn, $idTKYeuCau, $idSK)) {
+            $soNhomToiDaSV = gioi_han_nhom_sv_theo_su_kien($sukien);
+            if (so_nhom_sv_tham_gia($conn, $idTKYeuCau, $idSK) >= $soNhomToiDaSV) {
                 $conn->rollBack();
-                return ['status' => false, 'message' => 'Sinh viên đã thuộc nhóm khác trong sự kiện'];
+                return ['status' => false, 'message' => "Sinh viên đã đạt giới hạn tham gia {$soNhomToiDaSV} đội trong sự kiện"]; 
             }
 
             // INSERT thanhviennhom
@@ -800,6 +828,12 @@ function tim_kiem_sinh_vien(PDO $conn, string $keyword, int $idSK): array
                     (SELECT 1 FROM taikhoan_vaitro_sukien tvs
                      WHERE tvs.idTK = tk.idTK AND tvs.idSK = :idSK AND tvs.isActive = 1
                      LIMIT 1) AS da_dang_ky_sk,
+                                        (SELECT COUNT(DISTINCT n3.idNhom)
+                                         FROM nhom n3
+                                         LEFT JOIN thanhviennhom tv3 ON tv3.idNhom = n3.idNhom
+                                         WHERE n3.idSK = :idSK3 AND n3.isActive = 1
+                                             AND (tv3.idTK = tk.idTK OR n3.idChuNhom = tk.idTK OR n3.idTruongNhom = tk.idTK)
+                                        ) AS so_nhom_hien_tai,
                     (SELECT 1 FROM thanhviennhom tv2
                      JOIN nhom n2 ON tv2.idNhom = n2.idNhom
                      WHERE tv2.idTK = tk.idTK AND n2.idSK = :idSK2 AND n2.isActive = 1
@@ -811,7 +845,7 @@ function tim_kiem_sinh_vien(PDO $conn, string $keyword, int $idSK): array
                 ORDER BY sv.tenSV ASC
                 LIMIT 20';
         $stmt = $conn->prepare($sql);
-        $stmt->execute([':idSK' => $idSK, ':idSK2' => $idSK]);
+                $stmt->execute([':idSK' => $idSK, ':idSK2' => $idSK, ':idSK3' => $idSK]);
     } else {
         $kw = '%' . $keyword . '%';
         $sql = 'SELECT
@@ -819,6 +853,12 @@ function tim_kiem_sinh_vien(PDO $conn, string $keyword, int $idSK): array
                     (SELECT 1 FROM taikhoan_vaitro_sukien tvs
                      WHERE tvs.idTK = tk.idTK AND tvs.idSK = :idSK AND tvs.isActive = 1
                      LIMIT 1) AS da_dang_ky_sk,
+                                        (SELECT COUNT(DISTINCT n3.idNhom)
+                                         FROM nhom n3
+                                         LEFT JOIN thanhviennhom tv3 ON tv3.idNhom = n3.idNhom
+                                         WHERE n3.idSK = :idSK3 AND n3.isActive = 1
+                                             AND (tv3.idTK = tk.idTK OR n3.idChuNhom = tk.idTK OR n3.idTruongNhom = tk.idTK)
+                                        ) AS so_nhom_hien_tai,
                     (SELECT 1 FROM thanhviennhom tv2
                      JOIN nhom n2 ON tv2.idNhom = n2.idNhom
                      WHERE tv2.idTK = tk.idTK AND n2.idSK = :idSK2 AND n2.isActive = 1
@@ -831,7 +871,7 @@ function tim_kiem_sinh_vien(PDO $conn, string $keyword, int $idSK): array
                 ORDER BY sv.tenSV ASC
                 LIMIT 10';
         $stmt = $conn->prepare($sql);
-        $stmt->execute([':idSK' => $idSK, ':idSK2' => $idSK, ':kw' => $kw, ':kw2' => $kw]);
+        $stmt->execute([':idSK' => $idSK, ':idSK2' => $idSK, ':idSK3' => $idSK, ':kw' => $kw, ':kw2' => $kw]);
     }
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);

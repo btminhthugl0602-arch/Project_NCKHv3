@@ -44,7 +44,10 @@ try {
 
     if ($loai === 'sv') {
         $data = tim_kiem_sinh_vien($conn, $keyword, $idSk);
-        echo json_encode(['status' => 'success', 'message' => 'OK', 'data' => $data], JSON_UNESCAPED_UNICODE);
+        $meta = [
+            'so_nhom_toi_da_sv' => $sk && isset($sk['soNhomToiDaSV']) ? max(1, (int)$sk['soNhomToiDaSV']) : 1,
+        ];
+        echo json_encode(['status' => 'success', 'message' => 'OK', 'data' => $data, 'meta' => $meta], JSON_UNESCAPED_UNICODE);
     } else {
         if ($coGVHDTheoSuKien !== 1) {
             echo json_encode([
