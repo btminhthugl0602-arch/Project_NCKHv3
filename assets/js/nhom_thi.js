@@ -1462,7 +1462,12 @@ document.addEventListener('DOMContentLoaded', function () {
             let disableReason = '';
             if (loai === 'sv') {
                 if (!u.da_dang_ky_sk) disableReason = 'Chưa đăng ký sự kiện';
-                else if (u.da_co_nhom == 1) disableReason = 'Đã có nhóm';
+                else if (meta.so_nhom_toi_da_sv !== null && meta.so_nhom_toi_da_sv !== undefined
+                    && parseInt(u.so_nhom_hien_tai || 0) >= parseInt(meta.so_nhom_toi_da_sv)) {
+                    disableReason = 'Đã đạt giới hạn số đội';
+                } else if (u.da_co_nhom == 1 && (!meta.so_nhom_toi_da_sv || parseInt(meta.so_nhom_toi_da_sv) <= 1)) {
+                    disableReason = 'Đã có nhóm';
+                }
             } else {
                 if (!u.da_dang_ky_sk) disableReason = 'Chưa đăng ký sự kiện';
                 else if (meta.so_nhom_toi_da_gvhd !== null && meta.so_nhom_toi_da_gvhd !== undefined

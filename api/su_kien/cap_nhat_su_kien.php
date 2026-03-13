@@ -44,6 +44,7 @@ $result = btc_cap_nhat_su_kien(
     $input['is_active'] ?? 1,
     isset($input['so_thanh_vien_toi_thieu']) ? (int)$input['so_thanh_vien_toi_thieu'] : null,
     isset($input['so_thanh_vien_toi_da'])    ? (int)$input['so_thanh_vien_toi_da']    : null,
+    isset($input['so_nhom_toi_da_sv'])       ? (int)$input['so_nhom_toi_da_sv']       : null,
     array_key_exists('so_gvhd_toi_da',      $input) ? ($input['so_gvhd_toi_da']      !== null ? (int)$input['so_gvhd_toi_da']      : null) : false,
     array_key_exists('so_nhom_toi_da_gvhd', $input) ? ($input['so_nhom_toi_da_gvhd'] !== null ? (int)$input['so_nhom_toi_da_gvhd'] : null) : false,
     isset($input['yeu_cau_co_gvhd'])         ? ((int)$input['yeu_cau_co_gvhd']         === 1 ? 1 : 0) : null,

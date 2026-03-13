@@ -40,6 +40,7 @@
     // Cấu hình nhóm thi
     const basicSoTVToiThieu = document.getElementById('basicSoTVToiThieu');
     const basicSoTVToiDa = document.getElementById('basicSoTVToiDa');
+    const basicSoNhomToiDaSV = document.getElementById('basicSoNhomToiDaSV');
     const basicGvhdOptions = document.getElementById('basicGvhdOptions');
     const basicYeuCauCoGVHD = document.getElementById('basicYeuCauCoGVHD');
     const basicChoPhepGVTaoNhom = document.getElementById('basicChoPhepGVTaoNhom');
@@ -2267,6 +2268,7 @@
         // Cấu hình nhóm thi
         if (basicSoTVToiThieu) basicSoTVToiThieu.value = detail.soThanhVienToiThieu ?? 1;
         if (basicSoTVToiDa) basicSoTVToiDa.value = detail.soThanhVienToiDa ?? 5;
+        if (basicSoNhomToiDaSV) basicSoNhomToiDaSV.value = detail.soNhomToiDaSV ?? 1;
 
         const coGVHD = suKienCoGVHD(detail);
         if (basicGvhdOptions) {
@@ -2391,11 +2393,15 @@
             // Client-side validation
             const toiThieu = basicSoTVToiThieu ? (parseInt(basicSoTVToiThieu.value) || 0) : 0;
             const toiDa = basicSoTVToiDa ? (parseInt(basicSoTVToiDa.value) || 0) : 0;
+            const soNhomToiDaSV = basicSoNhomToiDaSV ? (parseInt(basicSoNhomToiDaSV.value) || 0) : 0;
             if (toiThieu < 1) {
                 return Swal.fire({ icon: 'warning', title: 'Dữ liệu không hợp lệ', text: 'Số thành viên tối thiểu phải >= 1.' });
             }
             if (toiDa < 1) {
                 return Swal.fire({ icon: 'warning', title: 'Dữ liệu không hợp lệ', text: 'Số thành viên tối đa phải >= 1.' });
+            }
+            if (soNhomToiDaSV < 1) {
+                return Swal.fire({ icon: 'warning', title: 'Dữ liệu không hợp lệ', text: 'Số đội tối đa mỗi sinh viên phải >= 1.' });
             }
             if (toiThieu > toiDa) {
                 return Swal.fire({ icon: 'warning', title: 'Dữ liệu không hợp lệ', text: 'Số thành viên tối thiểu không được lớn hơn tối đa.' });
@@ -2417,6 +2423,7 @@
                 // Cấu hình nhóm hiện hành
                 so_thanh_vien_toi_thieu: toiThieu,
                 so_thanh_vien_toi_da: toiDa,
+                so_nhom_toi_da_sv: soNhomToiDaSV,
                 yeu_cau_co_gvhd: eventHasGVHD && basicYeuCauCoGVHD ? (basicYeuCauCoGVHD.checked ? 1 : 0) : 0,
                 cho_phep_gv_tao_nhom: eventHasGVHD && basicChoPhepGVTaoNhom ? (basicChoPhepGVTaoNhom.checked ? 1 : 0) : 0,
             };
@@ -2426,6 +2433,7 @@
 
                 eventDetailCache.soThanhVienToiThieu = payload.so_thanh_vien_toi_thieu;
                 eventDetailCache.soThanhVienToiDa = payload.so_thanh_vien_toi_da;
+                eventDetailCache.soNhomToiDaSV = payload.so_nhom_toi_da_sv;
                 eventDetailCache.yeuCauCoGVHD = payload.yeu_cau_co_gvhd;
                 eventDetailCache.choPhepGVTaoNhom = payload.cho_phep_gv_tao_nhom;
 

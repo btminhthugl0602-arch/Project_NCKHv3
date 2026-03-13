@@ -411,6 +411,7 @@ function btc_cap_nhat_su_kien(
     $is_active,
     $so_thanh_vien_toi_thieu = null,
     $so_thanh_vien_toi_da    = null,
+    $so_nhom_toi_da_sv       = null,
     $so_gvhd_toi_da          = false,
     $so_nhom_toi_da_gvhd     = false,
     $yeu_cau_co_gvhd         = null,
@@ -470,6 +471,9 @@ function btc_cap_nhat_su_kien(
     if ($so_thanh_vien_toi_da !== null && $so_thanh_vien_toi_da < 1) {
         return ['status' => false, 'message' => 'Số thành viên tối đa phải >= 1'];
     }
+    if ($so_nhom_toi_da_sv !== null && $so_nhom_toi_da_sv < 1) {
+        return ['status' => false, 'message' => 'Số đội tối đa mỗi sinh viên phải >= 1'];
+    }
     if (
         $so_thanh_vien_toi_thieu !== null && $so_thanh_vien_toi_da !== null
         && $so_thanh_vien_toi_thieu > $so_thanh_vien_toi_da
@@ -494,6 +498,10 @@ function btc_cap_nhat_su_kien(
         if ($so_thanh_vien_toi_da !== null) {
             $fields[] = 'soThanhVienToiDa';
             $values[] = $so_thanh_vien_toi_da;
+        }
+        if ($so_nhom_toi_da_sv !== null && cot_ton_tai($conn, 'sukien', 'soNhomToiDaSV')) {
+            $fields[] = 'soNhomToiDaSV';
+            $values[] = $so_nhom_toi_da_sv;
         }
         if ($so_gvhd_toi_da !== false) {
             $fields[] = 'soGVHDToiDa';

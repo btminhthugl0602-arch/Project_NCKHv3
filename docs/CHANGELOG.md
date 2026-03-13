@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## 2026-03-14 — Cau hinh gioi han so doi moi sinh vien theo su kien
+
+- Them migration [database/migrations/2026_03_14_add_so_nhom_toi_da_sv_to_sukien.sql](database/migrations/2026_03_14_add_so_nhom_toi_da_sv_to_sukien.sql):
+  - Bo sung cot `sukien.soNhomToiDaSV` (mac dinh `1`).
+- Cap nhat [api/su_kien/cap_nhat_su_kien.php](api/su_kien/cap_nhat_su_kien.php) va [api/su_kien/quan_ly_su_kien.php](api/su_kien/quan_ly_su_kien.php):
+  - Nhan va luu tham so `so_nhom_toi_da_sv` trong luong "Cau hinh nhom thi".
+- Cap nhat [views/partials/event-detail/tab-config-vongthi.php](views/partials/event-detail/tab-config-vongthi.php) va [assets/js/event-detail.js](assets/js/event-detail.js):
+  - Them truong cau hinh "So doi toi da moi sinh vien" trong tab cau hinh nhom.
+- Cap nhat [api/nhom/quan_ly_nhom.php](api/nhom/quan_ly_nhom.php):
+  - Bo hardcode SV chi duoc 1 nhom.
+  - Kiem tra gioi han dua tren `soNhomToiDaSV` khi tao nhom, gui yeu cau moi/xin vao nhom, va duyet yeu cau.
+  - Bo sung truong `so_nhom_hien_tai` trong tim kiem sinh vien.
+- Cap nhat [api/nhom/tim_kiem_user.php](api/nhom/tim_kiem_user.php) va [assets/js/nhom_thi.js](assets/js/nhom_thi.js):
+  - Tra metadata `so_nhom_toi_da_sv` va disable chon SV khi da dat gioi han.
+
 ## 2026-03-13 — Nhom: Chan moi/tham gia SV khi gioi han toi da = 1
 
 - Cap nhat [api/nhom/quan_ly_nhom.php](api/nhom/quan_ly_nhom.php):

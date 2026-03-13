@@ -28,6 +28,12 @@
                 <input id="basicSoTVToiDa" type="number" min="1"
                     class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
             </div>
+            <div>
+                <label class="block mb-1 text-xs font-semibold text-slate-700">Số đội tối đa mỗi sinh viên</label>
+                <input id="basicSoNhomToiDaSV" type="number" min="1"
+                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+                <p class="mt-1 mb-0 text-xs text-slate-500">Ví dụ: 1 = mỗi sinh viên chỉ được tham gia 1 đội trong sự kiện.</p>
+            </div>
         </div>
 
         <div id="basicGvhdOptions" class="space-y-3 hidden md:col-span-2 lg:col-span-2">
