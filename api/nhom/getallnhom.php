@@ -27,11 +27,21 @@ $idTK  = $actor['idTK'];
 try {
     $nhoms        = lay_tat_ca_nhom($conn, $idSk);
     $userHasGroup = kiem_tra_user_co_nhom($conn, $idTK, $idSk);
+
+    // Lấy loại tài khoản để frontend phân biệt SV / GV
+    $tk       = truy_van_mot_ban_ghi($conn, 'taikhoan', 'idTK', $idTK);
+    $loaiTK   = $tk ? (int) $tk['idLoaiTK'] : 0;
+
+    // Với GV: đếm số nhóm đang hướng dẫn để frontend check giới hạn
+    $soNhomHuongDan = ($loaiTK === 2) ? so_nhom_gv_huong_dan($conn, $idTK, $idSk) : null;
+
     echo json_encode([
-        'status'         => 'success',
-        'message'        => 'Lấy danh sách nhóm thành công',
-        'data'           => $nhoms,
-        'user_has_group' => $userHasGroup,
+        'status'                  => 'success',
+        'message'                 => 'Lấy danh sách nhóm thành công',
+        'data'                    => $nhoms,
+        'user_has_group'          => $userHasGroup,
+        'user_loai_tk'            => $loaiTK,
+        'user_so_nhom_huong_dan'  => $soNhomHuongDan,
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     http_response_code(500);

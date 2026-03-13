@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const searchEl = document.getElementById('searchInput');
         const formWrapper = document.getElementById('formTaoNhomWrapper');
 
-        let allGroups = [], userHasGroup = false;
+        let allGroups = [], userHasGroup = false, userLoaiTK = 0, userSoNhomHuongDan = 0;
 
         // ── Toggle form inline ──
         function showForm() {
@@ -83,11 +83,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700">
                        <i class="fas fa-crown text-yellow-500" style="font-size:9px"></i> ${esc(g.ten_truong_nhom)}
                    </span>` : '';
-            const btn = (!userHasGroup)
-                ? `<button onclick="xinVaoNhom(${g.idnhom})"
-                       class="inline-flex items-center gap-1 px-4 py-1.5 text-xs font-semibold text-white rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 transition">
-                       <i class="fas fa-user-plus"></i> Xin tham gia
-                   </button>` : '';
+            let btn = '';
+            if (!userHasGroup) {
+                if (userLoaiTK === 2) {
+                    // GV: nút "Xin làm GVHD" — disable nếu đã đủ giới hạn
+                    const soNhomToiDa = parseInt(g.so_nhom_toi_da_gvhd ?? -1);
+                    const daDu = soNhomToiDa >= 0 && userSoNhomHuongDan >= soNhomToiDa;
+                    btn = daDu
+                        ? `<button disabled title="Bạn đã đủ số nhóm hướng dẫn"
+                               class="inline-flex items-center gap-1 px-4 py-1.5 text-xs font-semibold text-slate-400 rounded-lg bg-slate-100 cursor-not-allowed opacity-60">
+                               <i class="fas fa-chalkboard-teacher"></i> Xin làm GVHD
+                           </button>`
+                        : `<button onclick="xinLamGVHD(${g.idnhom})"
+                               class="inline-flex items-center gap-1 px-4 py-1.5 text-xs font-semibold text-white rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 transition">
+                               <i class="fas fa-chalkboard-teacher"></i> Xin làm GVHD
+                           </button>`;
+                } else {
+                    // SV: nút "Xin tham gia"
+                    btn = `<button onclick="xinVaoNhom(${g.idnhom})"
+                               class="inline-flex items-center gap-1 px-4 py-1.5 text-xs font-semibold text-white rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 transition">
+                               <i class="fas fa-user-plus"></i> Xin tham gia
+                           </button>`;
+                }
+            }
             return `<div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3 shadow-soft-sm hover:shadow-soft-md transition">
                 <div class="flex items-start justify-between gap-2">
                     <span class="font-bold text-slate-800 text-sm leading-snug">${esc(g.tennhom)}</span>
@@ -114,6 +132,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (d.status !== 'success') { elError.textContent = d.message; elError.classList.remove('hidden'); return; }
                 allGroups = d.data || [];
                 userHasGroup = !!d.user_has_group;
+                userLoaiTK = parseInt(d.user_loai_tk || 0);
+                userSoNhomHuongDan = parseInt(d.user_so_nhom_huong_dan || 0);
                 const publicCount = allGroups.filter(g => parseInt(g.dangtuyen) === 1).length;
                 if (elCount) elCount.textContent = `${publicCount} nhóm công khai`;
                 renderGrid(allGroups);
@@ -1035,86 +1055,160 @@ document.addEventListener('DOMContentLoaded', function () {
     // TAB: LỜI MỜI
     // ================================================================
     if (tab === 'loi-moi') {
-        const elLoading = document.getElementById('invitesLoading');
-        const elError = document.getElementById('invitesError');
-        const elEmpty = document.getElementById('invitesEmpty');
-        const elList = document.getElementById('invitesList');
-        const elHistory = document.getElementById('historySection');
-        const elHistList = document.getElementById('historyList');
+        const requestSubtab = String(window.REQUEST_SUBTAB || 'loi-moi');
 
-        function renderInviteCard(inv) {
-            const soTV = parseInt(inv.so_thanh_vien_sv || 0);
-            const roleBadge = inv.loaiYeuCau === 'GVHD'
-                ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700"><i class="fas fa-chalkboard-teacher"></i> Mời làm GVHD</span>`
-                : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700"><i class="fas fa-users"></i> Mời tham gia nhóm</span>`;
-            return `<div id="invite-${inv.idYeuCau}" class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3 shadow-soft-sm">
-                <div class="flex items-center justify-between gap-2">
-                    <span class="font-bold text-slate-800 text-sm">${esc(inv.tennhom)}</span>
-                    <span class="text-xs text-slate-400">${soTV} thành viên</span>
-                </div>
-                <div>${roleBadge}</div>
-                ${inv.loiNhan ? `<p class="text-xs text-slate-500 italic">"${esc(inv.loiNhan)}"</p>` : ''}
-                <div class="flex gap-2">
-                    <button onclick="respondInvite(${inv.idYeuCau}, 1)"
-                        class="flex-1 py-1.5 text-xs font-semibold text-white rounded-lg bg-blue-600 hover:bg-blue-700 transition">
-                        <i class="fas fa-check mr-1"></i> Chấp nhận
-                    </button>
-                    <button onclick="respondInvite(${inv.idYeuCau}, 2)"
-                        class="flex-1 py-1.5 text-xs font-semibold text-slate-600 rounded-lg bg-slate-100 hover:bg-slate-200 transition">
-                        <i class="fas fa-times mr-1"></i> Từ chối
-                    </button>
-                </div>
-            </div>`;
-        }
+        // ── SUBTAB: LỜI MỜI ────────────────────────────────────────────
+        if (requestSubtab === 'loi-moi') {
+            const elLoading = document.getElementById('invitesLoading');
+            const elError   = document.getElementById('invitesError');
+            const elEmpty   = document.getElementById('invitesEmpty');
+            const elList    = document.getElementById('invitesList');
 
-        async function loadInvites() {
-            try {
-                const d = await apiFetch(`/api/nhom/getrequest.php?id_sk=${idSk}`);
-                elLoading.classList.add('hidden');
-                if (d.status !== 'success') {
-                    elError.textContent = d.message || 'Lỗi tải dữ liệu';
-                    elError.classList.remove('hidden');
-                    return;
-                }
-                const pending = d.data?.loi_moi_den || [];
-                const history = (d.data?.yeu_cau_gui_di || []).filter(i => parseInt(i.trangThai) !== 0);
-
-                if (!pending.length) {
-                    elEmpty.innerHTML = `<div class="flex flex-col items-center justify-center py-16 text-center">
-                        <svg class="w-16 h-16 mb-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                        <p class="font-semibold text-slate-700 mb-1">Không có lời mời</p>
-                        <p class="text-sm text-slate-400">Bạn chưa có lời mời tham gia nhóm nào trong sự kiện này.</p>
-                    </div>`;
-                    elEmpty.classList.remove('hidden');
-                } else {
-                    elList.innerHTML = pending.map(renderInviteCard).join('');
-                    elList.classList.remove('hidden');
-                }
-
-                if (history.length) {
-                    elHistList.innerHTML = history.map(i => {
-                        const ok = parseInt(i.trangThai) === 1;
-                        const roleLabel = i.loaiYeuCau === 'GVHD' ? 'GVHD' : 'Thành viên';
-                        return `<div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                            <div>
-                                <span class="text-sm text-slate-600">${esc(i.tennhom)}</span>
-                                <span class="text-xs text-slate-400 ml-2">(${roleLabel})</span>
-                            </div>
-                            <span class="text-xs px-2 py-0.5 rounded-full ${ok ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}">${ok ? 'Đã chấp nhận' : 'Đã từ chối'}</span>
-                        </div>`;
-                    }).join('');
-                    elHistory.classList.remove('hidden');
-                }
-            } catch (e) {
-                elLoading.classList.add('hidden');
-                elError.textContent = 'Không thể kết nối máy chủ';
-                elError.classList.remove('hidden');
+            function renderInviteCard(inv) {
+                const soTV = parseInt(inv.so_thanh_vien_sv || 0);
+                const roleBadge = inv.loaiYeuCau === 'GVHD'
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700"><i class="fas fa-chalkboard-teacher"></i> Mời làm GVHD</span>`
+                    : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700"><i class="fas fa-users"></i> Mời tham gia nhóm</span>`;
+                return `<div id="invite-${inv.idYeuCau}" class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3 shadow-soft-sm">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="font-bold text-slate-800 text-sm">${esc(inv.tennhom)}</span>
+                        <span class="text-xs text-slate-400">${soTV} thành viên</span>
+                    </div>
+                    <div>${roleBadge}</div>
+                    ${inv.loiNhan ? `<p class="text-xs text-slate-500 italic">"${esc(inv.loiNhan)}"</p>` : ''}
+                    <div class="flex gap-2">
+                        <button onclick="respondInvite(${inv.idYeuCau}, 1)"
+                            class="flex-1 py-1.5 text-xs font-semibold text-white rounded-lg bg-blue-600 hover:bg-blue-700 transition">
+                            <i class="fas fa-check mr-1"></i> Chấp nhận
+                        </button>
+                        <button onclick="respondInvite(${inv.idYeuCau}, 2)"
+                            class="flex-1 py-1.5 text-xs font-semibold text-slate-600 rounded-lg bg-slate-100 hover:bg-slate-200 transition">
+                            <i class="fas fa-times mr-1"></i> Từ chối
+                        </button>
+                    </div>
+                </div>`;
             }
+
+            function showInvitesEmpty() {
+                elEmpty.innerHTML = `<div class="flex flex-col items-center justify-center py-16 text-center">
+                    <svg class="w-16 h-16 mb-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    <p class="font-semibold text-slate-700 mb-1">Không có lời mời</p>
+                    <p class="text-sm text-slate-400">Bạn chưa có lời mời tham gia nhóm nào trong sự kiện này.</p>
+                </div>`;
+                elList.classList.add('hidden');
+                elEmpty.classList.remove('hidden');
+            }
+
+            async function loadInvites() {
+                try {
+                    const d = await apiFetch(`/api/nhom/getrequest.php?id_sk=${idSk}`);
+                    elLoading.classList.add('hidden');
+                    if (d.status !== 'success') {
+                        elError.textContent = d.message || 'Lỗi tải dữ liệu';
+                        elError.classList.remove('hidden');
+                        return;
+                    }
+                    const pending = d.data?.loi_moi_den || [];
+                    if (!pending.length) {
+                        showInvitesEmpty();
+                    } else {
+                        elList.innerHTML = pending.map(renderInviteCard).join('');
+                        elList.classList.remove('hidden');
+                    }
+                } catch (e) {
+                    elLoading.classList.add('hidden');
+                    elError.textContent = 'Không thể kết nối máy chủ';
+                    elError.classList.remove('hidden');
+                }
+            }
+            loadInvites();
         }
-        loadInvites();
+
+        // ── SUBTAB: YÊU CẦU CỦA TÔI ───────────────────────────────────
+        if (requestSubtab === 'yeu-cau') {
+            const elLoading      = document.getElementById('sentLoading');
+            const elError        = document.getElementById('sentError');
+            const elPendingEmpty = document.getElementById('sentPendingEmpty');
+            const elPendingList  = document.getElementById('sentPendingList');
+            const elHistSection  = document.getElementById('sentHistorySection');
+            const elHistList     = document.getElementById('sentHistoryList');
+
+            function renderSentCard(yc) {
+                const roleLabel = yc.loaiYeuCau === 'GVHD' ? 'Xin làm GVHD' : 'Xin tham gia';
+                const roleBadge = yc.loaiYeuCau === 'GVHD'
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700"><i class="fas fa-chalkboard-teacher"></i> ${roleLabel}</span>`
+                    : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700"><i class="fas fa-users"></i> ${roleLabel}</span>`;
+                return `<div id="sent-${yc.idYeuCau}" class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3 shadow-soft-sm">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="font-bold text-slate-800 text-sm">${esc(yc.tennhom || yc.maNhom)}</span>
+                        <span class="text-xs text-slate-400">${yc.maNhom || ''}</span>
+                    </div>
+                    <div>${roleBadge}</div>
+                    ${yc.loiNhan ? `<p class="text-xs text-slate-500 italic">"${esc(yc.loiNhan)}"</p>` : ''}
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-xs text-amber-600 font-medium"><i class="fas fa-clock mr-1"></i>Đang chờ duyệt</span>
+                        <button onclick="rutYeuCau(${yc.idYeuCau})"
+                            class="px-3 py-1.5 text-xs font-semibold text-rose-600 rounded-lg border border-rose-200 hover:bg-rose-50 transition">
+                            <i class="fas fa-times mr-1"></i> Rút yêu cầu
+                        </button>
+                    </div>
+                </div>`;
+            }
+
+            function renderHistoryItem(yc) {
+                const ok = parseInt(yc.trangThai) === 1;
+                const roleLabel = yc.loaiYeuCau === 'GVHD' ? 'GVHD' : 'Thành viên';
+                return `<div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                    <div>
+                        <span class="text-sm text-slate-600">${esc(yc.tennhom || yc.maNhom)}</span>
+                        <span class="text-xs text-slate-400 ml-2">(${roleLabel})</span>
+                    </div>
+                    <span class="text-xs px-2 py-0.5 rounded-full ${ok ? 'bg-green-100 text-green-700' : 'bg-rose-100 text-rose-600'}">
+                        ${ok ? 'Đã chấp nhận' : 'Bị từ chối'}
+                    </span>
+                </div>`;
+            }
+
+            async function loadSentRequests() {
+                try {
+                    const d = await apiFetch(`/api/nhom/getrequest.php?id_sk=${idSk}`);
+                    elLoading.classList.add('hidden');
+                    if (d.status !== 'success') {
+                        elError.textContent = d.message || 'Lỗi tải dữ liệu';
+                        elError.classList.remove('hidden');
+                        return;
+                    }
+                    const all     = d.data?.yeu_cau_gui_di || [];
+                    const pending = all.filter(i => parseInt(i.trangThai) === 0);
+                    const history = all.filter(i => parseInt(i.trangThai) !== 0);
+
+                    if (!pending.length) {
+                        elPendingEmpty.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-center border border-dashed border-slate-300 rounded-xl bg-slate-50">
+                            <span class="material-symbols-outlined text-3xl text-slate-300 mb-2">send</span>
+                            <p class="font-semibold text-slate-600 text-sm mb-1">Chưa có yêu cầu đang chờ</p>
+                            <p class="text-slate-400 text-xs">Hãy <a href="/event-detail?id_sk=${idSk}&tab=nhom-all" class="text-primary font-semibold hover:underline">xem tất cả nhóm</a> để xin tham gia.</p>
+                        </div>`;
+                        elPendingEmpty.classList.remove('hidden');
+                    } else {
+                        elPendingList.innerHTML = pending.map(renderSentCard).join('');
+                        elPendingList.classList.remove('hidden');
+                    }
+
+                    if (history.length) {
+                        elHistList.innerHTML = history.map(renderHistoryItem).join('');
+                        elHistSection.classList.remove('hidden');
+                    }
+                } catch (e) {
+                    elLoading.classList.add('hidden');
+                    elError.textContent = 'Không thể kết nối máy chủ';
+                    elError.classList.remove('hidden');
+                }
+            }
+            loadSentRequests();
+        }
     }
 
     // ================================================================
@@ -1133,6 +1227,49 @@ document.addEventListener('DOMContentLoaded', function () {
         Swal.fire({ icon: res.status === 'success' ? 'success' : 'error', title: res.message, confirmButtonColor: '#5e72e4' });
     };
 
+    window.xinLamGVHD = async function (idNhom) {
+        const r = await Swal.fire({
+            title: 'Xin làm Giảng viên hướng dẫn?', input: 'text',
+            inputPlaceholder: 'Lời nhắn (tuỳ chọn)...',
+            showCancelButton: true, confirmButtonText: 'Gửi yêu cầu', cancelButtonText: 'Huỷ',
+            confirmButtonColor: '#5e72e4',
+        });
+        if (!r.isConfirmed) return;
+        const res = await apiPost('/api/nhom/gui_yeu_cau.php', { id_sk: idSk, id_nhom: idNhom, chieu_moi: 1, loai_yeu_cau: 'GVHD', loi_nhan: r.value || '' });
+        Swal.fire({ icon: res.status === 'success' ? 'success' : 'error', title: res.message, confirmButtonColor: '#5e72e4' });
+    };
+
+    window.rutYeuCau = async function (idYC) {
+        const c = await Swal.fire({
+            title: 'Rút yêu cầu?',
+            text: 'Bạn có chắc muốn rút yêu cầu này không?',
+            icon: 'warning', showCancelButton: true,
+            confirmButtonText: 'Rút yêu cầu', cancelButtonText: 'Huỷ',
+            confirmButtonColor: '#ef4444',
+        });
+        if (!c.isConfirmed) return;
+        const res = await apiPost('/api/nhom/huy_yeu_cau.php', { id_yeu_cau: idYC });
+        if (res.status === 'success') {
+            document.getElementById(`sent-${idYC}`)?.remove();
+            // Nếu list pending rỗng → hiện empty state
+            if (!document.querySelector('#sentPendingList [id^="sent-"]')) {
+                const elList = document.getElementById('sentPendingList');
+                const elEmpty = document.getElementById('sentPendingEmpty');
+                elList?.classList.add('hidden');
+                if (elEmpty) {
+                    elEmpty.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-center border border-dashed border-slate-300 rounded-xl bg-slate-50">
+                        <span class="material-symbols-outlined text-3xl text-slate-300 mb-2">send</span>
+                        <p class="font-semibold text-slate-600 text-sm mb-1">Chưa có yêu cầu đang chờ</p>
+                    </div>`;
+                    elEmpty.classList.remove('hidden');
+                }
+            }
+            Swal.fire({ icon: 'success', title: res.message, timer: 1500, showConfirmButton: false });
+        } else {
+            Swal.fire({ icon: 'error', title: res.message });
+        }
+    };
+
     window.respondInvite = async function (idYC, tt) {
         const ok = tt === 1;
         const c = await Swal.fire({
@@ -1145,6 +1282,23 @@ document.addEventListener('DOMContentLoaded', function () {
         const res = await apiPost('/api/nhom/duyet_yeu_cau.php', { id_sk: idSk, id_yeu_cau: idYC, trang_thai: tt });
         if (res.status === 'success') {
             document.getElementById(`invite-${idYC}`)?.remove();
+            // Nếu list lời mời rỗng → hiện empty state
+            if (!document.querySelector('#invitesList [id^="invite-"]')) {
+                const elList  = document.getElementById('invitesList');
+                const elEmpty = document.getElementById('invitesEmpty');
+                elList?.classList.add('hidden');
+                if (elEmpty) {
+                    elEmpty.innerHTML = `<div class="flex flex-col items-center justify-center py-16 text-center">
+                        <svg class="w-16 h-16 mb-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <p class="font-semibold text-slate-700 mb-1">Không còn lời mời nào</p>
+                        <p class="text-sm text-slate-400">Bạn đã xử lý tất cả lời mời.</p>
+                    </div>`;
+                    elEmpty.classList.remove('hidden');
+                }
+            }
             Swal.fire({ icon: 'success', title: res.message, timer: 1500, showConfirmButton: false });
         } else Swal.fire({ icon: 'error', title: res.message });
     };

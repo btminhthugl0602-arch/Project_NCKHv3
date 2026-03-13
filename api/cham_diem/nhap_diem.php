@@ -1,4 +1,5 @@
 <?php
+
 /**
  * API Nhập điểm dành cho Giảng viên / Giám khảo
  *
@@ -69,7 +70,8 @@ try {
 // GET HANDLERS
 // ─────────────────────────────────────────────────────────────
 
-function handleGetRequest($conn, $idGV, $idSK) {
+function handleGetRequest($conn, $idGV, $idSK)
+{
     $action    = $_GET['action']       ?? 'lay_phieu_cham';
     $idVongThi = isset($_GET['id_vong_thi']) ? (int) $_GET['id_vong_thi'] : 0;
     $idSanPham = isset($_GET['id_san_pham'])  ? (int) $_GET['id_san_pham']  : 0;
@@ -110,7 +112,8 @@ function handleGetRequest($conn, $idGV, $idSK) {
 // POST HANDLERS
 // ─────────────────────────────────────────────────────────────
 
-function handlePostRequest($conn, $idGV, $idSK) {
+function handlePostRequest($conn, $idGV, $idSK)
+{
     $input = $_SERVER['_PARSED_INPUT'] ?? json_decode(file_get_contents('php://input'), true);
     if (!$input) {
         http_response_code(400);
@@ -166,7 +169,8 @@ function handlePostRequest($conn, $idGV, $idSK) {
 /**
  * Lấy phancongcham + danh sách sản phẩm GV được phân công trong vòng thi.
  */
-function nhapDiem_layDanhSach($conn, $idGV, $idSK, $idVongThi) {
+function nhapDiem_layDanhSach($conn, $idGV, $idSK, $idVongThi)
+{
     // Lấy bản ghi phancongcham của GV trong vòng này
     $stmtPCC = $conn->prepare(
         "SELECT pcc.idPhanCongCham, pcc.idBoTieuChi, pcc.trangThaiXacNhan,
@@ -236,7 +240,8 @@ function nhapDiem_layDanhSach($conn, $idGV, $idSK, $idVongThi) {
  * Lấy chi tiết phiếu chấm: tiêu chí + điểm đã nhập của GV cho sản phẩm đó.
  * Trả về null nếu GV không được phân công chấm sản phẩm này.
  */
-function nhapDiem_layChiTiet($conn, $idGV, $idSK, $idVongThi, $idSanPham) {
+function nhapDiem_layChiTiet($conn, $idGV, $idSK, $idVongThi, $idSanPham)
+{
     // Xác nhận GV được phân công SP này + lấy trạng thái per-SP
     $stmtPD = $conn->prepare(
         "SELECT isTrongTai, trangThaiCham, ngayNop FROM phancong_doclap
@@ -295,7 +300,7 @@ function nhapDiem_layChiTiet($conn, $idGV, $idSK, $idVongThi, $idSanPham) {
 
     // Thông tin sản phẩm
     $stmtSP = $conn->prepare(
-        "SELECT sp.idSanPham, sp.tensanpham, sp.moTataiLieu, n.manhom
+        "SELECT sp.idSanPham, sp.tensanpham, n.manhom
          FROM   sanpham sp
          INNER  JOIN nhom n ON sp.idNhom = n.idnhom
          WHERE  sp.idSanPham = :idSanPham
@@ -303,6 +308,19 @@ function nhapDiem_layChiTiet($conn, $idGV, $idSK, $idVongThi, $idSanPham) {
     );
     $stmtSP->execute([':idSanPham' => $idSanPham]);
     $spInfo = $stmtSP->fetch(PDO::FETCH_ASSOC);
+
+    // Nội dung bài nộp: lấy field_value cho vòng này (ưu tiên) hoặc form mặc định SK
+    $stmtFV = $conn->prepare(
+        "SELECT ff.tenTruong, ff.kieuTruong, ff.thuTu,
+                sfv.giaTriText, sfv.duongDanFile, sfv.ngayNop
+         FROM   sanpham_field_value sfv
+         INNER  JOIN form_field ff ON ff.idField = sfv.idField AND ff.isActive = 1
+         WHERE  sfv.idSanPham = :idSanPham
+           AND  (sfv.idVongThi = :idVongThi OR sfv.idVongThi IS NULL)
+         ORDER  BY ff.thuTu ASC"
+    );
+    $stmtFV->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
+    $dsTaiLieu = $stmtFV->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($dsTieuChi as &$tc) {
         $tc['diem']      = $tc['diem'] !== null ? (float) $tc['diem'] : null;
@@ -318,6 +336,7 @@ function nhapDiem_layChiTiet($conn, $idGV, $idSK, $idVongThi, $idSanPham) {
         'trangThaiChamSP' => $pdRow['trangThaiCham'],
         'ngayNop'         => $pdRow['ngayNop'],
         'dsTieuChi'       => $dsTieuChi,
+        'dsTaiLieu'       => $dsTaiLieu,
     ];
 
     // Trọng tài: bổ sung bức tranh tổng quát để TT có context phán quyết
@@ -335,7 +354,8 @@ function nhapDiem_layChiTiet($conn, $idGV, $idSK, $idVongThi, $idSanPham) {
  *
  * @return array [{ idGV, tenGV, tongDiem, chiTiet: [{ idTieuChi, noiDungTieuChi, diem, diemToiDa, nhanXet }] }]
  */
-function nhapDiem_layBongTranhGiamKhao($conn, $idSanPham, $idVongThi, $idBoTieuChi) {
+function nhapDiem_layBongTranhGiamKhao($conn, $idSanPham, $idVongThi, $idBoTieuChi)
+{
     // Lấy danh sách GK chính đã thực sự chấm bài này.
     // Logic:
     //   - Nguồn sự thật: chamtieuchi (records điểm thực tế) → JOIN ngược lên phancongcham
@@ -429,7 +449,8 @@ function nhapDiem_layBongTranhGiamKhao($conn, $idSanPham, $idVongThi, $idBoTieuC
  * @param array $bongTranh Kết quả từ nhapDiem_layBongTranhGiamKhao()
  * @return array [{ idTieuChi, avgDiem, deviationPct, isHighDeviation }]
  */
-function nhapDiem_tinhMaTranCanhBao(array $bongTranh): array {
+function nhapDiem_tinhMaTranCanhBao(array $bongTranh): array
+{
     if (count($bongTranh) < 2) return [];
 
     // Gom điểm theo từng tiêu chí
@@ -467,7 +488,8 @@ function nhapDiem_tinhMaTranCanhBao(array $bongTranh): array {
  * Lưu điểm từng tiêu chí (auto-save).
  * Dùng SELECT + UPDATE/INSERT vì chamtieuchi chưa có UNIQUE constraint.
  */
-function nhapDiem_luuDiem($conn, $idGV, $idSK, $idVongThi, $idSanPham, $dsDiem) {
+function nhapDiem_luuDiem($conn, $idGV, $idSK, $idVongThi, $idSanPham, $dsDiem)
+{
     try {
         // Xác nhận GV được phân công SP này + lấy trạng thái per-SP
         $stmtPD = $conn->prepare(
@@ -567,7 +589,6 @@ function nhapDiem_luuDiem($conn, $idGV, $idSK, $idVongThi, $idSanPham, $dsDiem) 
 
         $conn->commit();
         return ['success' => true, 'message' => 'Lưu nháp thành công'];
-
     } catch (Throwable $e) {
         if ($conn->inTransaction()) $conn->rollBack();
         error_log('Error in nhapDiem_luuDiem: ' . $e->getMessage());
@@ -581,7 +602,8 @@ function nhapDiem_luuDiem($conn, $idGV, $idSK, $idVongThi, $idSanPham, $dsDiem) 
  * Nếu là trọng tài (isTrongTai=1): sau khi nộp, điểm phán quyết TT sẽ được
  * ghi thẳng vào sanpham_vongthi như điểm chốt cuối cùng.
  */
-function nhapDiem_nopPhieu($conn, $idGV, $idSK, $idVongThi, $idSanPham) {
+function nhapDiem_nopPhieu($conn, $idGV, $idSK, $idVongThi, $idSanPham)
+{
     try {
         // Xác nhận GV được phân công SP này + kiểm tra trạng thái per-SP
         $stmtPD = $conn->prepare(
@@ -631,7 +653,7 @@ function nhapDiem_nopPhieu($conn, $idGV, $idSK, $idVongThi, $idSanPham) {
             return [
                 'success' => false,
                 'message' => "Chưa chấm đủ tiêu chí ({$soDaCham}/{$soTieuChi}). "
-                           . 'Vui lòng nhập điểm cho tất cả tiêu chí trước khi nộp phiếu.',
+                    . 'Vui lòng nhập điểm cho tất cả tiêu chí trước khi nộp phiếu.',
             ];
         }
 
@@ -698,7 +720,6 @@ function nhapDiem_nopPhieu($conn, $idGV, $idSK, $idVongThi, $idSanPham) {
 
         $conn->commit();
         return ['success' => true, 'message' => 'Nộp phiếu chấm thành công.'];
-
     } catch (Throwable $e) {
         if ($conn->inTransaction()) $conn->rollBack();
         error_log('Error in nhapDiem_nopPhieu: ' . $e->getMessage());

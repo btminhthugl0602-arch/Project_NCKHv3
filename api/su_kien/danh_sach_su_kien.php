@@ -39,6 +39,7 @@ try {
              LEFT JOIN cap_tochuc ct ON ct.idCap = sk.idCap
              LEFT JOIN loaicap lc ON lc.idLoaiCap = ct.idLoaiCap
              WHERE sk.tenSK LIKE :search
+               AND sk.isDeleted = 0
              ORDER BY sk.isActive DESC, sk.idSK DESC
              LIMIT :limit'
         );
@@ -51,6 +52,7 @@ try {
              FROM sukien sk
              LEFT JOIN cap_tochuc ct ON ct.idCap = sk.idCap
              LEFT JOIN loaicap lc ON lc.idLoaiCap = ct.idLoaiCap
+             WHERE sk.isDeleted = 0
              ORDER BY sk.idSK DESC
              LIMIT :limit'
         );

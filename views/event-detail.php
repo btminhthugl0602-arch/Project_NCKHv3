@@ -165,6 +165,7 @@ ob_start();
                         window.EVENT_DETAIL_ID = <?php echo (int) $idSk; ?>;
                         window.EVENT_DETAIL_TAB = <?php echo json_encode($tab, JSON_UNESCAPED_UNICODE); ?>;
                         window.IS_GUEST = <?php echo $_isGuest ? 'true' : 'false'; ?>;
+                        window.USER_LOAI_TK = <?php echo (int) $idLoaiTK; ?>;
                         window.PERMISSIONS = <?php echo json_encode($perm,      JSON_UNESCAPED_UNICODE); ?>;
                         window.TAB_ACCESS = <?php echo json_encode($tabAccess, JSON_UNESCAPED_UNICODE); ?>;
                     </script>

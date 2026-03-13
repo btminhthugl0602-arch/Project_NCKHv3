@@ -34,7 +34,8 @@ function co_quyen_quan_ly_su_kien($conn, int $id_tk, int $id_sk = 0): bool
         return kiem_tra_quyen_su_kien($conn, $id_tk, $id_sk, 'cauhinh_sukien');
     }
 
-    return false;
+    // Tạo mới sự kiện → kiểm tra quyền hệ thống
+    return kiem_tra_quyen_he_thong($conn, $id_tk, 'tao_su_kien');
 }
 
 /**
@@ -506,6 +507,10 @@ function btc_lay_chi_tiet_su_kien($conn, $id_su_kien)
 
     $su_kien = truy_van_mot_ban_ghi($conn, 'sukien', 'idSK', $id_su_kien);
     if (!$su_kien) {
+        return null;
+    }
+
+    if ((int) ($su_kien['isDeleted'] ?? 0) === 1) {
         return null;
     }
 

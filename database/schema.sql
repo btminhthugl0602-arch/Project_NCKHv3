@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Mar 10, 2026 at 05:19 PM
+-- Generation Time: Mar 13, 2026 at 03:32 AM
 -- Server version: 8.4.3
 -- PHP Version: 8.3.30
 
@@ -323,7 +323,7 @@ CREATE TABLE `diemdanh` (
   `thoiGianDiemDanh` datetime DEFAULT CURRENT_TIMESTAMP,
   `hienDien` tinyint DEFAULT '1',
   `ghiChu` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `idLichTrinh` int DEFAULT NULL COMMENT 'Liên kết buổi điểm danh',
+  `idPhienDD` int DEFAULT NULL COMMENT 'Liên kết phiên điểm danh cụ thể',
   `phuongThuc` enum('QR','GPS','THU_CONG','NFC') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'QR' COMMENT 'Cách điểm danh được thực hiện',
   `viTriLat` decimal(10,7) DEFAULT NULL COMMENT 'Vị trí SV lúc điểm danh',
   `viTriLng` decimal(10,7) DEFAULT NULL,
@@ -403,8 +403,8 @@ CREATE TABLE `form_field` (
   `idField` int NOT NULL,
   `idSK` int NOT NULL COMMENT 'Luôn có — field thuộc về sự kiện nào. Dùng để copy form và cascade delete',
   `idVongThi` int DEFAULT NULL COMMENT 'NULL = field mặc định của sự kiện (dùng khi tạo sản phẩm lần đầu)\n             Có giá trị = field riêng của vòng thi đó\n             Logic resolve khi nhóm nộp ở Vòng X:\n               Vòng X có field? → dùng form Vòng X\n               Không → không cần nộp gì, thông báo vòng này không yêu cầu tài liệu',
-  `tenTruong` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên hiển thị, vd: "Link Github", "File báo cáo PDF"',
-  `kieuTruong` enum('TEXT','TEXTAREA','URL','FILE','SELECT','CHECKBOX') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tenTruong` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên hiển thị, vd: "Link Github", "File báo cáo PDF"',
+  `kieuTruong` enum('TEXT','TEXTAREA','URL','FILE','SELECT','CHECKBOX') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `batBuoc` tinyint NOT NULL DEFAULT '1',
   `thuTu` int NOT NULL DEFAULT '0' COMMENT 'Thứ tự hiển thị trong form',
   `cauHinhJson` json DEFAULT NULL COMMENT 'Cấu hình riêng theo kieuTruong:\n             FILE:     {"accept":"pdf,docx","maxSizeKB":5120}\n             SELECT:   {"options":["Lựa chọn A","Lựa chọn B"]}\n             TEXT:     {"maxLength":200,"placeholder":"Nhập tên đề tài..."}\n             TEXTAREA: {"maxLength":1000,"rows":5}\n             URL:      {"placeholder":"https://github.com/..."}\n             CHECKBOX: {"label":"Tôi xác nhận đã đọc quy định"}',
@@ -588,7 +588,7 @@ CREATE TABLE `nhom` (
   `idSK` int NOT NULL,
   `idChuNhom` int NOT NULL COMMENT 'Chủ nhóm: GV hoặc SV. Có quyền quản lý hành chính nhóm\n             (mời, kick, duyệt yêu cầu, chọn/đổi trưởng nhóm)',
   `idTruongNhom` int DEFAULT NULL COMMENT 'Trưởng nhóm: bắt buộc là SV. NULL khi GV là chủ nhóm\n             và chưa chỉ định. Người duy nhất được nộp sản phẩm.',
-  `maNhom` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Mã nhóm unique trong sự kiện',
+  `maNhom` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Mã nhóm unique trong sự kiện',
   `ngayTao` datetime DEFAULT CURRENT_TIMESTAMP,
   `isActive` tinyint NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Nhóm tham gia sự kiện.\n           Quy tắc:\n           - SV tạo nhóm → idChuNhom = idTruongNhom = SV đó\n           - GV tạo nhóm → idChuNhom = GV, idTruongNhom = NULL\n           - Chỉ Chủ nhóm mới được thay đổi Trưởng nhóm\n           - Chủ nhóm không được rời nếu chưa nhượng quyền\n           - Trưởng nhóm không thể tự bỏ role';
@@ -692,7 +692,7 @@ CREATE TABLE `phancong_doclap` (
   `idGV` int NOT NULL,
   `idVongThi` int NOT NULL,
   `isTrongTai` tinyint NOT NULL DEFAULT '0' COMMENT '0 = Giám khảo chính thức (phan_cong_giam_khao), 1 = Trọng tài phúc khảo (moi_trong_tai)',
-  `trangThaiCham` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Chờ chấm' COMMENT 'Chờ chấm / Đang chấm / Đã xác nhận',
+  `trangThaiCham` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Chờ chấm' COMMENT 'Chờ chấm / Đang chấm / Đã xác nhận',
   `ngayNop` datetime DEFAULT NULL COMMENT 'Thời điểm nộp phiếu chấm cho SP này'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -826,8 +826,8 @@ CREATE TABLE `sanpham` (
   `idNhom` int NOT NULL,
   `idSK` int NOT NULL,
   `idChuDeSK` int DEFAULT NULL COMMENT 'Chủ đề đề tài — hardcode vì ảnh hưởng phân công tiểu ban chấm',
-  `tenSanPham` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên đề tài — hardcode vì dùng ở mọi nơi: chấm điểm, kết quả, chứng nhận',
-  `trangThai` enum('CHO_DUYET','DA_DUYET','BI_LOAI') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'CHO_DUYET',
+  `tenSanPham` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên đề tài — hardcode vì dùng ở mọi nơi: chấm điểm, kết quả, chứng nhận',
+  `trangThai` enum('CHO_DUYET','DA_DUYET','BI_LOAI') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'CHO_DUYET',
   `ngayTao` datetime DEFAULT CURRENT_TIMESTAMP,
   `ngayCapNhat` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sản phẩm của nhóm. 1 bản ghi per nhóm per sự kiện.\n           Nội dung chi tiết (file, link...) lưu ở sanpham_field_value.\n           Chỉ Trưởng nhóm được tạo/cập nhật.\n           Chỉ được sửa khi vongthi.thoiGianDongNop chưa qua.';
@@ -859,8 +859,8 @@ CREATE TABLE `sanpham_field_value` (
   `idSanPham` int NOT NULL,
   `idVongThi` int DEFAULT NULL COMMENT 'NULL = nộp theo form SK mặc định (khi tạo sản phẩm lần đầu)\n             Có giá trị = nộp theo form vòng thi cụ thể',
   `idField` int NOT NULL,
-  `giaTriText` text COLLATE utf8mb4_unicode_ci COMMENT 'Dùng cho kieuTruong: TEXT, TEXTAREA, URL, SELECT, CHECKBOX',
-  `duongDanFile` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Dùng cho kieuTruong: FILE. Lưu path tương đối.\n             Pattern: /uploads/sanpham/{idSK}/{idNhom}/{idVongThi}/{tenFile}',
+  `giaTriText` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Dùng cho kieuTruong: TEXT, TEXTAREA, URL, SELECT, CHECKBOX',
+  `duongDanFile` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Dùng cho kieuTruong: FILE. Lưu path tương đối.\n             Pattern: /uploads/sanpham/{idSK}/{idNhom}/{idVongThi}/{tenFile}',
   `ngayNop` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm nộp/cập nhật lần cuối'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Giá trị các field nhóm đã điền khi nộp tài liệu.\n           PRIMARY KEY (idSanPham, idField): mỗi field chỉ có 1 giá trị\n           → nộp lại = UPDATE, không INSERT thêm.\n           Check deadline: vongthi.thoiGianDongNop > NOW() mới cho phép UPDATE.\n           Mỗi vòng có idField riêng trong form_field nên không bị trùng PK.';
 
@@ -958,7 +958,8 @@ INSERT INTO `sukien` (`idSK`, `tenSK`, `moTa`, `idCap`, `nguoiTao`, `ngayMoDangK
 (500, 'Hackathon Sinh viên Công nghệ 2026', 'Sự kiện demo full dữ liệu: Nhóm, Bài nộp, Chấm điểm', 1, 2, '2026-02-01 00:00:00', '2026-02-20 00:00:00', '2026-02-25 00:00:00', '2026-03-30 00:00:00', 1, NULL, 1, 5, NULL, 0, 1, 0),
 (501, 'gv Minh tạo', '', 1, 7, '2026-02-23 16:05:00', '2026-03-08 16:05:00', '2026-02-23 16:05:00', '2026-03-08 16:05:00', 0, NULL, 1, 5, NULL, 0, 1, 0),
 (800, 'Hội nghị NCKH Sinh viên Khoa CNTT 2026', 'Sự kiện NCKH trọng điểm nhằm tìm kiếm các giải pháp Công nghệ AI, IoT và Phần mềm ứng dụng xuất sắc nhất.', 1, 1, '2026-01-01 00:00:00', '2026-03-01 00:00:00', '2026-03-10 00:00:00', '2026-05-30 00:00:00', 1, NULL, 1, 5, NULL, 0, 1, 0),
-(999, 'Sự kiện Test Độ Lệch Điểm 2026', 'Môi trường test cảnh báo độ lệch', 1, 1, '2026-03-09 14:58:02', '2026-03-09 14:58:02', NULL, NULL, 1, NULL, 1, 5, NULL, 0, 1, 0);
+(999, 'Sự kiện Test Độ Lệch Điểm 2026', 'Môi trường test cảnh báo độ lệch', 1, 1, '2026-03-09 14:58:02', '2026-03-09 14:58:02', NULL, NULL, 1, NULL, 1, 5, NULL, 0, 1, 0),
+(1000, 'Sự kiện test', '', 1, 2, '2026-03-13 10:31:33', '2026-03-13 10:31:33', '2026-03-13 10:31:00', '2026-03-20 10:31:00', 1, NULL, 1, 5, NULL, 0, 1, 0);
 
 -- --------------------------------------------------------
 
@@ -1075,7 +1076,8 @@ INSERT INTO `taikhoan_vaitro_sukien` (`id`, `idTK`, `idSK`, `idVaiTro`, `nguonTa
 (26, 3, 11, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1),
 (27, 9, 500, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1),
 (28, 7, 800, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1),
-(29, 3, 999, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1);
+(29, 3, 999, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1),
+(33, 2, 1000, 1, 'BTC_THEM', 2, '2026-03-13 10:31:33', 1);
 
 -- --------------------------------------------------------
 
@@ -1131,6 +1133,13 @@ CREATE TABLE `thongbao` (
   `nguoiGui` int NOT NULL COMMENT 'Luôn có giá trị — mọi TB đều do người kích hoạt',
   `ngayGui` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng trung tâm thông báo. phamVi quyết định bảng phụ nào được dùng.';
+
+--
+-- Dumping data for table `thongbao`
+--
+
+INSERT INTO `thongbao` (`idThongBao`, `tieuDe`, `noiDung`, `loaiThongBao`, `phamVi`, `idSK`, `idDoiTuong`, `loaiDoiTuong`, `nguoiGui`, `ngayGui`) VALUES
+(1, 'Sự kiện mới: Sự kiện test', 'Sự kiện \"Sự kiện test\" vừa được công bố. Hãy xem chi tiết và đăng ký tham gia!', 'SU_KIEN', 'TAT_CA', 1000, NULL, NULL, 2, '2026-03-13 10:31:33');
 
 -- --------------------------------------------------------
 
@@ -1226,7 +1235,6 @@ INSERT INTO `thuoctinh_kiemtra` (`idThuocTinhKiemTra`, `tenThuocTinh`, `tenTruon
 (5, 'Trạng thái vòng thi', 'trangThai', 'sanpham_vongthi', 'VONGTHI'),
 (6, 'Trạng thái sản phẩm', 'trangThaiSanPham', 'sanpham', 'SANPHAM'),
 (7, 'Loại tài liệu', 'idloaitailieu', 'sanpham', 'SANPHAM'),
--- row #8 (isActive) đã bị xóa — cột này không tồn tại trong bảng sanpham
 (9, 'Điểm tổng kết', 'diemTongKet', 'ketqua', 'GIAITHUONG'),
 (10, 'Xếp hạng', 'xepHang', 'ketqua', 'GIAITHUONG'),
 (11, 'Đã có giải', 'idGiaiThuong', 'ketqua', 'GIAITHUONG');
@@ -1564,7 +1572,7 @@ CREATE TABLE `yeucau_thamgia` (
   `idNhom` int DEFAULT NULL,
   `idTK` int DEFAULT NULL,
   `ChieuMoi` tinyint DEFAULT '0' COMMENT '0: nhóm gửi lời mời, 1: người dùng yêu cầu tham gia nhóm',
-  `loaiYeuCau` enum('SV','GVHD') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'SV' COMMENT 'SV: yêu cầu thành viên sinh viên\n             GVHD: mời giảng viên hướng dẫn',
+  `loaiYeuCau` enum('SV','GVHD') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'SV' COMMENT 'SV: yêu cầu thành viên sinh viên\n             GVHD: mời giảng viên hướng dẫn',
   `loiNhan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `trangThai` int DEFAULT '0' COMMENT 'Chờ phản hồi/Đã chấp nhận/Đã từ chối',
   `ngayGui` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -1673,8 +1681,8 @@ ALTER TABLE `diemdanh`
   ADD PRIMARY KEY (`idDiemDanh`),
   ADD KEY `idNhom` (`idNhom`),
   ADD KEY `idTK` (`idTK`),
-  ADD KEY `idx_dd_lich` (`idLichTrinh`),
-  ADD KEY `idx_dd_tk_lich` (`idTK`,`idLichTrinh`);
+  ADD KEY `idx_dd_phien` (`idPhienDD`),
+  ADD KEY `idx_dd_tk_phien` (`idTK`,`idPhienDD`);
 
 --
 -- Indexes for table `dieukien`
@@ -2204,7 +2212,7 @@ ALTER TABLE `sinhvien`
 -- AUTO_INCREMENT for table `sukien`
 --
 ALTER TABLE `sukien`
-  MODIFY `idSK` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1000;
+  MODIFY `idSK` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1001;
 
 --
 -- AUTO_INCREMENT for table `taikhoan`
@@ -2216,13 +2224,13 @@ ALTER TABLE `taikhoan`
 -- AUTO_INCREMENT for table `taikhoan_vaitro_sukien`
 --
 ALTER TABLE `taikhoan_vaitro_sukien`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT for table `thongbao`
 --
 ALTER TABLE `thongbao`
-  MODIFY `idThongBao` int NOT NULL AUTO_INCREMENT;
+  MODIFY `idThongBao` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `thongtinnhom`
@@ -2354,7 +2362,7 @@ ALTER TABLE `chungnhan`
 ALTER TABLE `diemdanh`
   ADD CONSTRAINT `diemdanh_ibfk_1` FOREIGN KEY (`idNhom`) REFERENCES `nhom` (`idNhom`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   ADD CONSTRAINT `diemdanh_ibfk_2` FOREIGN KEY (`idTK`) REFERENCES `taikhoan` (`idTK`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  ADD CONSTRAINT `diemdanh_ibfk_3` FOREIGN KEY (`idLichTrinh`) REFERENCES `lichtrinh` (`idLichTrinh`) ON DELETE SET NULL;
+  ADD CONSTRAINT `diemdanh_ibfk_3` FOREIGN KEY (`idPhienDD`) REFERENCES `phien_diemdanh` (`idPhienDD`) ON DELETE SET NULL ON UPDATE RESTRICT;
 
 --
 -- Constraints for table `dieukien_don`

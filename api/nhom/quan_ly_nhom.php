@@ -1003,7 +1003,8 @@ function lay_yeu_cau_cua_toi(PDO $conn, int $idTK, int $idSK): array
            AND yc.ChieuMoi = 0
            AND n.idSK = :idSK
            AND yc.trangThai = 0
-         GROUP BY yc.idYeuCau
+         GROUP BY yc.idYeuCau, yc.idNhom, yc.loaiYeuCau,
+                  yc.loiNhan, yc.ngayGui, tn.tennhom, n.maNhom
          ORDER BY yc.ngayGui DESC'
     );
     $stmtMoi->execute([':idTK' => $idTK, ':idSK' => $idSK]);

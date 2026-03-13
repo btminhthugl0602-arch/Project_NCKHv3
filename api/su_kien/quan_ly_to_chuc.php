@@ -40,7 +40,7 @@ function tao_lich_trinh($conn, $id_nguoi_tao, $id_sk, $ten_hoat_dong, $thoi_gian
     $result = _insert_info(
         $conn,
         'lichtrinh',
-        ['idSK', 'idVongThi', 'tenHoatDong', 'thoiGian', 'diaDiem'],
+        ['idSK', 'idVongThi', 'tenHoatDong', 'thoiGianBatDau', 'diaDiem'],
         [$id_sk, $id_vong_thi, $ten_hoat_dong, $thoi_gian, $dia_diem]
     );
 
@@ -57,7 +57,7 @@ function ghi_nhan_diem_danh(
     $trang_thai_hien_dien,
     $ghi_chu = '',
     $id_phien_dd = null,
-    $phuong_thuc = 'Manual'
+    $phuong_thuc = 'THU_CONG'
 ) {
     $id_nguoi_check = (int) $id_nguoi_check;
     $id_nhom = (int) $id_nhom;
@@ -78,13 +78,19 @@ function ghi_nhan_diem_danh(
         return ['status' => false, 'message' => 'Không có quyền điểm danh'];
     }
 
-    if ($id_phien_dd !== null && !_is_exist($conn, 'phien_diemdanh', 'idPhienDD', $id_phien_dd)) {
-        return ['status' => false, 'message' => 'Phiên điểm danh không tồn tại'];
+    if ($id_phien_dd !== null) {
+        $phien = truy_van_mot_ban_ghi($conn, 'phien_diemdanh', 'idPhienDD', $id_phien_dd);
+        if (!$phien) {
+            return ['status' => false, 'message' => 'Phiên điểm danh không tồn tại'];
+        }
+        if ($phien['trangThai'] !== 'DANG_MO') {
+            return ['status' => false, 'message' => 'Phiên điểm danh đã đóng'];
+        }
     }
 
-    $allowedMethods = ['QR', 'GPS', 'Manual', 'NFC'];
+    $allowedMethods = ['QR', 'GPS', 'THU_CONG', 'NFC'];
     if (!in_array($phuong_thuc, $allowedMethods, true)) {
-        $phuong_thuc = 'Manual';
+        $phuong_thuc = 'THU_CONG';
     }
 
     $result = _insert_info(
@@ -119,10 +125,22 @@ function them_thanh_vien_btc($conn, $id_admin, $id_sk, $id_tk_can_bo, $chuc_vu =
 
     $exists = _select_info($conn, 'taikhoan_vaitro_sukien', ['id'], [
         'WHERE' => [
-            'idTK', '=', $id_tk_can_bo, 'AND',
-            'idSK', '=', $id_sk, 'AND',
-            'idVaiTro', '=', 1, 'AND',
-            'isActive', '=', 1, '',
+            'idTK',
+            '=',
+            $id_tk_can_bo,
+            'AND',
+            'idSK',
+            '=',
+            $id_sk,
+            'AND',
+            'idVaiTro',
+            '=',
+            1,
+            'AND',
+            'isActive',
+            '=',
+            1,
+            '',
         ],
         'LIMIT' => [1],
     ]);

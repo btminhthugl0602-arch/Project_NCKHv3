@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Partial: Tab Nhập điểm dành cho Giảng viên / Giám khảo
  * Biến cần có: $idSk, $tab
@@ -88,11 +89,16 @@
                             class="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-200 text-slate-600">Chưa chấm</span>
                     </div>
                 </div>
-                <div id="gvMoTaTaiLieu" class="mt-2 hidden">
-                    <p class="text-xs text-slate-500">
-                        <i class="fas fa-link mr-1"></i>
-                        <span id="gvMoTaText" class="break-all"></span>
-                    </p>
+                <div id="gvTaiLieuSection" class="mt-3 hidden">
+                    <div class="border-t border-slate-100 pt-3">
+                        <button type="button" id="gvBtnToggleTaiLieu"
+                            class="flex items-center gap-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+                            <i class="fas fa-folder-open"></i>
+                            <span id="gvTaiLieuToggleLabel">Xem tài liệu đã nộp</span>
+                            <i id="gvTaiLieuChevron" class="fas fa-chevron-down text-[10px] transition-transform"></i>
+                        </button>
+                        <div id="gvTaiLieuList" class="mt-2 hidden space-y-2"></div>
+                    </div>
                 </div>
             </div>
 

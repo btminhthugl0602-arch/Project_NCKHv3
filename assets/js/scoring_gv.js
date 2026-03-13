@@ -24,7 +24,7 @@
     };
 
     const API = {
-        vongThi:  BASE_PATH + '/api/su_kien/danh_sach_vong_thi.php',
+        vongThi: BASE_PATH + '/api/su_kien/danh_sach_vong_thi.php',
         nhapDiem: BASE_PATH + '/api/cham_diem/nhap_diem.php',
     };
 
@@ -43,42 +43,45 @@
     }
 
     function cacheElements() {
-        el.vongThiSelect        = document.getElementById('gvVongThiSelect');
-        el.phieuStatus          = document.getElementById('gvPhieuStatus');
-        el.statTong             = document.getElementById('gvStatTongBai');
-        el.statDaCham           = document.getElementById('gvStatDaCham');
-        el.statChuaCham         = document.getElementById('gvStatChuaCham');
-        el.listSanPham          = document.getElementById('gvListSanPham');
-        el.listPlaceholder      = document.getElementById('gvListSanPhamPlaceholder');
-        el.phieuCham            = document.getElementById('gvPhieuCham');
-        el.phieuPlaceholder     = document.getElementById('gvPhieuChamPlaceholder');
-        el.tenSanPham           = document.getElementById('gvTenSanPham');
-        el.maNhom               = document.getElementById('gvMaNhom');
-        el.boTieuChiBadge       = document.getElementById('gvBoTieuChiBadge');
-        el.chamStatusBadge      = document.getElementById('gvChamStatusBadge');
-        el.moTaDiv              = document.getElementById('gvMoTaTaiLieu');
-        el.moTaText             = document.getElementById('gvMoTaText');
-        el.tieuChiTbody         = document.getElementById('gvTieuChiTableBody');
-        el.tongDiem             = document.getElementById('gvTongDiem');
-        el.luuStatus            = document.getElementById('gvLuuStatus');
-        el.btnLuuNhap           = document.getElementById('gvBtnLuuNhap');
-        el.btnNopPhieu          = document.getElementById('gvBtnNopPhieu');
-        el.tmplSpItem           = document.getElementById('gvSanPhamItemTemplate');
-        el.tmplTieuChiRow       = document.getElementById('gvTieuChiRowTemplate');
+        el.vongThiSelect = document.getElementById('gvVongThiSelect');
+        el.phieuStatus = document.getElementById('gvPhieuStatus');
+        el.statTong = document.getElementById('gvStatTongBai');
+        el.statDaCham = document.getElementById('gvStatDaCham');
+        el.statChuaCham = document.getElementById('gvStatChuaCham');
+        el.listSanPham = document.getElementById('gvListSanPham');
+        el.listPlaceholder = document.getElementById('gvListSanPhamPlaceholder');
+        el.phieuCham = document.getElementById('gvPhieuCham');
+        el.phieuPlaceholder = document.getElementById('gvPhieuChamPlaceholder');
+        el.tenSanPham = document.getElementById('gvTenSanPham');
+        el.maNhom = document.getElementById('gvMaNhom');
+        el.boTieuChiBadge = document.getElementById('gvBoTieuChiBadge');
+        el.chamStatusBadge = document.getElementById('gvChamStatusBadge');
+        el.moTaDiv = document.getElementById('gvTaiLieuSection');
+        el.moTaList = document.getElementById('gvTaiLieuList');
+        el.btnToggleTaiLieu = document.getElementById('gvBtnToggleTaiLieu');
+        el.taiLieuToggleLabel = document.getElementById('gvTaiLieuToggleLabel');
+        el.taiLieuChevron = document.getElementById('gvTaiLieuChevron');
+        el.tieuChiTbody = document.getElementById('gvTieuChiTableBody');
+        el.tongDiem = document.getElementById('gvTongDiem');
+        el.luuStatus = document.getElementById('gvLuuStatus');
+        el.btnLuuNhap = document.getElementById('gvBtnLuuNhap');
+        el.btnNopPhieu = document.getElementById('gvBtnNopPhieu');
+        el.tmplSpItem = document.getElementById('gvSanPhamItemTemplate');
+        el.tmplTieuChiRow = document.getElementById('gvTieuChiRowTemplate');
 
         // Phiếu Trọng tài
-        el.phieuTrongTai        = document.getElementById('gvPhieuTrongTai');
-        el.ttTenSanPham         = document.getElementById('gvTTTenSanPham');
-        el.ttMaNhom             = document.getElementById('gvTTMaNhom');
-        el.ttChamStatusBadge    = document.getElementById('gvTTChamStatusBadge');
-        el.ttGKSummary          = document.getElementById('gvTTGKSummary');
-        el.ttTableHead          = document.getElementById('gvTTTableHead');
-        el.ttTableBody          = document.getElementById('gvTTTableBody');
-        el.ttTongDiem           = document.getElementById('gvTTTongDiem');
-        el.ttTongDiemGKCols     = document.getElementById('gvTTTongDiemGKCols');
-        el.ttLuuStatus          = document.getElementById('gvTTLuuStatus');
-        el.ttBtnLuuNhap         = document.getElementById('gvTTBtnLuuNhap');
-        el.ttBtnNopPhieu        = document.getElementById('gvTTBtnNopPhieu');
+        el.phieuTrongTai = document.getElementById('gvPhieuTrongTai');
+        el.ttTenSanPham = document.getElementById('gvTTTenSanPham');
+        el.ttMaNhom = document.getElementById('gvTTMaNhom');
+        el.ttChamStatusBadge = document.getElementById('gvTTChamStatusBadge');
+        el.ttGKSummary = document.getElementById('gvTTGKSummary');
+        el.ttTableHead = document.getElementById('gvTTTableHead');
+        el.ttTableBody = document.getElementById('gvTTTableBody');
+        el.ttTongDiem = document.getElementById('gvTTTongDiem');
+        el.ttTongDiemGKCols = document.getElementById('gvTTTongDiemGKCols');
+        el.ttLuuStatus = document.getElementById('gvTTLuuStatus');
+        el.ttBtnLuuNhap = document.getElementById('gvTTBtnLuuNhap');
+        el.ttBtnNopPhieu = document.getElementById('gvTTBtnNopPhieu');
         el.tmplTieuChiTrongTaiRow = document.getElementById('gvTieuChiTrongTaiRowTemplate');
     }
 
@@ -140,7 +143,7 @@
         renderListLoading();
         try {
             const url = `${API.nhapDiem}?action=lay_phieu_cham&id_sk=${state.idSK}&id_vong_thi=${state.idVongThi}`;
-            const res  = await fetch(url);
+            const res = await fetch(url);
             const json = await res.json();
 
             if (json.status !== 'success') {
@@ -157,7 +160,7 @@
                 return;
             }
 
-            state.dsSanPham  = dsSanPham || [];
+            state.dsSanPham = dsSanPham || [];
             updatePhieuStatusBadge(phancongcham.trangThaiXacNhan);
             renderDanhSach(dsSanPham, phancongcham);
 
@@ -189,7 +192,7 @@
     }
 
     function buildSpItem(sp) {
-        const tmpl   = el.tmplSpItem.content.cloneNode(true);
+        const tmpl = el.tmplSpItem.content.cloneNode(true);
         const wrapper = tmpl.querySelector('.gv-sp-item');
 
         wrapper.dataset.id = sp.idSanPham;
@@ -203,7 +206,7 @@
         // Thanh tiến độ
         const soTC = sp.soTieuChi || 0;
         const soDa = sp.soTieuChiDaCham || 0;
-        const pct  = soTC > 0 ? Math.round((soDa / soTC) * 100) : 0;
+        const pct = soTC > 0 ? Math.round((soDa / soTC) * 100) : 0;
         wrapper.querySelector('.gv-sp-tien-do-text').textContent = `${soDa} / ${soTC} tiêu chí`;
         wrapper.querySelector('.gv-sp-tien-do-bar').style.width = `${pct}%`;
 
@@ -254,10 +257,10 @@
         showPhieuLoading();
         try {
             const url = `${API.nhapDiem}?action=chi_tiet_san_pham`
-                      + `&id_sk=${state.idSK}`
-                      + `&id_vong_thi=${state.idVongThi}`
-                      + `&id_san_pham=${idSanPham}`;
-            const res  = await fetch(url);
+                + `&id_sk=${state.idSK}`
+                + `&id_vong_thi=${state.idVongThi}`
+                + `&id_san_pham=${idSanPham}`;
+            const res = await fetch(url);
             const json = await res.json();
 
             if (json.status !== 'success') {
@@ -289,16 +292,11 @@
         // ── GK thường (logic gốc) ──────────────────────────────────
 
         // Header
-        el.tenSanPham.textContent  = sanPham?.tensanpham || '--';
-        el.maNhom.textContent      = sanPham?.manhom || '--';
+        el.tenSanPham.textContent = sanPham?.tensanpham || '--';
+        el.maNhom.textContent = sanPham?.manhom || '--';
         el.boTieuChiBadge.innerHTML = `<i class="fas fa-clipboard-list mr-1"></i>${phancongcham?.tenBoTieuChi || 'Bộ tiêu chí'}`;
 
-        if (sanPham?.moTataiLieu) {
-            el.moTaDiv.classList.remove('hidden');
-            el.moTaText.textContent = sanPham.moTataiLieu;
-        } else {
-            el.moTaDiv.classList.add('hidden');
-        }
+        renderTaiLieu(data.dsTaiLieu || []);
 
         // Trạng thái chấm dựa trên per-SP trangThaiChamSP
         const tatCaDaCham = dsTieuChi.length > 0 && dsTieuChi.every(tc => tc.diem !== null);
@@ -317,8 +315,8 @@
         el.luuStatus.classList.add('hidden');
 
         // Cập nhật trạng thái buttons
-        el.btnLuuNhap.disabled  = isSubmitted;
-        el.btnNopPhieu.disabled  = isSubmitted;
+        el.btnLuuNhap.disabled = isSubmitted;
+        el.btnNopPhieu.disabled = isSubmitted;
         if (isSubmitted) {
             el.btnLuuNhap.classList.add('opacity-50', 'cursor-not-allowed');
             el.btnNopPhieu.classList.add('opacity-50', 'cursor-not-allowed');
@@ -344,7 +342,7 @@
 
         // Header
         el.ttTenSanPham.textContent = sanPham?.tensanpham || '--';
-        el.ttMaNhom.textContent     = sanPham?.manhom || '--';
+        el.ttMaNhom.textContent = sanPham?.manhom || '--';
         updateTTChamStatusBadge(trangThaiChamSP);
 
         // Tóm tắt điểm GK chính
@@ -366,7 +364,7 @@
         el.ttLuuStatus.classList.add('hidden');
 
         // Buttons
-        el.ttBtnLuuNhap.disabled  = isSubmitted;
+        el.ttBtnLuuNhap.disabled = isSubmitted;
         el.ttBtnNopPhieu.disabled = isSubmitted;
         if (isSubmitted) {
             el.ttBtnLuuNhap.classList.add('opacity-50', 'cursor-not-allowed');
@@ -423,7 +421,7 @@
 
         dsTieuChi.forEach((tc, idx) => {
             const canhBao = maTranCanhBao.find(m => m.idTieuChi == tc.idTieuChi) || {};
-            const isHigh  = !!canhBao.isHighDeviation;
+            const isHigh = !!canhBao.isHighDeviation;
 
             const row = document.createElement('tr');
             row.dataset.id = tc.idTieuChi;
@@ -443,10 +441,10 @@
             // Cột GK (mỗi GK 1 cột)
             bongTranh.forEach(gk => {
                 const chiTiet = (gk.chiTiet || []).find(c => c.idTieuChi == tc.idTieuChi);
-                const diem    = chiTiet ? parseFloat(chiTiet.diem) : null;
-                const td      = document.createElement('td');
-                td.className  = 'px-3 py-2 text-center align-top';
-                td.innerHTML  = diem !== null
+                const diem = chiTiet ? parseFloat(chiTiet.diem) : null;
+                const td = document.createElement('td');
+                td.className = 'px-3 py-2 text-center align-top';
+                td.innerHTML = diem !== null
                     ? `<span class="font-semibold text-slate-700">${diem.toFixed(1)}</span>`
                     + (chiTiet?.nhanXet ? `<p class="text-xs text-slate-400 mt-0.5 italic">${escHtml(chiTiet.nhanXet)}</p>` : '')
                     : '<span class="text-slate-300 text-xs">—</span>';
@@ -476,10 +474,10 @@
                 tdInput.innerHTML = `<span class="font-bold text-orange-700">${diemHienTai}</span>`;
             } else {
                 const inputDiem = document.createElement('input');
-                inputDiem.type  = 'number';
-                inputDiem.min   = 0;
-                inputDiem.max   = tc.diemToiDa;
-                inputDiem.step  = '0.5';
+                inputDiem.type = 'number';
+                inputDiem.min = 0;
+                inputDiem.max = tc.diemToiDa;
+                inputDiem.step = '0.5';
                 inputDiem.className = `gv-tt-input w-20 text-center px-2 py-1 text-sm border rounded-lg focus:outline-none focus:ring-2 ${isHigh ? 'border-orange-300 focus:ring-orange-300' : 'border-slate-300 focus:ring-indigo-300'}`;
                 // Pre-fill: dùng điểm TT đã lưu nháp nếu có, fallback về avg
                 if (tc.diem !== null) {
@@ -513,7 +511,7 @@
                     : '<span class="text-slate-300 text-xs">—</span>';
             } else {
                 const textarea = document.createElement('textarea');
-                textarea.rows  = 2;
+                textarea.rows = 2;
                 textarea.className = `gv-tt-nhan-xet w-full px-2 py-1 text-xs border rounded-lg resize-none focus:outline-none focus:ring-1 ${isHigh ? 'border-orange-300 focus:ring-orange-300 bg-orange-50' : 'border-slate-200 focus:ring-indigo-300'}`;
                 textarea.placeholder = isHigh ? 'Lý do bắt buộc (lệch cao)...' : 'Nhận xét (không bắt buộc)...';
                 if (tc.nhanXet) textarea.value = tc.nhanXet;
@@ -553,7 +551,7 @@
             inp.disabled = true;
             inp.classList.add('bg-slate-50', 'text-slate-500');
         });
-        el.ttBtnLuuNhap.disabled  = true;
+        el.ttBtnLuuNhap.disabled = true;
         el.ttBtnNopPhieu.disabled = true;
         el.ttBtnLuuNhap.classList.add('opacity-50', 'cursor-not-allowed');
         el.ttBtnNopPhieu.classList.add('opacity-50', 'cursor-not-allowed');
@@ -569,22 +567,22 @@
         el.tieuChiTbody.innerHTML = '';
         dsTieuChi.forEach((tc, idx) => {
             const tmpl = el.tmplTieuChiRow.content.cloneNode(true);
-            const row  = tmpl.querySelector('tr');
+            const row = tmpl.querySelector('tr');
 
             row.dataset.id = tc.idTieuChi;
-            row.querySelector('.gv-tc-stt').textContent        = idx + 1;
-            row.querySelector('.gv-tc-noi-dung').textContent   = tc.noiDungTieuChi || '--';
+            row.querySelector('.gv-tc-stt').textContent = idx + 1;
+            row.querySelector('.gv-tc-noi-dung').textContent = tc.noiDungTieuChi || '--';
             row.querySelector('.gv-tc-diem-toi-da').textContent = tc.diemToiDa;
 
-            const inputDiem    = row.querySelector('.gv-tc-input');
+            const inputDiem = row.querySelector('.gv-tc-input');
             const inputNhanXet = row.querySelector('.gv-tc-nhan-xet');
 
             inputDiem.max = tc.diemToiDa;
             if (tc.diem !== null) inputDiem.value = tc.diem;
-            if (tc.nhanXet)       inputNhanXet.value = tc.nhanXet;
+            if (tc.nhanXet) inputNhanXet.value = tc.nhanXet;
 
             if (readOnly) {
-                inputDiem.disabled    = true;
+                inputDiem.disabled = true;
                 inputNhanXet.disabled = true;
                 inputDiem.classList.add('bg-slate-50', 'text-slate-500');
                 inputNhanXet.classList.add('bg-slate-50', 'text-slate-500');
@@ -633,18 +631,18 @@
         if (diem.length === 0) return;
 
         const payload = {
-            action:       'luu_diem',
-            id_sk:        state.idSK,
-            id_vong_thi:  state.idVongThi,
-            id_san_pham:  state.idSanPhamSelected,
+            action: 'luu_diem',
+            id_sk: state.idSK,
+            id_vong_thi: state.idVongThi,
+            id_san_pham: state.idSanPhamSelected,
             diem,
         };
 
         try {
-            const res  = await fetch(API.nhapDiem, {
-                method:  'POST',
+            const res = await fetch(API.nhapDiem, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify(payload),
+                body: JSON.stringify(payload),
             });
             const json = await res.json();
 
@@ -675,9 +673,9 @@
             el.ttTableBody.querySelectorAll('tr.gv-tt-row').forEach(row => {
                 const idTieuChi = parseInt(row.dataset.id, 10);
                 const inputDiem = row.querySelector('.gv-tt-input');
-                const inputNX   = row.querySelector('.gv-tt-nhan-xet');
+                const inputNX = row.querySelector('.gv-tt-nhan-xet');
                 if (!inputDiem) return;  // đã khóa (readonly) — bỏ qua
-                const diem    = inputDiem.value;
+                const diem = inputDiem.value;
                 const nhanXet = inputNX ? inputNX.value : '';
                 if (idTieuChi && diem !== '') {
                     result.push({ id_tieu_chi: idTieuChi, diem: parseFloat(diem), nhan_xet: nhanXet });
@@ -691,8 +689,8 @@
         const result = [];
         rows.forEach(row => {
             const idTieuChi = parseInt(row.dataset.id, 10);
-            const diem      = row.querySelector('.gv-tc-input')?.value;
-            const nhanXet   = row.querySelector('.gv-tc-nhan-xet')?.value || '';
+            const diem = row.querySelector('.gv-tc-input')?.value;
+            const nhanXet = row.querySelector('.gv-tc-nhan-xet')?.value || '';
             if (idTieuChi && diem !== '') {
                 result.push({ id_tieu_chi: idTieuChi, diem: parseFloat(diem), nhan_xet: nhanXet });
             }
@@ -731,19 +729,19 @@
             }
 
             const confirm = await Swal.fire({
-                icon:              'question',
-                title:             'Xác nhận phán quyết?',
-                html:              '<p class="text-sm text-slate-600">Phán quyết này sẽ <strong>thay thế hoàn toàn</strong> điểm trung bình của các giám khảo chính và trở thành <strong>điểm cuối cùng</strong> của bài thi. Hành động này <strong>không thể hoàn tác</strong>.</p>',
-                showCancelButton:  true,
+                icon: 'question',
+                title: 'Xác nhận phán quyết?',
+                html: '<p class="text-sm text-slate-600">Phán quyết này sẽ <strong>thay thế hoàn toàn</strong> điểm trung bình của các giám khảo chính và trở thành <strong>điểm cuối cùng</strong> của bài thi. Hành động này <strong>không thể hoàn tác</strong>.</p>',
+                showCancelButton: true,
                 confirmButtonText: '<i class="fas fa-gavel mr-1"></i> Xác nhận phán quyết',
-                cancelButtonText:  'Xem lại',
+                cancelButtonText: 'Xem lại',
                 confirmButtonColor: '#ea580c',
                 customClass: { confirmButton: 'font-semibold' },
             });
             if (!confirm.isConfirmed) return;
         } else {
             // ── GK thường: kiểm tra đã nhập đủ điểm ──
-            const rows  = el.tieuChiTbody.querySelectorAll('tr.gv-tieuchi-row');
+            const rows = el.tieuChiTbody.querySelectorAll('tr.gv-tieuchi-row');
             const empty = Array.from(rows).some(r => r.querySelector('.gv-tc-input')?.value === '');
             if (empty) {
                 Swal.fire({ icon: 'warning', title: 'Chưa nhập đủ điểm', text: 'Vui lòng nhập điểm cho tất cả tiêu chí trước khi nộp phiếu.' });
@@ -751,12 +749,12 @@
             }
 
             const confirm = await Swal.fire({
-                icon:              'question',
-                title:             'Xác nhận nộp phiếu?',
-                text:              'Sau khi nộp, bạn sẽ không thể chỉnh sửa điểm sản phẩm này nữa.',
-                showCancelButton:  true,
+                icon: 'question',
+                title: 'Xác nhận nộp phiếu?',
+                text: 'Sau khi nộp, bạn sẽ không thể chỉnh sửa điểm sản phẩm này nữa.',
+                showCancelButton: true,
                 confirmButtonText: 'Nộp phiếu',
-                cancelButtonText:  'Hủy',
+                cancelButtonText: 'Hủy',
                 confirmButtonColor: '#4f46e5',
             });
             if (!confirm.isConfirmed) return;
@@ -766,17 +764,17 @@
         await luuDiem(false);
 
         const payload = {
-            action:      'nop_phieu',
-            id_sk:       state.idSK,
+            action: 'nop_phieu',
+            id_sk: state.idSK,
             id_vong_thi: state.idVongThi,
             id_san_pham: state.idSanPhamSelected,
         };
 
         try {
-            const res  = await fetch(API.nhapDiem, {
-                method:  'POST',
+            const res = await fetch(API.nhapDiem, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify(payload),
+                body: JSON.stringify(payload),
             });
             const json = await res.json();
 
@@ -810,20 +808,64 @@
     // UI HELPERS
     // ─────────────────────────────────────────────────────────────
 
+    function renderTaiLieu(dsTaiLieu) {
+        if (!dsTaiLieu || dsTaiLieu.length === 0) {
+            el.moTaDiv.classList.add('hidden');
+            return;
+        }
+
+        el.moTaDiv.classList.remove('hidden');
+        el.moTaList.classList.add('hidden');  // collapsed by default
+        el.taiLieuChevron.style.transform = '';
+
+        // Build field list
+        el.moTaList.innerHTML = dsTaiLieu.map(field => {
+            const label = `<p class="text-[11px] font-semibold text-slate-500 mb-0.5">${escHtml(field.tenTruong)}</p>`;
+            let content = '';
+            const kieu = (field.kieuTruong || '').toUpperCase();
+
+            if (kieu === 'FILE' && field.duongDanFile) {
+                const fileName = field.duongDanFile.split('/').pop();
+                content = `<a href="${escHtml(field.duongDanFile)}" target="_blank" rel="noopener"
+                    class="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium break-all">
+                    <i class="fas fa-file-download"></i>${escHtml(fileName)}
+                </a>`;
+            } else if (kieu === 'URL' && field.giaTriText) {
+                content = `<a href="${escHtml(field.giaTriText)}" target="_blank" rel="noopener"
+                    class="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 break-all">
+                    <i class="fas fa-external-link-alt"></i>${escHtml(field.giaTriText)}
+                </a>`;
+            } else if (field.giaTriText) {
+                content = `<p class="text-xs text-slate-700 whitespace-pre-wrap break-words">${escHtml(field.giaTriText)}</p>`;
+            } else {
+                content = `<p class="text-xs text-slate-400 italic">Chưa nộp</p>`;
+            }
+
+            return `<div class="p-2 bg-slate-50 rounded-lg border border-slate-100">${label}${content}</div>`;
+        }).join('');
+
+        // Toggle
+        el.btnToggleTaiLieu.onclick = () => {
+            const isHidden = el.moTaList.classList.contains('hidden');
+            el.moTaList.classList.toggle('hidden', !isHidden);
+            el.taiLieuChevron.style.transform = isHidden ? 'rotate(180deg)' : '';
+        };
+    }
+
     function updateStats(tong, daCham) {
-        el.statTong.textContent     = tong;
-        el.statDaCham.textContent   = daCham;
+        el.statTong.textContent = tong;
+        el.statDaCham.textContent = daCham;
         el.statChuaCham.textContent = tong - daCham;
     }
 
     function updatePhieuStatusBadge(trangThai) {
         const badges = {
-            'Chờ chấm':    { bg: 'bg-slate-100',   text: 'text-slate-500',   label: 'Chờ chấm' },
-            'Đang chấm':   { bg: 'bg-amber-100',   text: 'text-amber-700',   label: 'Đang chấm' },
+            'Chờ chấm': { bg: 'bg-slate-100', text: 'text-slate-500', label: 'Chờ chấm' },
+            'Đang chấm': { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Đang chấm' },
             'Đã xác nhận': { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'Đã chốt điểm' },
         };
         const cfg = trangThai ? (badges[trangThai] || { bg: 'bg-slate-200', text: 'text-slate-600', label: trangThai })
-                              : { bg: 'bg-slate-200', text: 'text-slate-600', label: 'Chưa phân công' };
+            : { bg: 'bg-slate-200', text: 'text-slate-600', label: 'Chưa phân công' };
 
         el.phieuStatus.className = `px-3 py-1.5 text-xs font-semibold rounded-full ${cfg.bg} ${cfg.text}`;
         el.phieuStatus.textContent = cfg.label;
@@ -862,10 +904,10 @@
         if (!sp) return;
 
         sp.soTieuChiDaCham = soDaDiem;
-        const soTC  = sp.soTieuChi || 1;
-        const pct   = Math.min(Math.round((soDaDiem / soTC) * 100), 100);
+        const soTC = sp.soTieuChi || 1;
+        const pct = Math.min(Math.round((soDaDiem / soTC) * 100), 100);
         item.querySelector('.gv-sp-tien-do-text').textContent = `${soDaDiem} / ${soTC} tiêu chí`;
-        item.querySelector('.gv-sp-tien-do-bar').style.width  = `${pct}%`;
+        item.querySelector('.gv-sp-tien-do-bar').style.width = `${pct}%`;
     }
 
     // Cập nhật badge và state per-SP trong danh sách (không reload)
