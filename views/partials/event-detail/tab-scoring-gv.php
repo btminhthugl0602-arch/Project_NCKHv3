@@ -327,7 +327,6 @@
         </td>
     </tr>
 </template>
-
 <!-- ══════════════════════════════════════════════════════════════
      SECTION: Bài phản biện tiểu ban (chấm offline)
      Hiển thị khi GV được phân công phản biện qua tiểu ban
@@ -336,8 +335,7 @@
 <div id="pbTieuBanSection" class="mt-6 hidden">
     <div class="flex items-center gap-3 mb-4">
         <div class="flex-1 h-px bg-slate-200"></div>
-        <span
-            class="flex items-center gap-2 px-3 py-1 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-full">
+        <span class="flex items-center gap-2 px-3 py-1 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-full">
             <i class="fas fa-sitemap text-[10px]"></i>Phản biện tiểu ban
         </span>
         <div class="flex-1 h-px bg-slate-200"></div>
@@ -419,23 +417,17 @@
                         <table class="w-full text-sm">
                             <thead>
                                 <tr class="bg-slate-50 border-b border-slate-200">
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase w-8">#
-                                    </th>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase">Nội dung
-                                        tiêu chí</th>
-                                    <th class="px-3 py-2 text-center text-xs font-bold text-slate-500 uppercase w-28">
-                                        Điểm / Tối đa</th>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase w-40">Nhận
-                                        xét</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase w-8">#</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase">Nội dung tiêu chí</th>
+                                    <th class="px-3 py-2 text-center text-xs font-bold text-slate-500 uppercase w-28">Điểm / Tối đa</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase w-40">Nhận xét</th>
                                 </tr>
                             </thead>
                             <tbody id="pbTieuChiTbody" class="divide-y divide-slate-100"></tbody>
                             <tfoot>
                                 <tr class="bg-purple-50 border-t-2 border-purple-200">
-                                    <td colspan="2" class="px-3 py-2 text-sm font-bold text-slate-700 text-right">Tổng
-                                        điểm (tạm tính)</td>
-                                    <td class="px-3 py-2 text-center text-base font-bold text-purple-700"
-                                        id="pbTongDiem">--</td>
+                                    <td colspan="2" class="px-3 py-2 text-sm font-bold text-slate-700 text-right">Tổng điểm (tạm tính)</td>
+                                    <td class="px-3 py-2 text-center text-base font-bold text-purple-700" id="pbTongDiem">--</td>
                                     <td></td>
                                 </tr>
                             </tfoot>
@@ -467,14 +459,13 @@
 
 <!-- Template: Item bài phản biện trong danh sách -->
 <template id="pbSanPhamItemTemplate">
-    <div class="pb-sp-item p-3 border rounded-lg cursor-pointer transition-all border-slate-200 hover:border-purple-300 hover:bg-purple-50/50"
-        data-id="">
+    <div class="pb-sp-item p-3 border rounded-lg cursor-pointer transition-all border-slate-200 hover:border-purple-300 hover:bg-purple-50/50" data-id="">
         <div class="flex items-start justify-between gap-2">
             <div class="flex-1 min-w-0">
                 <p class="text-xs font-bold text-slate-700 truncate pb-sp-ten"></p>
                 <p class="text-xs text-slate-500 mt-0.5">
                     <i class="fas fa-sitemap mr-1 text-slate-400"></i>
-                    <span class="pb-sp-tieubán"></span>
+                    <span class="pb-sp-tieuban"></span>
                 </p>
             </div>
             <div class="flex-shrink-0 pb-sp-badge"></div>

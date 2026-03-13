@@ -1,20 +1,44 @@
 <?php
 /**
- * Partial: Tab Phân công Ban giám khảo
- * Biến cần có: $idSk, $tab
+ * Partial: Tab Phân công Ban Giám Khảo
+ * Biến: $idSk, $tab, $perm
  */
+$canEdit = !empty($perm['quan_ly_tieuban']) || !empty($perm['cauhinh_sukien']);
 ?>
-<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-    <div class="p-4 border rounded-xl border-slate-200 bg-slate-50">
-        <p class="mb-1 text-xs font-bold uppercase text-slate-400">Phân công Ban giám khảo</p>
-        <p class="mb-0 text-sm text-slate-600">Quản lý danh sách BGK và phân công theo từng tiểu ban, phiên báo cáo.</p>
+<div id="judgesTab">
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div>
+            <p class="mb-0 text-sm font-bold text-slate-700">
+                <i class="fas fa-user-tie mr-2 text-blue-500"></i>Phân công Ban Giám Khảo theo Tiểu ban
+            </p>
+            <p class="mb-0 text-xs text-slate-400 mt-0.5">Gán giảng viên vào từng phòng báo cáo và thiết lập vai trò trong Hội đồng</p>
+        </div>
+        <button id="btnRefreshJudges" type="button"
+            class="inline-flex items-center px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-soft-sm flex-shrink-0">
+            <i class="fas fa-sync-alt mr-1.5"></i>Làm mới
+        </button>
     </div>
-    <div class="p-4 border rounded-xl border-dashed border-slate-300">
-        <p class="mb-1 text-xs font-bold uppercase text-slate-400">Gợi ý tác vụ</p>
-        <ul class="pl-5 space-y-1 text-sm list-disc text-slate-500">
-            <li>Thêm giảng viên vào danh sách BGK</li>
-            <li>Phân công BGK theo tiểu ban</li>
-            <li>Khóa lịch chấm để tránh trùng lặp</li>
-        </ul>
+
+    <!-- Bảng tổng hợp -->
+    <div id="judgesTableWrapper" class="overflow-x-auto border border-slate-200 rounded-2xl shadow-soft-sm">
+        <div class="p-10 text-center text-slate-400">
+            <i class="fas fa-spinner fa-spin text-3xl mb-3 block text-slate-300"></i>
+            <p class="text-sm">Đang tải dữ liệu phân công...</p>
+        </div>
     </div>
+
+    <!-- Thống kê tóm tắt -->
+    <div id="judgesStatSummary" class="hidden mt-4">
+        <div class="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700">
+            <i class="fas fa-info-circle flex-shrink-0"></i>
+            <span id="judgesStatText"></span>
+        </div>
+    </div>
+
 </div>
+
+<script>
+    window.JUDGES_CAN_EDIT = <?= $canEdit ? 'true' : 'false' ?>;
+</script>
