@@ -24,6 +24,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const subtitleEl = document.getElementById('eventSubtitle');
     const sidebarEventNameEl = document.getElementById('sidebarEventName');
 
+    const detailMoTa = document.getElementById('detailMoTa');
+    const detailCap = document.getElementById('detailCap');
+    const detailTrangThai = document.getElementById('detailTrangThai');
+    const detailNgayMoDK = document.getElementById('detailNgayMoDK');
+    const detailNgayDongDK = document.getElementById('detailNgayDongDK');
+    const detailNgayBatDau = document.getElementById('detailNgayBatDau');
+    const detailNgayKetThuc = document.getElementById('detailNgayKetThuc');
+    const detailCheDoSV = document.getElementById('detailCheDoSV');
+    const detailCheDoGV = document.getElementById('detailCheDoGV');
+
+    const configTenSuKien = document.getElementById('configTenSuKien');
+    const configCapToChuc = document.getElementById('configCapToChuc');
+    const configCheDoSV = document.getElementById('configCheDoSV');
+    const configCheDoGV = document.getElementById('configCheDoGV');
+
     const basicTenSuKien = document.getElementById('basicTenSuKien');
     const basicMoTa = document.getElementById('basicMoTa');
     const basicIdCap = document.getElementById('basicIdCap');
@@ -36,16 +51,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnToggleEventStatus = document.getElementById('btnToggleEventStatus');
     const btnCreateRound = document.getElementById('btnCreateRound');
     const basicRoundList = document.getElementById('basicRoundList');
-
-    // Cấu hình nhóm thi
-    const basicSoTVToiThieu = document.getElementById('basicSoTVToiThieu');
-    const basicSoTVToiDa = document.getElementById('basicSoTVToiDa');
-    const basicSoGVHDToiDa = document.getElementById('basicSoGVHDToiDa');
-    const basicSoGVHDKhongGioiHan = document.getElementById('basicSoGVHDKhongGioiHan');
-    const basicSoNhomToiDaGVHD = document.getElementById('basicSoNhomToiDaGVHD');
-    const basicSoNhomGVHDKhongGioiHan = document.getElementById('basicSoNhomGVHDKhongGioiHan');
-    const basicYeuCauCoGVHD = document.getElementById('basicYeuCauCoGVHD');
-    const basicChoPhepGVTaoNhom = document.getElementById('basicChoPhepGVTaoNhom');
 
     const ruleInputThuocTinh = document.getElementById('ruleInputThuocTinh');
     const ruleInputToanTu = document.getElementById('ruleInputToanTu');
@@ -1146,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Load necessary data
             const promises = [
-                fetch(`${BASE_PATH}/api/cham_diem/phan_cong_giam_khao.php?action=list_giang_vien&id_sk=${encodeURIComponent(idSk)}`, {
+                fetch(`${BASE_PATH}/api/cham_diem/phan_cong_giam_khao.php?action=list_giang_vien`, {
                     method: 'GET',
                     credentials: 'same-origin'
                 }).then(r => r.json()),
@@ -1781,41 +1786,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (basicNgayBatDau) basicNgayBatDau.value = toDatetimeLocal(detail.ngayBatDau);
         if (basicNgayKetThuc) basicNgayKetThuc.value = toDatetimeLocal(detail.ngayKetThuc);
         if (basicTrangThaiText) basicTrangThaiText.textContent = Number(detail.isActive || 0) === 1 ? 'Đang mở' : 'Đang đóng';
-
-        // Cấu hình nhóm thi
-        if (basicSoTVToiThieu) basicSoTVToiThieu.value = detail.soThanhVienToiThieu ?? 1;
-        if (basicSoTVToiDa) basicSoTVToiDa.value = detail.soThanhVienToiDa ?? 5;
-
-        const soGVHDNull = detail.soGVHDToiDa === null || detail.soGVHDToiDa === undefined;
-        if (basicSoGVHDKhongGioiHan) basicSoGVHDKhongGioiHan.checked = soGVHDNull;
-        if (basicSoGVHDToiDa) {
-            basicSoGVHDToiDa.disabled = soGVHDNull;
-            basicSoGVHDToiDa.value = soGVHDNull ? '' : detail.soGVHDToiDa;
-        }
-
-        const soNhomNull = detail.soNhomToiDaGVHD === null || detail.soNhomToiDaGVHD === undefined;
-        if (basicSoNhomGVHDKhongGioiHan) basicSoNhomGVHDKhongGioiHan.checked = soNhomNull;
-        if (basicSoNhomToiDaGVHD) {
-            basicSoNhomToiDaGVHD.disabled = soNhomNull;
-            basicSoNhomToiDaGVHD.value = soNhomNull ? '' : detail.soNhomToiDaGVHD;
-        }
-
-        if (basicYeuCauCoGVHD) basicYeuCauCoGVHD.checked = Number(detail.yeuCauCoGVHD) === 1;
-        if (basicChoPhepGVTaoNhom) basicChoPhepGVTaoNhom.checked = Number(detail.choPhepGVTaoNhom) === 1;
-    }
-
-    // Toggle disable/enable input khi check "Không giới hạn"
-    if (basicSoGVHDKhongGioiHan && basicSoGVHDToiDa) {
-        basicSoGVHDKhongGioiHan.addEventListener('change', function () {
-            basicSoGVHDToiDa.disabled = this.checked;
-            if (this.checked) basicSoGVHDToiDa.value = '';
-        });
-    }
-    if (basicSoNhomGVHDKhongGioiHan && basicSoNhomToiDaGVHD) {
-        basicSoNhomGVHDKhongGioiHan.addEventListener('change', function () {
-            basicSoNhomToiDaGVHD.disabled = this.checked;
-            if (this.checked) basicSoNhomToiDaGVHD.value = '';
-        });
     }
 
     function hienThiLoi(message) {
@@ -1843,6 +1813,21 @@ document.addEventListener('DOMContentLoaded', function () {
             if (subtitleEl) subtitleEl.textContent = `Mã sự kiện: #${detail.idSK || idSk}`;
             if (sidebarEventNameEl) sidebarEventNameEl.textContent = detail.tenSK || `Sự kiện #${idSk}`;
 
+            if (detailMoTa) detailMoTa.textContent = detail.moTa || '--';
+            if (detailCap) detailCap.textContent = capText(detail);
+            if (detailTrangThai) detailTrangThai.textContent = trangThai;
+            if (detailNgayMoDK) detailNgayMoDK.textContent = formatDateTime(detail.ngayMoDangKy);
+            if (detailNgayDongDK) detailNgayDongDK.textContent = formatDateTime(detail.ngayDongDangKy);
+            if (detailNgayBatDau) detailNgayBatDau.textContent = formatDateTime(detail.ngayBatDau);
+            if (detailNgayKetThuc) detailNgayKetThuc.textContent = formatDateTime(detail.ngayKetThuc);
+            if (detailCheDoSV) detailCheDoSV.textContent = detail.cheDoDangKySV || '--';
+            if (detailCheDoGV) detailCheDoGV.textContent = detail.cheDoDangKyGV || '--';
+
+            if (configTenSuKien) configTenSuKien.textContent = detail.tenSK || '--';
+            if (configCapToChuc) configCapToChuc.textContent = capText(detail);
+            if (configCheDoSV) configCheDoSV.textContent = detail.cheDoDangKySV || '--';
+            if (configCheDoGV) configCheDoGV.textContent = detail.cheDoDangKyGV || '--';
+
             if (currentTab === 'config-basic') {
                 doDuLieuVaoBasicForm(detail);
                 await napDanhSachCapVaoSelect(detail.idCap || null);
@@ -1867,7 +1852,8 @@ document.addEventListener('DOMContentLoaded', function () {
         khoiTaoTabConfigRules();
         khoiTaoTabConfigCriteria();
         khoiTaoTabReviewAssign();
-        khoiTaoTabConfigTaiLieu();
+        khoiTaoTabSubcommittees();
+        khoiTaoTabJudges();
     }
 
     if (btnSaveBasicConfig) {
@@ -1906,73 +1892,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     icon: 'success',
                     title: 'Đã lưu',
                     text: 'Cập nhật thông tin sự kiện thành công.',
-                });
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Không thể lưu',
-                    text: error.message || 'Vui lòng thử lại.',
-                });
-            }
-        });
-    }
-
-    // ── Lưu cấu hình nhóm thi ────────────────────────────────────────
-    const btnSaveNhomConfig = document.getElementById('btnSaveNhomConfig');
-    if (btnSaveNhomConfig) {
-        btnSaveNhomConfig.addEventListener('click', async function () {
-            if (!eventDetailCache) return;
-
-            // Client-side validation
-            const toiThieu = basicSoTVToiThieu ? (parseInt(basicSoTVToiThieu.value) || 0) : 0;
-            const toiDa = basicSoTVToiDa ? (parseInt(basicSoTVToiDa.value) || 0) : 0;
-            if (toiThieu < 1) {
-                return Swal.fire({ icon: 'warning', title: 'Dữ liệu không hợp lệ', text: 'Số thành viên tối thiểu phải >= 1.' });
-            }
-            if (toiDa < 1) {
-                return Swal.fire({ icon: 'warning', title: 'Dữ liệu không hợp lệ', text: 'Số thành viên tối đa phải >= 1.' });
-            }
-            if (toiThieu > toiDa) {
-                return Swal.fire({ icon: 'warning', title: 'Dữ liệu không hợp lệ', text: 'Số thành viên tối thiểu không được lớn hơn tối đa.' });
-            }
-
-            const soGVHDNull = basicSoGVHDKhongGioiHan && basicSoGVHDKhongGioiHan.checked;
-            const soNhomNull = basicSoNhomGVHDKhongGioiHan && basicSoNhomGVHDKhongGioiHan.checked;
-
-            const payload = {
-                id_su_kien: idSk,
-                // Bắt buộc để pass server validation — lấy từ cache, không thay đổi
-                ten_su_kien: eventDetailCache.tenSK || '',
-                mo_ta: eventDetailCache.moTa || '',
-                id_cap: eventDetailCache.idCap || null,
-                ngay_mo_dk: eventDetailCache.ngayMoDangKy || null,
-                ngay_dong_dk: eventDetailCache.ngayDongDangKy || null,
-                ngay_bat_dau: eventDetailCache.ngayBatDau || null,
-                ngay_ket_thuc: eventDetailCache.ngayKetThuc || null,
-                is_active: eventDetailCache.isActive ?? 1,
-                // 6 fields nhóm
-                so_thanh_vien_toi_thieu: toiThieu,
-                so_thanh_vien_toi_da: toiDa,
-                so_gvhd_toi_da: soGVHDNull ? null : (basicSoGVHDToiDa ? (parseInt(basicSoGVHDToiDa.value) || null) : null),
-                so_nhom_toi_da_gvhd: soNhomNull ? null : (basicSoNhomToiDaGVHD ? (parseInt(basicSoNhomToiDaGVHD.value) || null) : null),
-                yeu_cau_co_gvhd: basicYeuCauCoGVHD ? (basicYeuCauCoGVHD.checked ? 1 : 0) : 0,
-                cho_phep_gv_tao_nhom: basicChoPhepGVTaoNhom ? (basicChoPhepGVTaoNhom.checked ? 1 : 0) : 1,
-            };
-
-            try {
-                await capNhatSuKien(payload);
-
-                eventDetailCache.soThanhVienToiThieu = payload.so_thanh_vien_toi_thieu;
-                eventDetailCache.soThanhVienToiDa = payload.so_thanh_vien_toi_da;
-                eventDetailCache.soGVHDToiDa = payload.so_gvhd_toi_da;
-                eventDetailCache.soNhomToiDaGVHD = payload.so_nhom_toi_da_gvhd;
-                eventDetailCache.yeuCauCoGVHD = payload.yeu_cau_co_gvhd;
-                eventDetailCache.choPhepGVTaoNhom = payload.cho_phep_gv_tao_nhom;
-
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Đã lưu',
-                    text: 'Cập nhật cấu hình nhóm thi thành công.',
                 });
             } catch (error) {
                 Swal.fire({
@@ -2534,495 +2453,472 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+});
 
-    // =========================================================
-    // Tab: Cấu hình tài liệu (config-tailieu)
-    // =========================================================
+// =============================================================
+// MODULE: Quản lý Tiểu ban
+// khoiTaoTabSubcommittees() — tab "subcommittees"
+// khoiTaoTabJudges()        — tab "judges"
+// =============================================================
+(function () {
+    'use strict';
 
-    async function khoiTaoTabConfigTaiLieu() {
-        if (currentTab !== 'config-tailieu') return;
+    const TB_API = BASE_PATH + '/api/su_kien/tieu_ban.php';
+    const canEditTB = window.TB_CAN_EDIT === true;
 
-        let _currentVongThi = null;
-        let _vongThiOptions = [];
+    // Cache dùng chung giữa 2 tab
+    let _tieubanList = [];
+    let _gvList      = [];
+    let _btcList     = [];
+    let _vtList      = [];
+    let _tbLoaded    = false;
 
-        // ── DOM refs ──────────────────────────────────────────
-        const elVongThiList = document.getElementById('tlVongThiList');
-        const elCurrentName = document.getElementById('tlCurrentRoundName');
-        const elFieldList = document.getElementById('tlFieldList');
-        const btnAddField = document.getElementById('btnTlAddField');
-        const copySrc = document.getElementById('tlCopySrc');
-        const copyDst = document.getElementById('tlCopyDst');
-        const copyMode = document.getElementById('tlCopyMode');
-        const btnCopyForm = document.getElementById('btnTlCopyForm');
-        const modal = document.getElementById('tlFieldModal');
-        const modalTitle = document.getElementById('tlModalTitle');
-        const fieldEditId = document.getElementById('tlFieldEditId');
-        const fieldTen = document.getElementById('tlFieldTenTruong');
-        const fieldKieu = document.getElementById('tlFieldKieuTruong');
-        const fieldBatBuoc = document.getElementById('tlFieldBatBuoc');
-        const fieldCauHinhWrap = document.getElementById('tlFieldCauHinhWrap');
-        const btnModalClose = document.getElementById('btnTlModalClose');
-        const btnModalCancel = document.getElementById('btnTlModalCancel');
-        const btnModalSave = document.getElementById('btnTlModalSave');
-
-        if (!elVongThiList) return;
-
-        // ── Helpers ───────────────────────────────────────────
-        const KIEU_LABEL = {
-            TEXT: 'Văn bản', TEXTAREA: 'Đoạn văn', URL: 'URL',
-            FILE: 'Upload file', SELECT: 'Chọn lựa', CHECKBOX: 'Xác nhận'
-        };
-        const KIEU_ICON = {
-            TEXT: 'fa-font', TEXTAREA: 'fa-align-left', URL: 'fa-link',
-            FILE: 'fa-file-upload', SELECT: 'fa-list', CHECKBOX: 'fa-check-square'
-        };
-
-        function _post(url, body) {
-            return fetch(BASE_PATH + url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            }).then(r => r.json());
-        }
-        function _get(url) {
-            return fetch(BASE_PATH + url).then(r => r.json());
-        }
-        function escHtml(s) {
-            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
-        function escHtmlAttr(s) {
-            return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-        }
-
-        // ── Render vòng thi list ──────────────────────────────
-        function renderVongThiList(tongQuan) {
-            const vts = tongQuan.vongThi || [];
-            _vongThiOptions = vts;
-
-            if (!vts.length) {
-                elVongThiList.innerHTML = `<div class="px-3 py-2 text-xs text-slate-400 border rounded-lg border-slate-200 bg-white">
-                    Sự kiện chưa có vòng thi nào. Hãy tạo vòng thi ở tab <strong>Cấu hình vòng thi</strong> trước.
-                </div>`;
-                copySrc.innerHTML = copyDst.innerHTML = '<option value="">— Chưa có vòng thi —</option>';
-                return;
-            }
-
-            elVongThiList.innerHTML = vts.map(vt => `
-                <button type="button" data-id="${vt.idVongThi}"
-                    class="tl-vt-btn w-full text-left px-3 py-2 rounded-lg border transition-all text-sm
-                           border-slate-200 bg-white text-slate-700 hover:border-fuchsia-300 hover:bg-fuchsia-50/50">
-                    <div class="flex items-center justify-between">
-                        <span><i class="fas fa-layer-group mr-1.5 opacity-40 text-xs"></i>${escHtml(vt.tenVongThi)}</span>
-                        <span class="text-xs px-2 py-0.5 rounded-full ${parseInt(vt.soField) > 0
-                    ? 'bg-fuchsia-100 text-fuchsia-600'
-                    : 'bg-slate-100 text-slate-400'}">
-                            ${vt.soField} trường
-                        </span>
-                    </div>
-                </button>
-            `).join('');
-
-            const optHTML = vts.map(vt =>
-                `<option value="${vt.idVongThi}">${escHtml(vt.tenVongThi)} (${vt.soField} trường)</option>`
-            ).join('');
-            copySrc.innerHTML = optHTML;
-            copyDst.innerHTML = optHTML;
-
-            // Tự chọn vòng đầu nếu chỉ có 1 và chưa chọn gì
-            if (vts.length >= 1 && _currentVongThi === null) {
-                const first = vts[0];
-                selectVongThi(first.idVongThi, first.tenVongThi);
-                loadFormFields(first.idVongThi);
-            }
-
-            elVongThiList.querySelectorAll('.tl-vt-btn').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    const id = parseInt(this.dataset.id);
-                    const ten = _vongThiOptions.find(v => v.idVongThi == id)?.tenVongThi || '';
-                    selectVongThi(id, ten);
-                    loadFormFields(id);
-                });
-            });
-        }
-
-        function selectVongThi(idVT, tenVT) {
-            _currentVongThi = idVT;
-            if (elCurrentName) elCurrentName.textContent = tenVT || '—';
-            if (btnAddField) btnAddField.disabled = false;
-            document.querySelectorAll('.tl-vt-btn').forEach(b => {
-                const isActive = parseInt(b.dataset.id) === idVT;
-                b.classList.toggle('border-fuchsia-400', isActive);
-                b.classList.toggle('bg-fuchsia-50', isActive);
-                b.classList.toggle('text-fuchsia-700', isActive);
-                b.classList.toggle('font-semibold', isActive);
-                b.classList.toggle('border-slate-200', !isActive);
-                b.classList.toggle('bg-white', !isActive);
-                b.classList.toggle('text-slate-700', !isActive);
-            });
-        }
-
-        // ── Render field list ─────────────────────────────────
-        function renderFieldList(fields) {
-            if (!fields.length) {
-                elFieldList.innerHTML = `
-                    <div class="p-6 text-sm text-center text-slate-400 border rounded-xl border-dashed border-slate-300 bg-white">
-                        <i class="fas fa-inbox text-2xl mb-2 block opacity-30"></i>
-                        Vòng thi này chưa có trường nào.<br>
-                        <span class="text-xs">Nhóm sẽ không cần nộp tài liệu ở vòng này.</span>
-                    </div>`;
-                return;
-            }
-            elFieldList.innerHTML = fields.map(f => {
-                const icon = KIEU_ICON[f.kieuTruong] || 'fa-question';
-                const label = KIEU_LABEL[f.kieuTruong] || f.kieuTruong;
-                const inactive = parseInt(f.isActive) === 0;
-                return `
-                <div class="flex items-center gap-3 px-4 py-3 border rounded-xl bg-white
-                            ${inactive ? 'opacity-50' : ''} border-slate-200 transition-all hover:border-fuchsia-200"
-                     data-field-id="${f.idField}">
-                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-fuchsia-50 text-fuchsia-500">
-                        <i class="fas ${icon} text-xs"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-semibold text-slate-700 truncate">${escHtml(f.tenTruong)}</span>
-                            ${parseInt(f.batBuoc) ? '<span class="text-red-500 text-xs font-bold">*</span>' : ''}
-                            ${inactive ? '<span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-400">Ẩn</span>' : ''}
-                        </div>
-                        <div class="text-xs text-slate-400 mt-0.5">
-                            <span class="mr-2"><i class="fas ${icon} mr-1"></i>${label}</span>
-                            <span class="text-slate-300">Thứ tự: ${f.thuTu}</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1 flex-shrink-0">
-                        <button type="button" title="${inactive ? 'Hiện' : 'Ẩn'} trường"
-                            data-action="toggle" data-id="${f.idField}"
-                            class="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
-                            <i class="fas ${inactive ? 'fa-eye' : 'fa-eye-slash'} text-xs"></i>
-                        </button>
-                        <button type="button" title="Sửa trường"
-                            data-action="edit" data-id="${f.idField}"
-                            class="p-2 rounded-lg text-slate-400 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-colors">
-                            <i class="fas fa-pen text-xs"></i>
-                        </button>
-                        <button type="button" title="Xóa trường"
-                            data-action="delete" data-id="${f.idField}" data-name="${escHtmlAttr(f.tenTruong)}"
-                            class="p-2 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-                            <i class="fas fa-trash text-xs"></i>
-                        </button>
-                    </div>
-                </div>`;
-            }).join('');
-
-            // Event delegation — không dùng onclick inline
-            elFieldList.querySelectorAll('[data-action]').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    const action = this.dataset.action;
-                    const id = parseInt(this.dataset.id);
-                    const name = this.dataset.name || '';
-                    if (action === 'edit') handleEditField(id);
-                    if (action === 'toggle') handleToggleField(id);
-                    if (action === 'delete') handleDeleteField(id, name);
-                });
-            });
-        }
-
-        // ── Cấu hình JSON theo kiểu trường ───────────────────
-        function renderCauHinhInputs(kieu, current = {}) {
-            let html = '';
-            switch (kieu) {
-                case 'FILE':
-                    html = `
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block mb-1 text-xs font-semibold text-slate-600">Định dạng cho phép</label>
-                                <input id="cfAccept" type="text" value="${escHtmlAttr(current.accept || '')}" placeholder="pdf,docx,xlsx"
-                                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
-                                <p class="mt-1 text-xs text-slate-400">Phân cách bằng dấu phẩy, để trống = tất cả</p>
-                            </div>
-                            <div>
-                                <label class="block mb-1 text-xs font-semibold text-slate-600">Dung lượng tối đa (KB)</label>
-                                <input id="cfMaxSize" type="number" value="${current.maxSizeKB || ''}" placeholder="5120"
-                                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
-                            </div>
-                        </div>`;
-                    break;
-                case 'SELECT':
-                    html = `
-                        <div>
-                            <label class="block mb-1 text-xs font-semibold text-slate-600">Các lựa chọn <span class="text-red-400">*</span></label>
-                            <textarea id="cfOptions" rows="4" placeholder="Mỗi lựa chọn một dòng"
-                                class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none">${escHtml((current.options || []).join('\n'))}</textarea>
-                            <p class="mt-1 text-xs text-slate-400">Mỗi lựa chọn trên 1 dòng</p>
-                        </div>`;
-                    break;
-                case 'TEXT':
-                case 'TEXTAREA':
-                    html = `
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block mb-1 text-xs font-semibold text-slate-600">Placeholder</label>
-                                <input id="cfPlaceholder" type="text" value="${escHtmlAttr(current.placeholder || '')}"
-                                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
-                            </div>
-                            <div>
-                                <label class="block mb-1 text-xs font-semibold text-slate-600">${kieu === 'TEXTAREA' ? 'Số hàng' : 'Độ dài tối đa'}</label>
-                                <input id="${kieu === 'TEXTAREA' ? 'cfRows' : 'cfMaxLength'}" type="number"
-                                    value="${kieu === 'TEXTAREA' ? (current.rows || 4) : (current.maxLength || 200)}"
-                                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
-                            </div>
-                        </div>`;
-                    break;
-                case 'URL':
-                    html = `
-                        <div>
-                            <label class="block mb-1 text-xs font-semibold text-slate-600">Placeholder</label>
-                            <input id="cfPlaceholder" type="text" value="${escHtmlAttr(current.placeholder || 'https://')}"
-                                class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
-                        </div>`;
-                    break;
-                case 'CHECKBOX':
-                    html = `
-                        <div>
-                            <label class="block mb-1 text-xs font-semibold text-slate-600">Nhãn xác nhận</label>
-                            <input id="cfLabel" type="text" value="${escHtmlAttr(current.label || '')}" placeholder="Tôi xác nhận đã đọc quy định"
-                                class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
-                        </div>`;
-                    break;
-            }
-            if (fieldCauHinhWrap) {
-                fieldCauHinhWrap.innerHTML = html || '<p class="text-xs text-slate-400">Kiểu này không cần cấu hình thêm.</p>';
-            }
-        }
-
-        function collectCauHinhJson(kieu) {
-            const cfg = {};
-            switch (kieu) {
-                case 'FILE': {
-                    const accept = document.getElementById('cfAccept')?.value.trim();
-                    const maxSize = parseInt(document.getElementById('cfMaxSize')?.value || 0);
-                    if (accept) cfg.accept = accept;
-                    if (maxSize) cfg.maxSizeKB = maxSize;
-                    break;
-                }
-                case 'SELECT': {
-                    const raw = document.getElementById('cfOptions')?.value || '';
-                    cfg.options = raw.split('\n').map(s => s.trim()).filter(Boolean);
-                    break;
-                }
-                case 'TEXT':
-                case 'TEXTAREA': {
-                    const ph = document.getElementById('cfPlaceholder')?.value.trim();
-                    const ml = parseInt(document.getElementById('cfMaxLength')?.value || 0);
-                    const rws = parseInt(document.getElementById('cfRows')?.value || 0);
-                    if (ph) cfg.placeholder = ph;
-                    if (ml) cfg.maxLength = ml;
-                    if (rws) cfg.rows = rws;
-                    break;
-                }
-                case 'URL': {
-                    const ph = document.getElementById('cfPlaceholder')?.value.trim();
-                    if (ph) cfg.placeholder = ph;
-                    break;
-                }
-                case 'CHECKBOX': {
-                    const lbl = document.getElementById('cfLabel')?.value.trim();
-                    if (lbl) cfg.label = lbl;
-                    break;
-                }
-            }
-            return Object.keys(cfg).length ? cfg : null;
-        }
-
-        // ── Modal ─────────────────────────────────────────────
-        function showModal(title, editData = null) {
-            if (!modal) return;
-            if (modalTitle) modalTitle.textContent = title;
-            if (fieldEditId) fieldEditId.value = editData?.idField || '';
-            if (fieldTen) fieldTen.value = editData?.tenTruong || '';
-            if (fieldKieu) fieldKieu.value = editData?.kieuTruong || 'TEXT';
-            if (fieldBatBuoc) fieldBatBuoc.checked = editData ? parseInt(editData.batBuoc) === 1 : true;
-            renderCauHinhInputs(
-                editData?.kieuTruong || 'TEXT',
-                editData?.cauHinhJson ? JSON.parse(editData.cauHinhJson) : {}
-            );
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            fieldTen?.focus();
-        }
-
-        function hideModal() {
-            modal?.classList.add('hidden');
-            modal?.classList.remove('flex');
-        }
-
-        // ── Load ──────────────────────────────────────────────
-        async function loadTongQuan() {
-            try {
-                elVongThiList.innerHTML = `<div class="px-3 py-2 text-sm text-slate-400 border rounded-lg border-slate-200 bg-white">Đang tải...</div>`;
-                const res = await _get(`/api/su_kien/lay_form_field.php?id_sk=${idSk}&mode=tong_quan`);
-                if (res.status === 'success') renderVongThiList(res.data);
-                else elVongThiList.innerHTML = `<p class="text-xs text-red-500 px-2">${escHtml(res.message)}</p>`;
-            } catch {
-                elVongThiList.innerHTML = `<p class="text-xs text-red-500 px-2">Lỗi tải danh sách vòng thi.</p>`;
-            }
-        }
-
-        async function loadFormFields(idVT) {
-            if (!elFieldList) return;
-            elFieldList.innerHTML = `<div class="p-4 text-sm text-slate-400 text-center border rounded-xl border-slate-200 bg-white">Đang tải...</div>`;
-            try {
-                const res = await _get(`/api/su_kien/lay_form_field.php?id_sk=${idSk}&mode=fields&id_vong_thi=${idVT}`);
-                if (res.status === 'success') renderFieldList(res.data);
-                else elFieldList.innerHTML = `<p class="text-xs text-red-500 px-2">${escHtml(res.message)}</p>`;
-            } catch {
-                elFieldList.innerHTML = `<p class="text-xs text-red-500 px-2">Lỗi tải danh sách trường.</p>`;
-            }
-        }
-
-        // ── Handlers ──────────────────────────────────────────
-        async function handleEditField(idField) {
-            try {
-                const res = await _get(`/api/su_kien/lay_form_field.php?id_sk=${idSk}&mode=fields&id_vong_thi=${_currentVongThi}`);
-                const field = (res.data || []).find(f => f.idField == idField);
-                if (field) showModal('Sửa trường', field);
-            } catch {
-                Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không tải được thông tin trường.' });
-            }
-        }
-
-        async function handleToggleField(idField) {
-            try {
-                const res = await _post('/api/su_kien/cap_nhat_form_field.php', { action: 'toggle', id_field: idField });
-                if (res.status === 'success') await loadFormFields(_currentVongThi);
-                else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
-            } catch {
-                Swal.fire({ icon: 'error', title: 'Lỗi kết nối', text: 'Vui lòng thử lại.' });
-            }
-        }
-
-        async function handleDeleteField(idField, tenTruong) {
-            const confirm = await Swal.fire({
-                icon: 'warning', title: 'Xóa trường?',
-                html: `Xóa trường <strong>${escHtml(tenTruong)}</strong>?<br>
-                       <span class="text-xs text-slate-500">Không thể xóa nếu đã có nhóm nộp dữ liệu — hãy dùng "Ẩn".</span>`,
-                showCancelButton: true, confirmButtonText: 'Xóa', cancelButtonText: 'Hủy',
-                confirmButtonColor: '#ef4444'
-            });
-            if (!confirm.isConfirmed) return;
-            try {
-                const res = await _post('/api/su_kien/cap_nhat_form_field.php', { action: 'xoa', id_field: idField });
-                if (res.status === 'success') {
-                    await loadFormFields(_currentVongThi);
-                    await loadTongQuan();
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Không thể xóa', text: res.message });
-                }
-            } catch {
-                Swal.fire({ icon: 'error', title: 'Lỗi kết nối', text: 'Vui lòng thử lại.' });
-            }
-        }
-
-        // ── Sự kiện modal ─────────────────────────────────────
-        fieldKieu?.addEventListener('change', function () {
-            renderCauHinhInputs(this.value, {});
-        });
-
-        btnAddField?.addEventListener('click', function () {
-            if (_currentVongThi === null) return;
-            showModal('Thêm trường mới');
-        });
-
-        btnModalSave?.addEventListener('click', async function () {
-            const tenTruong = fieldTen?.value.trim() || '';
-            const kieuTruong = fieldKieu?.value || 'TEXT';
-            const batBuoc = fieldBatBuoc?.checked ? 1 : 0;
-            const cauHinhJson = collectCauHinhJson(kieuTruong);
-            const editId = fieldEditId?.value ? parseInt(fieldEditId.value) : null;
-
-            if (!tenTruong) {
-                Swal.fire({ icon: 'warning', title: 'Thiếu dữ liệu', text: 'Vui lòng nhập tên trường.' });
-                return;
-            }
-            if (kieuTruong === 'SELECT' && !(cauHinhJson?.options?.length)) {
-                Swal.fire({ icon: 'warning', title: 'Thiếu lựa chọn', text: 'SELECT phải có ít nhất 1 lựa chọn.' });
-                return;
-            }
-
-            btnModalSave.disabled = true;
-            btnModalSave.textContent = 'Đang lưu...';
-
-            try {
-                const body = editId
-                    ? { action: 'cap_nhat', id_field: editId, ten_truong: tenTruong, kieu_truong: kieuTruong, bat_buoc: batBuoc, cau_hinh_json: cauHinhJson }
-                    : { id_sk: idSk, id_vong_thi: _currentVongThi, ten_truong: tenTruong, kieu_truong: kieuTruong, bat_buoc: batBuoc, cau_hinh_json: cauHinhJson };
-                const url = editId ? '/api/su_kien/cap_nhat_form_field.php' : '/api/su_kien/tao_form_field.php';
-                const res = await _post(url, body);
-
-                if (res.status === 'success') {
-                    hideModal();
-                    await loadFormFields(_currentVongThi);
-                    await loadTongQuan();
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Không thể lưu', text: res.message });
-                }
-            } catch {
-                Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể kết nối máy chủ.' });
-            } finally {
-                if (btnModalSave) {
-                    btnModalSave.disabled = false;
-                    btnModalSave.textContent = 'Lưu trường';
-                }
-            }
-        });
-
-        [btnModalClose, btnModalCancel].forEach(btn =>
-            btn?.addEventListener('click', hideModal)
-        );
-        modal?.addEventListener('click', function (e) {
-            if (e.target === modal) hideModal();
-        });
-
-        btnCopyForm?.addEventListener('click', async function () {
-            const src = parseInt(copySrc?.value) || null;
-            const dst = parseInt(copyDst?.value) || null;
-            const mode = copyMode?.value || 'them_vao';
-            if (!src || !dst) {
-                Swal.fire({ icon: 'warning', title: 'Chưa chọn', text: 'Vui lòng chọn nguồn và đích.' });
-                return;
-            }
-            if (src === dst) {
-                Swal.fire({ icon: 'warning', title: 'Không hợp lệ', text: 'Nguồn và đích phải khác nhau.' });
-                return;
-            }
-            const cf = await Swal.fire({
-                icon: 'question', title: 'Xác nhận copy',
-                text: mode === 'ghi_de'
-                    ? 'Sẽ xóa các trường cũ (chưa có dữ liệu) ở đích rồi copy. Tiếp tục?'
-                    : 'Sẽ thêm các trường nguồn vào đích. Tiếp tục?',
-                showCancelButton: true, confirmButtonText: 'Tiếp tục', cancelButtonText: 'Hủy'
-            });
-            if (!cf.isConfirmed) return;
-
-            try {
-                const res = await _post('/api/su_kien/cap_nhat_form_field.php', {
-                    action: 'copy', id_sk: idSk, src_vong_thi: src, dst_vong_thi: dst, mode
-                });
-                if (res.status === 'success') {
-                    await Swal.fire({ icon: 'success', title: 'Đã copy', text: res.message, timer: 1500, showConfirmButton: false });
-                    await loadTongQuan();
-                    if (_currentVongThi === dst) await loadFormFields(dst);
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
-                }
-            } catch {
-                Swal.fire({ icon: 'error', title: 'Lỗi kết nối', text: 'Vui lòng thử lại.' });
-            }
-        });
-
-        // ── Khởi động ─────────────────────────────────────────
-        await loadTongQuan();
+    // ── Helpers ─────────────────────────────────────────────
+    async function tbApiGet(params) {
+        const qs = new URLSearchParams(params).toString();
+        const r  = await fetch(TB_API + '?' + qs, { credentials: 'same-origin' });
+        return r.json();
     }
 
+    async function tbApiPost(body) {
+        const r = await fetch(TB_API, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        return r.json();
+    }
 
-});
+    function fmtDateTB(d) {
+        if (!d) return '—';
+        const parts = String(d).split('-');
+        return parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : d;
+    }
+
+    function nhomLabel(sp) { return sp.tennhom || sp.manhom || 'Cá nhân'; }
+
+    function esc(str) {
+        return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Load tất cả dữ liệu ─────────────────────────────────
+    async function tbLoadAll() {
+        const [tbRes, gvRes, btcRes, vtRes] = await Promise.all([
+            tbApiGet({ action: 'danh_sach', id_sk: idSk }),
+            tbApiGet({ action: 'ds_giang_vien' }),
+            tbApiGet({ action: 'ds_bo_tieu_chi' }),
+            fetch(BASE_PATH + '/api/su_kien/danh_sach_vong_thi.php?id_sk=' + encodeURIComponent(idSk), { credentials: 'same-origin' }).then(r => r.json()),
+        ]);
+
+        if (tbRes.status !== 'success') throw new Error(tbRes.message || 'Không tải được tiểu ban');
+
+        _tieubanList = tbRes.data.tieuban_list || [];
+        _gvList      = gvRes.data  || [];
+        _btcList     = btcRes.data || [];
+        _vtList      = vtRes.data  || [];
+        _tbLoaded    = true;
+
+        return tbRes.data;
+    }
+
+    // ── Stats ────────────────────────────────────────────────
+    function tbRenderStats(data) {
+        const s1 = document.getElementById('statSoTieuBan');
+        const s2 = document.getElementById('statSoBaiXep');
+        if (s1) s1.textContent = _tieubanList.length;
+        if (s2) s2.textContent = (data.assigned_ids || []).length;
+
+        tbApiGet({ action: 'sp_chua_xep', id_sk: idSk }).then(r => {
+            const s3 = document.getElementById('statSoBaiCho');
+            if (s3) s3.textContent = (r.data || []).length;
+        }).catch(() => {});
+    }
+
+    // ── Render danh sách tiểu ban ────────────────────────────
+    function tbRenderList() {
+        const el = document.getElementById('subcommitteeList');
+        if (!el) return;
+
+        if (!_tieubanList.length) {
+            el.innerHTML =
+                '<div class="p-10 text-center text-slate-400 border border-dashed border-slate-200 rounded-xl">' +
+                '<i class="fas fa-sitemap text-4xl mb-3 block text-slate-300"></i>' +
+                '<p class="text-sm font-semibold text-slate-500">Chưa có tiểu ban nào</p>' +
+                '<p class="text-xs text-slate-400 mt-1">Nhấn "Tạo tiểu ban mới" để bắt đầu phân phòng báo cáo</p>' +
+                '</div>';
+            return;
+        }
+
+        el.innerHTML = _tieubanList.map(tbCardHtml).join('');
+        el.querySelectorAll('[data-tb-action]').forEach(b => b.addEventListener('click', tbHandleAction));
+    }
+
+    function tbCardHtml(tb) {
+        const id  = tb.idTieuBan;
+        const gvs = tb.giang_vien || [];
+        const sps = tb.san_pham   || [];
+
+        const btcBadge = tb.tenBoTieuChi
+            ? '<span class="font-semibold text-cyan-600">' + esc(tb.tenBoTieuChi) + '</span>'
+            : '<span class="text-slate-400 italic">Dùng chung theo Vòng</span>';
+
+        const gvChips = gvs.length
+            ? gvs.map(g =>
+                '<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs border border-slate-200 rounded-full bg-slate-50 text-slate-600">' +
+                esc(g.tenGV) +
+                (canEditTB ? ' <button class="text-rose-400 hover:text-rose-600 leading-none font-bold" data-tb-action="xoa_gv" data-tb="' + id + '" data-gv="' + g.idGV + '" title="Rút GK">×</button>' : '') +
+                '</span>').join('')
+            : '<span class="text-slate-400 italic text-xs">Chưa có thành viên nào.</span>';
+
+        const spRows = sps.length
+            ? sps.map(sp =>
+                '<div class="flex items-center justify-between py-2 border-b border-dashed border-slate-100 last:border-0">' +
+                '<span class="text-sm text-slate-700">' +
+                '<span class="inline-block px-1.5 py-0.5 text-xs bg-slate-100 text-slate-500 rounded mr-1.5">' + esc(nhomLabel(sp)) + '</span>' +
+                '<span class="font-medium">' + esc(sp.tenSanPham) + '</span>' +
+                '</span>' +
+                (canEditTB ? '<button class="text-xs text-rose-500 hover:text-rose-700 font-semibold px-2 flex-shrink-0" data-tb-action="xoa_sp" data-tb="' + id + '" data-sp="' + sp.idSanPham + '" data-name="' + esc(sp.tenSanPham) + '">Rút bài</button>' : '') +
+                '</div>').join('')
+            : '<p class="text-xs text-slate-400 italic text-center py-3 bg-slate-50 rounded-lg">Trống.</p>';
+
+        return (
+            '<div class="border border-slate-200 rounded-xl overflow-hidden shadow-soft-sm" id="tb-card-' + id + '">' +
+            '  <div class="flex items-start justify-between px-5 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">' +
+            '    <div>' +
+            '      <p class="mb-0 text-sm font-bold text-emerald-700">' + esc(tb.tenTieuBan) + '</p>' +
+            '      <p class="mb-0 text-xs text-slate-500 mt-0.5">' +
+            fmtDateTB(tb.ngayBaoCao) + ' &nbsp;|&nbsp; Phòng: <strong>' + esc(tb.diaDiem || '—') + '</strong>' +
+            ' &nbsp;|&nbsp; Vòng: <strong>' + esc(tb.tenVongThi || '—') + '</strong>' +
+            ' &nbsp;|&nbsp; Tiêu chí: ' + btcBadge +
+            '      </p>' +
+            '    </div>' +
+            (canEditTB ?
+            '    <div class="flex gap-2 ml-4 flex-shrink-0">' +
+            '      <button class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 shadow-sm" data-tb-action="edit" data-tb="' + id + '" title="Sửa"><i class="fas fa-pencil-alt text-xs"></i></button>' +
+            '      <button class="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 shadow-sm" data-tb-action="xoa" data-tb="' + id + '" data-name="' + esc(tb.tenTieuBan) + '" title="Xóa"><i class="fas fa-trash text-xs"></i></button>' +
+            '    </div>' : '') +
+            '  </div>' +
+            '  <div class="p-5 grid grid-cols-1 gap-5 md:grid-cols-2">' +
+            '    <div>' +
+            '      <div class="flex items-center justify-between mb-2">' +
+            '        <p class="text-xs font-bold text-slate-600 uppercase"><i class="fas fa-user-tie mr-1 text-slate-400"></i>Hội đồng Ban giám khảo</p>' +
+            (canEditTB ? '        <button class="text-xs text-blue-600 hover:text-blue-800 font-semibold" data-tb-action="them_gv" data-tb="' + id + '" data-tbname="' + esc(tb.tenTieuBan) + '">+ Thêm GK</button>' : '') +
+            '      </div>' +
+            '      <div class="flex flex-wrap gap-2">' + gvChips + '</div>' +
+            '    </div>' +
+            '    <div>' +
+            '      <div class="flex items-center justify-between mb-2">' +
+            '        <p class="text-xs font-bold text-slate-600 uppercase"><i class="fas fa-file-alt mr-1 text-slate-400"></i>Bài báo cáo (' + sps.length + ')</p>' +
+            (canEditTB ? '        <button class="text-xs text-emerald-600 hover:text-emerald-800 font-semibold" data-tb-action="them_sp" data-tb="' + id + '" data-tbname="' + esc(tb.tenTieuBan) + '">+ Thêm bài</button>' : '') +
+            '      </div>' +
+            '      <div>' + spRows + '</div>' +
+            '    </div>' +
+            '  </div>' +
+            '</div>'
+        );
+    }
+
+    // ── Handle card actions ──────────────────────────────────
+    async function tbHandleAction(e) {
+        const btn    = e.currentTarget;
+        const action = btn.dataset.tbAction;
+        const tbId   = parseInt(btn.dataset.tb || 0);
+
+        if (action === 'edit') {
+            const tb = _tieubanList.find(t => t.idTieuBan == tbId);
+            if (tb) tbShowEditModal(tb);
+        }
+        if (action === 'xoa') {
+            const cf = await Swal.fire({
+                icon: 'warning', title: 'Xóa tiểu ban?',
+                html: 'Tiểu ban <strong>' + esc(btn.dataset.name) + '</strong> và toàn bộ GK, bài báo cáo sẽ bị xóa.',
+                showCancelButton: true, confirmButtonText: 'Xóa', cancelButtonText: 'Hủy', confirmButtonColor: '#ef4444',
+            });
+            if (!cf.isConfirmed) return;
+            const res = await tbApiPost({ action: 'xoa', id_tieu_ban: tbId });
+            if (res.status === 'success') {
+                Swal.fire({ icon: 'success', title: 'Đã xóa', text: res.message, timer: 1500, showConfirmButton: false });
+                await tbReload();
+            } else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+        }
+        if (action === 'them_gv') await tbShowAddGvModal(tbId, btn.dataset.tbname);
+        if (action === 'xoa_gv') {
+            const res = await tbApiPost({ action: 'xoa_gv', id_tieu_ban: tbId, id_gv: parseInt(btn.dataset.gv) });
+            if (res.status === 'success') await tbReload();
+            else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+        }
+        if (action === 'them_sp') await tbShowAddSpModal(tbId, btn.dataset.tbname);
+        if (action === 'xoa_sp') {
+            const res = await tbApiPost({ action: 'xoa_sp', id_tieu_ban: tbId, id_san_pham: parseInt(btn.dataset.sp) });
+            if (res.status === 'success') await tbReload();
+            else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+        }
+    }
+
+    // ── Modal: Tạo ──────────────────────────────────────────
+    async function tbShowCreateModal() {
+        const vtOpts  = _vtList.map(v  => '<option value="' + v.idVongThi + '">' + esc(v.tenVongThi) + '</option>').join('');
+        const btcOpts = _btcList.map(b => '<option value="' + b.idBoTieuChi + '">' + esc(b.tenBoTieuChi) + '</option>').join('');
+
+        const { value } = await Swal.fire({
+            title: 'Khởi tạo Tiểu ban', width: 560,
+            html:
+                '<div class="text-left space-y-3">' +
+                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Tên tiểu ban <span class="text-rose-500">*</span></label>' +
+                '<input id="sw-ten" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300" placeholder="VD: Tiểu ban Công nghệ AI"></div>' +
+                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Thuộc vòng thi <span class="text-rose-500">*</span></label>' +
+                '<select id="sw-vt" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300"><option value="">-- Chọn vòng thi --</option>' + vtOpts + '</select></div>' +
+                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Bộ tiêu chí riêng <span class="text-slate-400 font-normal">(Tùy chọn)</span></label>' +
+                '<select id="sw-btc" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300"><option value="">-- Dùng chung tiêu chí của Vòng --</option>' + btcOpts + '</select></div>' +
+                '<div class="grid grid-cols-2 gap-3">' +
+                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Ngày báo cáo</label>' +
+                '<input id="sw-ngay" type="date" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300"></div>' +
+                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Địa điểm / Phòng</label>' +
+                '<input id="sw-dia" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300" placeholder="VD: Phòng 404K"></div>' +
+                '</div></div>',
+            focusConfirm: false, showCancelButton: true, confirmButtonText: 'Khởi tạo', cancelButtonText: 'Hủy',
+            preConfirm: () => {
+                const ten = document.getElementById('sw-ten').value.trim();
+                const vt  = document.getElementById('sw-vt').value;
+                if (!ten) { Swal.showValidationMessage('Vui lòng nhập tên tiểu ban'); return false; }
+                if (!vt)  { Swal.showValidationMessage('Vui lòng chọn vòng thi'); return false; }
+                return {
+                    ten_tieu_ban:   ten,
+                    id_vong_thi:    parseInt(vt),
+                    id_bo_tieu_chi: document.getElementById('sw-btc').value  || null,
+                    ngay_bao_cao:   document.getElementById('sw-ngay').value || null,
+                    dia_diem:       document.getElementById('sw-dia').value.trim() || null,
+                };
+            },
+        });
+
+        if (!value) return;
+        const res = await tbApiPost(Object.assign({ action: 'tao', id_sk: idSk }, value));
+        if (res.status === 'success') {
+            Swal.fire({ icon: 'success', title: 'Đã tạo tiểu ban', text: res.message, timer: 1500, showConfirmButton: false });
+            await tbReload();
+        } else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+    }
+
+    // ── Modal: Sửa ──────────────────────────────────────────
+    async function tbShowEditModal(tb) {
+        const btcOpts = _btcList.map(b =>
+            '<option value="' + b.idBoTieuChi + '" ' + (tb.idBoTieuChi == b.idBoTieuChi ? 'selected' : '') + '>' + esc(b.tenBoTieuChi) + '</option>'
+        ).join('');
+
+        const { value } = await Swal.fire({
+            title: 'Sửa: ' + esc(tb.tenTieuBan), width: 520,
+            html:
+                '<div class="text-left space-y-3">' +
+                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Tên tiểu ban <span class="text-rose-500">*</span></label>' +
+                '<input id="sw-eten" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300" value="' + esc(tb.tenTieuBan) + '"></div>' +
+                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Bộ tiêu chí riêng <span class="text-slate-400 font-normal">(Tùy chọn)</span></label>' +
+                '<select id="sw-ebtc" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300"><option value="">-- Dùng chung tiêu chí của Vòng --</option>' + btcOpts + '</select></div>' +
+                '<div class="grid grid-cols-2 gap-3">' +
+                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Ngày báo cáo</label>' +
+                '<input id="sw-engay" type="date" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300" value="' + esc(tb.ngayBaoCao || '') + '"></div>' +
+                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Địa điểm / Phòng</label>' +
+                '<input id="sw-edia" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300" value="' + esc(tb.diaDiem || '') + '"></div>' +
+                '</div></div>',
+            focusConfirm: false, showCancelButton: true, confirmButtonText: 'Lưu thay đổi', cancelButtonText: 'Hủy',
+            preConfirm: () => {
+                const ten = document.getElementById('sw-eten').value.trim();
+                if (!ten) { Swal.showValidationMessage('Tên tiểu ban không được để trống'); return false; }
+                return {
+                    ten_tieu_ban:   ten,
+                    id_bo_tieu_chi: document.getElementById('sw-ebtc').value  || null,
+                    ngay_bao_cao:   document.getElementById('sw-engay').value || null,
+                    dia_diem:       document.getElementById('sw-edia').value.trim()  || null,
+                };
+            },
+        });
+
+        if (!value) return;
+        const res = await tbApiPost(Object.assign({ action: 'cap_nhat', id_tieu_ban: tb.idTieuBan }, value));
+        if (res.status === 'success') {
+            Swal.fire({ icon: 'success', title: 'Đã cập nhật', text: res.message, timer: 1500, showConfirmButton: false });
+            await tbReload();
+        } else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+    }
+
+    // ── Modal: Thêm GV ───────────────────────────────────────
+    async function tbShowAddGvModal(tbId, tbName) {
+        const tb       = _tieubanList.find(t => t.idTieuBan == tbId);
+        const taken    = (tb && tb.giang_vien || []).map(g => parseInt(g.idGV));
+        const avail    = _gvList.filter(g => !taken.includes(parseInt(g.idGV)));
+
+        if (!avail.length) {
+            Swal.fire({ icon: 'info', title: 'Không còn giảng viên', text: 'Tất cả giảng viên đã được phân công.' });
+            return;
+        }
+
+        const opts = avail.map(g => '<option value="' + g.idGV + '">' + esc(g.tenGV) + '</option>').join('');
+
+        const { value } = await Swal.fire({
+            title: 'Thêm Giám khảo vào: ' + esc(tbName),
+            html: '<div class="text-left"><label class="block text-xs font-semibold text-slate-700 mb-1">Chọn giảng viên</label>' +
+                  '<select id="sw-gv" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300"><option value="">-- Chọn --</option>' + opts + '</select></div>',
+            showCancelButton: true, confirmButtonText: 'Thêm', cancelButtonText: 'Hủy',
+            preConfirm: () => {
+                const v = document.getElementById('sw-gv').value;
+                if (!v) { Swal.showValidationMessage('Vui lòng chọn giảng viên'); return false; }
+                return parseInt(v);
+            },
+        });
+
+        if (!value) return;
+        const res = await tbApiPost({ action: 'them_gv', id_tieu_ban: tbId, id_gv: value });
+        if (res.status === 'success') await tbReload();
+        else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+    }
+
+    // ── Modal: Thêm SP ───────────────────────────────────────
+    async function tbShowAddSpModal(tbId, tbName) {
+        const spRes = await tbApiGet({ action: 'sp_chua_xep', id_sk: idSk });
+        const list  = spRes.data || [];
+
+        if (!list.length) {
+            Swal.fire({ icon: 'info', title: 'Không còn bài trống', text: 'Tất cả bài đã xếp phòng hoặc chưa được duyệt.' });
+            return;
+        }
+
+        const opts = list.map(sp => '<option value="' + sp.idSanPham + '">' + esc(nhomLabel(sp)) + ' — ' + esc(sp.tenSanPham) + '</option>').join('');
+
+        const { value } = await Swal.fire({
+            title: 'Thêm bài vào: ' + esc(tbName),
+            html: '<div class="text-left"><label class="block text-xs font-semibold text-slate-700 mb-1">Chọn bài báo cáo (đã duyệt)</label>' +
+                  '<select id="sw-sp" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300"><option value="">-- Chọn --</option>' + opts + '</select></div>',
+            showCancelButton: true, confirmButtonText: 'Xếp vào phòng', cancelButtonText: 'Hủy',
+            preConfirm: () => {
+                const v = document.getElementById('sw-sp').value;
+                if (!v) { Swal.showValidationMessage('Vui lòng chọn bài'); return false; }
+                return parseInt(v);
+            },
+        });
+
+        if (!value) return;
+        const res = await tbApiPost({ action: 'them_sp', id_tieu_ban: tbId, id_san_pham: value });
+        if (res.status === 'success') await tbReload();
+        else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+    }
+
+    // ── Reload ───────────────────────────────────────────────
+    async function tbReload() {
+        const data = await tbLoadAll();
+        tbRenderList();
+        tbRenderStats(data);
+        tbRenderJudgesTable();
+    }
+
+    // ── Tab Judges: bảng phân công ───────────────────────────
+    function tbRenderJudgesTable() {
+        const w = document.getElementById('judgesTableWrapper');
+        if (!w) return;
+
+        const judgesCanEdit = window.JUDGES_CAN_EDIT === true;
+
+        if (!_tieubanList.length) {
+            w.innerHTML =
+                '<div class="p-10 text-center text-slate-400">' +
+                '<i class="fas fa-info-circle text-2xl mb-2 block"></i>' +
+                '<p class="text-sm">Chưa có tiểu ban nào. Hãy tạo tiểu ban ở tab <strong>Quản lý Tiểu ban</strong> trước.</p>' +
+                '</div>';
+            return;
+        }
+
+        const rows = _tieubanList.map(tb => {
+            const gvs   = tb.giang_vien || [];
+            const chips = gvs.length
+                ? gvs.map(g =>
+                    '<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs border rounded-full bg-slate-50 border-slate-200 text-slate-600">' +
+                    esc(g.tenGV) +
+                    (judgesCanEdit ? ' <button class="text-rose-400 hover:text-rose-600 font-bold leading-none" data-tb-j-action="xoa_gv" data-tb="' + tb.idTieuBan + '" data-gv="' + g.idGV + '">×</button>' : '') +
+                    '</span>').join('')
+                : '<span class="text-slate-400 italic text-xs">Chưa có</span>';
+
+            return (
+                '<tr class="hover:bg-slate-50 transition-colors">' +
+                '<td class="px-4 py-3 text-sm font-semibold text-slate-700 border-b border-slate-100">' + esc(tb.tenTieuBan) +
+                '<span class="block text-xs font-normal text-slate-400">' + esc(tb.tenVongThi || '—') + '</span></td>' +
+                '<td class="px-4 py-3 text-sm text-slate-500 border-b border-slate-100 text-center">' + fmtDateTB(tb.ngayBaoCao) + '</td>' +
+                '<td class="px-4 py-3 text-sm text-slate-500 border-b border-slate-100 text-center">' + esc(tb.diaDiem || '—') + '</td>' +
+                '<td class="px-4 py-3 border-b border-slate-100"><div class="flex flex-wrap gap-1.5">' + chips + '</div></td>' +
+                '<td class="px-4 py-3 text-center border-b border-slate-100">' +
+                (judgesCanEdit
+                    ? '<button class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-tl from-blue-600 to-cyan-400 rounded-lg shadow-soft-sm hover:shadow-soft-lg transition-all" data-tb-j-action="them_gv" data-tb="' + tb.idTieuBan + '" data-tbname="' + esc(tb.tenTieuBan) + '"><i class="fas fa-user-plus mr-1"></i> Phân công</button>'
+                    : '—') +
+                '</td></tr>'
+            );
+        }).join('');
+
+        w.innerHTML =
+            '<table class="min-w-full text-sm">' +
+            '<thead class="bg-gradient-to-r from-slate-700 to-slate-600 text-white">' +
+            '<tr>' +
+            '<th class="px-4 py-3 text-left text-xs font-bold uppercase text-slate-200">Tiểu ban</th>' +
+            '<th class="px-4 py-3 text-center text-xs font-bold uppercase text-slate-200 w-32">Ngày BC</th>' +
+            '<th class="px-4 py-3 text-center text-xs font-bold uppercase text-slate-200 w-28">Phòng</th>' +
+            '<th class="px-4 py-3 text-left text-xs font-bold uppercase text-slate-200">Ban giám khảo</th>' +
+            '<th class="px-4 py-3 text-center text-xs font-bold uppercase text-slate-200 w-32">Thao tác</th>' +
+            '</tr></thead>' +
+            '<tbody>' + rows + '</tbody>' +
+            '</table>';
+
+        w.querySelectorAll('[data-tb-j-action]').forEach(b => b.addEventListener('click', async (e) => {
+            const btn    = e.currentTarget;
+            const action = btn.dataset.tbJAction;
+            const tbId   = parseInt(btn.dataset.tb || 0);
+            if (action === 'them_gv') await tbShowAddGvModal(tbId, btn.dataset.tbname);
+            if (action === 'xoa_gv') {
+                const res = await tbApiPost({ action: 'xoa_gv', id_tieu_ban: tbId, id_gv: parseInt(btn.dataset.gv) });
+                if (res.status === 'success') await tbReload();
+                else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+            }
+        }));
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // PUBLIC
+    // ─────────────────────────────────────────────────────────
+    window.khoiTaoTabSubcommittees = async function () {
+        if (currentTab !== 'subcommittees') return;
+        const el = document.getElementById('subcommitteeList');
+        if (!el) return;
+
+        try {
+            const data = await tbLoadAll();
+            tbRenderStats(data);
+            tbRenderList();
+
+            const btn = document.getElementById('btnTaoTieuBanMoi');
+            if (btn && canEditTB) btn.addEventListener('click', tbShowCreateModal);
+        } catch (err) {
+            if (el) el.innerHTML =
+                '<div class="p-6 border border-rose-200 rounded-xl bg-rose-50 text-rose-700 text-sm">' +
+                '<i class="fas fa-exclamation-triangle mr-2"></i>' + esc(err.message || 'Không tải được dữ liệu tiểu ban') + '</div>';
+        }
+    };
+
+    window.khoiTaoTabJudges = async function () {
+        if (currentTab !== 'judges') return;
+        const w = document.getElementById('judgesTableWrapper');
+        if (!w) return;
+
+        try {
+            if (!_tbLoaded) await tbLoadAll();
+            tbRenderJudgesTable();
+
+            const btnR = document.getElementById('btnRefreshJudges');
+            if (btnR) btnR.addEventListener('click', async () => {
+                await tbLoadAll();
+                tbRenderJudgesTable();
+            });
+        } catch (err) {
+            w.innerHTML =
+                '<div class="p-6 border border-rose-200 rounded-xl bg-rose-50 text-rose-700 text-sm">' +
+                '<i class="fas fa-exclamation-triangle mr-2"></i>' + esc(err.message || 'Không tải được dữ liệu phân công') + '</div>';
+        }
+    };
+
+})();

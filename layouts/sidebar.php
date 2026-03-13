@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $useEventSidebar     = isset($useEventSidebar)     && $useEventSidebar === true;
 $eventSidebarEventId = isset($eventSidebarEventId) ? (int)    $eventSidebarEventId : 0;
 $eventSidebarSection = isset($eventSidebarSection) ? (string) $eventSidebarSection : 'overview';
@@ -108,6 +108,16 @@ function _sb_link_if(array $tabAccess, string $section, string $current, int $id
                 <?php echo _sb_section_label('Nghiệp vụ chấm thi'); ?>
                 <?php echo _sb_link_if($_sbTabAccess, 'scoring',    $eventSidebarSection, $eventSidebarEventId, 'edit_note',    'Quản lý & Duyệt điểm'); ?>
                 <?php echo _sb_link_if($_sbTabAccess, 'scoring-gv', $eventSidebarSection, $eventSidebarEventId, 'rate_review',  'Chấm điểm'); ?>
+                <?php endif; ?>
+
+                <?php
+                $hasTieuBan = !empty($_sbTabAccess['subcommittees'])
+                           || !empty($_sbTabAccess['judges']);
+                if ($hasTieuBan):
+                ?>
+                <?php echo _sb_section_label('Tiểu ban & Hội đồng'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'subcommittees', $eventSidebarSection, $eventSidebarEventId, 'meeting_room', 'Quản lý Tiểu ban'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'judges',        $eventSidebarSection, $eventSidebarEventId, 'supervisor_account', 'Phân công Ban GK'); ?>
                 <?php endif; ?>
 
                 <?php

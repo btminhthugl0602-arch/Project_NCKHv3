@@ -1,20 +1,36 @@
 <?php
 /**
  * Partial: Tab Phân công Ban giám khảo
- * Biến cần có: $idSk, $tab
+ * Biến cần có: $idSk, $tab, $perm
+ * JS xử lý: event-detail.js — khoiTaoTabJudges()
  */
+$canEdit = !empty($perm['quan_ly_tieuban']) || !empty($perm['cauhinh_sukien']);
 ?>
-<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-    <div class="p-4 border rounded-xl border-slate-200 bg-slate-50">
-        <p class="mb-1 text-xs font-bold uppercase text-slate-400">Phân công Ban giám khảo</p>
-        <p class="mb-0 text-sm text-slate-600">Quản lý danh sách BGK và phân công theo từng tiểu ban, phiên báo cáo.</p>
+<div id="judgesTab">
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+            <p class="mb-0 text-sm font-bold text-slate-700">
+                <i class="fas fa-user-tie mr-2 text-slate-500"></i>Phân công Ban Giám Khảo theo Tiểu ban
+            </p>
+            <p class="mb-0 text-xs text-slate-400">Gán giảng viên vào từng phòng báo cáo</p>
+        </div>
+        <button id="btnRefreshJudges" type="button"
+            class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+            <i class="fas fa-sync-alt mr-1.5"></i> Làm mới
+        </button>
     </div>
-    <div class="p-4 border rounded-xl border-dashed border-slate-300">
-        <p class="mb-1 text-xs font-bold uppercase text-slate-400">Gợi ý tác vụ</p>
-        <ul class="pl-5 space-y-1 text-sm list-disc text-slate-500">
-            <li>Thêm giảng viên vào danh sách BGK</li>
-            <li>Phân công BGK theo tiểu ban</li>
-            <li>Khóa lịch chấm để tránh trùng lặp</li>
-        </ul>
+
+    <!-- Bảng phân công -->
+    <div id="judgesTableWrapper" class="overflow-x-auto border border-slate-200 rounded-xl">
+        <div class="p-8 text-center text-slate-400">
+            <i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i>
+            <p class="text-sm">Đang tải dữ liệu...</p>
+        </div>
     </div>
+
 </div>
+
+<script>
+    window.JUDGES_CAN_EDIT = <?= $canEdit ? 'true' : 'false' ?>;
+</script>
