@@ -595,6 +595,44 @@ function xet_duyet_quy_che_theo_ngucanh($conn, $idSK, $maNguCanh, $id_doi_tuong)
                 ':maNguCanh' => $maNguCanh,
             ]);
             $rules = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+            // Fallback legacy: nếu thiếu mapping ngữ cảnh, vẫn thử theo loaiQuyChe cũ
+            // để tránh bỏ lọt quy chế (đặc biệt nhóm THAMGIA).
+            if (empty($rules)) {
+                $legacyLoaiMap = [
+                    'DANG_KY_THAM_GIA_SV' => ['THAMGIA_SV', 'THAMGIA'],
+                    'DANG_KY_THAM_GIA_GV' => ['THAMGIA_GV', 'THAMGIA'],
+                    'DUYET_VONG_THI' => ['VONGTHI'],
+                    'DUYET_VONG_THI_HANG_LOAT' => ['VONGTHI'],
+                    'NOP_SAN_PHAM' => ['SANPHAM'],
+                    'NOP_TAI_LIEU_VONG_THI' => ['VONGTHI'],
+                    'XET_GIAI_THUONG' => ['GIAITHUONG'],
+                ];
+
+                $fallbackLoai = $legacyLoaiMap[$maNguCanh] ?? [$maNguCanh];
+                $fallbackLoai = array_values(array_unique(array_filter(array_map('strtoupper', $fallbackLoai))));
+
+                if (!empty($fallbackLoai)) {
+                    $placeholders = [];
+                    $params = [':idSK' => $idSK];
+                    foreach ($fallbackLoai as $i => $code) {
+                        $ph = ':loai' . $i;
+                        $placeholders[] = $ph;
+                        $params[$ph] = $code;
+                    }
+
+                    $stmtLegacy = $conn->prepare(
+                        'SELECT DISTINCT q.idQuyChe, q.tenQuyChe, qd.idDieuKienCuoi
+                         FROM quyche q
+                         JOIN quyche_dieukien qd ON q.idQuyChe = qd.idQuyChe
+                         WHERE q.idSK = :idSK
+                           AND UPPER(q.loaiQuyChe) IN (' . implode(',', $placeholders) . ')
+                         ORDER BY q.idQuyChe ASC'
+                    );
+                    $stmtLegacy->execute($params);
+                    $rules = $stmtLegacy->fetchAll(PDO::FETCH_ASSOC) ?: [];
+                }
+            }
         } else {
             $stmt = $conn->prepare(
                 'SELECT q.idQuyChe, q.tenQuyChe, qd.idDieuKienCuoi
