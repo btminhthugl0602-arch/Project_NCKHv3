@@ -618,8 +618,6 @@
 - ⚠️ Cần thực thi thủ công sau khi kiểm tra dữ liệu trùng lặp.
 
 
->>>>>>> MinhThu
-
 ### Tính năng & Sửa lỗi cuối cùng
 
 #### 5.1 — Implement động cơ quy chế vòng thi `cham_diem_kiem_tra_quy_che`
