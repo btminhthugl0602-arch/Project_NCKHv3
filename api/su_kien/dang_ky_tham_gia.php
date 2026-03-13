@@ -98,15 +98,41 @@ try {
     // ── 5.1 Kiểm tra quy chế theo ngữ cảnh áp dụng ───────
     $maNguCanh = $idLoaiTK === 3 ? 'DANG_KY_THAM_GIA_SV' : 'DANG_KY_THAM_GIA_GV';
     $ketQuaQuyChe = xet_duyet_quy_che_theo_ngucanh($conn, $idSk, $maNguCanh, $idTK);
-    if (empty($ketQuaQuyChe['hopLe'])) {
-        $viPham = is_array($ketQuaQuyChe['viPham'] ?? null) ? $ketQuaQuyChe['viPham'] : [];
-        $tenViPham = array_values(array_filter(array_map(function ($item) {
-            return trim((string) ($item['tenQuyChe'] ?? ''));
-        }, $viPham)));
+
+    // Fail-safe cho dữ liệu legacy: thêm 1 lượt check theo mã loại cũ
+    // để tránh bỏ lọt khi mapping ngữ cảnh bị lệch/thiếu.
+    $legacyNguCanh = $idLoaiTK === 3 ? 'THAMGIA' : 'THAMGIA_GV';
+    $ketQuaQuyCheLegacy = xet_duyet_quy_che_theo_ngucanh($conn, $idSk, $legacyNguCanh, $idTK);
+
+    $tongQuyCheChinh = (int) ($ketQuaQuyChe['tongQuyChe'] ?? 0);
+    $tongQuyCheLegacy = (int) ($ketQuaQuyCheLegacy['tongQuyChe'] ?? 0);
+
+    $coQuyCheChinh = $tongQuyCheChinh > 0;
+    $coQuyCheLegacy = $tongQuyCheLegacy > 0;
+
+    $thatBaiChinh = $coQuyCheChinh && empty($ketQuaQuyChe['hopLe']);
+    $thatBaiLegacy = $coQuyCheLegacy && empty($ketQuaQuyCheLegacy['hopLe']);
+
+    if ($thatBaiChinh || $thatBaiLegacy) {
+        $viPham = [];
+        if ($thatBaiChinh) {
+            $viPham = array_merge($viPham, is_array($ketQuaQuyChe['viPham'] ?? null) ? $ketQuaQuyChe['viPham'] : []);
+        }
+        if ($thatBaiLegacy) {
+            $viPham = array_merge($viPham, is_array($ketQuaQuyCheLegacy['viPham'] ?? null) ? $ketQuaQuyCheLegacy['viPham'] : []);
+        }
+
+        $tenViPham = [];
+        foreach ($viPham as $item) {
+            $ten = trim((string) ($item['tenQuyChe'] ?? ''));
+            if ($ten !== '') {
+                $tenViPham[$ten] = true;
+            }
+        }
 
         $message = 'Bạn chưa đạt quy chế áp dụng cho đăng ký tham gia.';
         if (!empty($tenViPham)) {
-            $message .= ' Không đạt: ' . implode(', ', $tenViPham);
+            $message .= ' Không đạt: ' . implode(', ', array_keys($tenViPham));
         }
 
         http_response_code(400);
@@ -115,8 +141,10 @@ try {
             'message' => $message,
             'data' => [
                 'ma_ngu_canh' => $maNguCanh,
-                'tong_quy_che' => (int) ($ketQuaQuyChe['tongQuyChe'] ?? 0),
-                'vi_pham' => $viPham,
+                'ma_ngu_canh_legacy' => $legacyNguCanh,
+                'tong_quy_che' => $tongQuyCheChinh,
+                'tong_quy_che_legacy' => $tongQuyCheLegacy,
+                'vi_pham' => array_values($viPham),
             ],
         ], JSON_UNESCAPED_UNICODE);
         exit;
