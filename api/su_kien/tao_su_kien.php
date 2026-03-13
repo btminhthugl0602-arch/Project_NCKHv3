@@ -53,7 +53,8 @@ $result = btc_tao_su_kien(
     $input['ngay_dong_dk'] ?? null,
     $input['ngay_bat_dau'] ?? null,
     $input['ngay_ket_thuc'] ?? null,
-    $input['is_active'] ?? 1
+    $input['is_active'] ?? 1,
+    isset($input['co_gvhd_theo_su_kien']) ? ((int) $input['co_gvhd_theo_su_kien'] === 1 ? 1 : 0) : 1
 );
 
 $success = isset($result['status']) && $result['status'] === true;

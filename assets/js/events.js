@@ -203,6 +203,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 '<input id="swal-ngayKetThuc" type="datetime-local" class="swal2-input !w-full !m-0 !h-11" />' +
                 '</div>' +
                 '</div>' +
+
+                '<div class="rounded-xl border border-slate-200 bg-slate-50 p-3">' +
+                '<label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">' +
+                '<input id="swal-coGVHDTheoSuKien" type="checkbox" class="h-4 w-4 accent-fuchsia-600" checked />' +
+                'Sự kiện có giảng viên hướng dẫn (GVHD)' +
+                '</label>' +
+                '<p class="mt-1 text-xs text-slate-500">Nếu tắt, toàn bộ luồng mời/xin/duyệt GVHD sẽ bị loại trừ cho sự kiện này.</p>' +
+                '</div>' +
                 '</div>',
             focusConfirm: false,
             showCancelButton: true,
@@ -222,6 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const idCapRaw = capSelect.value.trim();
                 const ngayBatDauRaw = document.getElementById('swal-ngayBatDau').value;
                 const ngayKetThucRaw = document.getElementById('swal-ngayKetThuc').value;
+                const coGVHDTheoSuKien = document.getElementById('swal-coGVHDTheoSuKien').checked;
 
                 if (!tenSK) {
                     Swal.showValidationMessage('Tên sự kiện không được để trống');
@@ -244,6 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ngay_bat_dau: normalizeDateTime(ngayBatDauRaw),
                     ngay_ket_thuc: normalizeDateTime(ngayKetThucRaw),
                     is_active: 1,
+                    co_gvhd_theo_su_kien: coGVHDTheoSuKien ? 1 : 0,
                     ten_cap_label: tenCap,
                     ten_loai_cap_label: tenLoaiCap,
                 };

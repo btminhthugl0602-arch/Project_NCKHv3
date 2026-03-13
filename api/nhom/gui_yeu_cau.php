@@ -35,6 +35,20 @@ if (!$nhomCheck) {
 }
 $idSk = (int) $nhomCheck['idSK'];
 
+if ($loaiYeuCau === 'GVHD') {
+    $suKien = truy_van_mot_ban_ghi($conn, 'sukien', 'idSK', $idSk);
+    $coGVHDTheoSuKien = $suKien ? (int) ($suKien['coGVHDTheoSuKien'] ?? 1) : 1;
+    if ($coGVHDTheoSuKien !== 1) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Sự kiện này không áp dụng luồng giảng viên hướng dẫn (GVHD)',
+            'data' => null,
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+}
+
 // ── Auth ──────────────────────────────────────────────────
 // Chỉ yêu cầu đăng nhập (không cần quyền sự kiện cụ thể)
 $actor       = auth_require_login();

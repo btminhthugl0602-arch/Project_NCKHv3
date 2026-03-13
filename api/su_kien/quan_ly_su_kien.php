@@ -156,6 +156,38 @@ function kiem_tra_trung_ten_su_kien($conn, string $ten_su_kien, ?int $id_cap, in
     return (int) $stmt->fetchColumn() > 0;
 }
 
+/**
+ * Kiểm tra cột có tồn tại trong DB hiện tại hay không.
+ * Dùng để tránh lỗi khi code mới chạy trên DB chưa migrate.
+ */
+function cot_ton_tai(PDO $conn, string $table, string $column): bool
+{
+    static $cache = [];
+    $key = strtolower($table . '.' . $column);
+    if (array_key_exists($key, $cache)) {
+        return $cache[$key];
+    }
+
+    try {
+        $stmt = $conn->prepare(
+            'SELECT 1 FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = :table
+               AND COLUMN_NAME = :column
+             LIMIT 1'
+        );
+        $stmt->execute([
+            ':table' => $table,
+            ':column' => $column,
+        ]);
+        $cache[$key] = (bool) $stmt->fetchColumn();
+    } catch (Throwable $e) {
+        $cache[$key] = false;
+    }
+
+    return $cache[$key];
+}
+
 // ==========================================
 // CRUD FUNCTIONS
 // ==========================================
@@ -185,11 +217,13 @@ function btc_tao_su_kien(
     $ngay_dong_dk = null,
     $ngay_bat_dau = null,
     $ngay_ket_thuc = null,
-    $is_active = 1
+    $is_active = 1,
+    $co_gvhd_theo_su_kien = 1
 ) {
     $id_nguoi_tao = (int) $id_nguoi_tao;
     $id_cap = ($id_cap !== null && (int) $id_cap > 0) ? (int) $id_cap : null;
     $is_active = ((int) $is_active === 1) ? 1 : 0;
+    $co_gvhd_theo_su_kien = ((int) $co_gvhd_theo_su_kien === 1) ? 1 : 0;
     $ten_su_kien = trim((string) $ten_su_kien);
     $mo_ta = trim((string) $mo_ta);
     $warnings = [];
@@ -230,6 +264,11 @@ function btc_tao_su_kien(
 
         $fields = ['tenSK', 'moTa', 'nguoiTao', 'isActive'];
         $values = [$ten_su_kien, $mo_ta, $id_nguoi_tao, $is_active];
+
+        if (cot_ton_tai($conn, 'sukien', 'coGVHDTheoSuKien')) {
+            $fields[] = 'coGVHDTheoSuKien';
+            $values[] = $co_gvhd_theo_su_kien;
+        }
 
         if ($id_cap !== null) {
             $fields[] = 'idCap';
@@ -375,7 +414,8 @@ function btc_cap_nhat_su_kien(
     $so_gvhd_toi_da          = false,
     $so_nhom_toi_da_gvhd     = false,
     $yeu_cau_co_gvhd         = null,
-    $cho_phep_gv_tao_nhom    = null
+    $cho_phep_gv_tao_nhom    = null,
+    $co_gvhd_theo_su_kien    = null
 ) {
     $id_nguoi_thuc_hien = (int) $id_nguoi_thuc_hien;
     $id_su_kien = (int) $id_su_kien;
@@ -470,6 +510,10 @@ function btc_cap_nhat_su_kien(
         if ($cho_phep_gv_tao_nhom !== null) {
             $fields[] = 'choPhepGVTaoNhom';
             $values[] = $cho_phep_gv_tao_nhom;
+        }
+        if ($co_gvhd_theo_su_kien !== null && cot_ton_tai($conn, 'sukien', 'coGVHDTheoSuKien')) {
+            $fields[] = 'coGVHDTheoSuKien';
+            $values[] = ((int) $co_gvhd_theo_su_kien === 1) ? 1 : 0;
         }
 
         $updated = _update_info($conn, 'sukien', $fields, $values, ['idSK' => ['=', $id_su_kien, '']]);

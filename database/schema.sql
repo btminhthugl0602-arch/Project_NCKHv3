@@ -999,6 +999,7 @@ CREATE TABLE `sukien` (
   `soGVHDToiDa` int DEFAULT NULL COMMENT 'Số GVHD tối đa/nhóm. NULL = không giới hạn',
   `yeuCauCoGVHD` tinyint NOT NULL DEFAULT '0' COMMENT 'Bắt buộc có GVHD mới được nộp bài: 0=không, 1=có',
   `choPhepGVTaoNhom` tinyint NOT NULL DEFAULT '1' COMMENT 'Cho phép GV tạo nhóm: 0=không, 1=có',
+  `coGVHDTheoSuKien` tinyint NOT NULL DEFAULT '1' COMMENT 'Bật/tắt luồng GVHD theo sự kiện: 0=không, 1=có',
   `isDeleted` tinyint NOT NULL DEFAULT '0' COMMENT 'Xóa mềm. Tách biệt hoàn toàn với isActive'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1006,14 +1007,14 @@ CREATE TABLE `sukien` (
 -- Dumping data for table `sukien`
 --
 
-INSERT INTO `sukien` (`idSK`, `tenSK`, `moTa`, `idCap`, `nguoiTao`, `ngayMoDangKy`, `ngayDongDangKy`, `ngayBatDau`, `ngayKetThuc`, `isActive`, `soNhomToiDaGVHD`, `soThanhVienToiThieu`, `soThanhVienToiDa`, `soGVHDToiDa`, `yeuCauCoGVHD`, `choPhepGVTaoNhom`, `isDeleted`) VALUES
-(1, 'Nghiên cứu khoa học sinh viên CNTT 2026', 'Cuộc thi tìm kiếm ý tưởng công nghệ mới', 1, 2, '2026-01-01 00:00:00', '2026-02-28 00:00:00', '2026-03-15 00:00:00', '2026-05-20 00:00:00', 1, NULL, 1, 5, NULL, 0, 1, 0),
-(11, 'tin hoc dai hoc', 'thdh', 1, 1, '2026-02-19 00:00:00', '2026-02-28 00:00:00', '2026-02-19 00:00:00', '2026-02-28 00:00:00', 0, NULL, 1, 5, NULL, 0, 1, 0),
-(500, 'Hackathon Sinh viên Công nghệ 2026', 'Sự kiện demo full dữ liệu: Nhóm, Bài nộp, Chấm điểm', 1, 2, '2026-02-01 00:00:00', '2026-02-20 00:00:00', '2026-02-25 00:00:00', '2026-03-30 00:00:00', 1, NULL, 1, 5, NULL, 0, 1, 0),
-(501, 'gv Minh tạo', '', 1, 7, '2026-02-23 16:05:00', '2026-03-08 16:05:00', '2026-02-23 16:05:00', '2026-03-08 16:05:00', 0, NULL, 1, 5, NULL, 0, 1, 0),
-(800, 'Hội nghị NCKH Sinh viên Khoa CNTT 2026', 'Sự kiện NCKH trọng điểm nhằm tìm kiếm các giải pháp Công nghệ AI, IoT và Phần mềm ứng dụng xuất sắc nhất.', 1, 1, '2026-01-01 00:00:00', '2026-03-01 00:00:00', '2026-03-10 00:00:00', '2026-05-30 00:00:00', 1, NULL, 1, 5, NULL, 0, 1, 0),
-(999, 'Sự kiện Test Độ Lệch Điểm 2026', 'Môi trường test cảnh báo độ lệch', 1, 1, '2026-03-09 14:58:02', '2026-03-09 14:58:02', NULL, NULL, 1, NULL, 1, 5, NULL, 0, 1, 0),
-(1000, 'Sự kiện test', '', 1, 2, '2026-03-13 10:31:33', '2026-03-13 10:31:33', '2026-03-13 10:31:00', '2026-03-20 10:31:00', 1, NULL, 1, 5, NULL, 0, 1, 0);
+INSERT INTO `sukien` (`idSK`, `tenSK`, `moTa`, `idCap`, `nguoiTao`, `ngayMoDangKy`, `ngayDongDangKy`, `ngayBatDau`, `ngayKetThuc`, `isActive`, `soNhomToiDaGVHD`, `soThanhVienToiThieu`, `soThanhVienToiDa`, `soGVHDToiDa`, `yeuCauCoGVHD`, `choPhepGVTaoNhom`, `coGVHDTheoSuKien`, `isDeleted`) VALUES
+(1, 'Nghiên cứu khoa học sinh viên CNTT 2026', 'Cuộc thi tìm kiếm ý tưởng công nghệ mới', 1, 2, '2026-01-01 00:00:00', '2026-02-28 00:00:00', '2026-03-15 00:00:00', '2026-05-20 00:00:00', 1, NULL, 1, 5, NULL, 0, 1, 1, 0),
+(11, 'tin hoc dai hoc', 'thdh', 1, 1, '2026-02-19 00:00:00', '2026-02-28 00:00:00', '2026-02-19 00:00:00', '2026-02-28 00:00:00', 0, NULL, 1, 5, NULL, 0, 1, 1, 0),
+(500, 'Hackathon Sinh viên Công nghệ 2026', 'Sự kiện demo full dữ liệu: Nhóm, Bài nộp, Chấm điểm', 1, 2, '2026-02-01 00:00:00', '2026-02-20 00:00:00', '2026-02-25 00:00:00', '2026-03-30 00:00:00', 1, NULL, 1, 5, NULL, 0, 1, 1, 0),
+(501, 'gv Minh tạo', '', 1, 7, '2026-02-23 16:05:00', '2026-03-08 16:05:00', '2026-02-23 16:05:00', '2026-03-08 16:05:00', 0, NULL, 1, 5, NULL, 0, 1, 1, 0),
+(800, 'Hội nghị NCKH Sinh viên Khoa CNTT 2026', 'Sự kiện NCKH trọng điểm nhằm tìm kiếm các giải pháp Công nghệ AI, IoT và Phần mềm ứng dụng xuất sắc nhất.', 1, 1, '2026-01-01 00:00:00', '2026-03-01 00:00:00', '2026-03-10 00:00:00', '2026-05-30 00:00:00', 1, NULL, 1, 5, NULL, 0, 1, 1, 0),
+(999, 'Sự kiện Test Độ Lệch Điểm 2026', 'Môi trường test cảnh báo độ lệch', 1, 1, '2026-03-09 14:58:02', '2026-03-09 14:58:02', NULL, NULL, 1, NULL, 1, 5, NULL, 0, 1, 1, 0),
+(1000, 'Sự kiện test', '', 1, 2, '2026-03-13 10:31:33', '2026-03-13 10:31:33', '2026-03-13 10:31:00', '2026-03-20 10:31:00', 1, NULL, 1, 5, NULL, 0, 1, 1, 0);
 
 -- --------------------------------------------------------
 

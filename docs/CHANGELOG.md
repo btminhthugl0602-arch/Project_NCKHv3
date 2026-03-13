@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## 2026-03-13 — Nhom: Chan moi/tham gia SV khi gioi han toi da = 1
+
+- Cap nhat [api/nhom/quan_ly_nhom.php](api/nhom/quan_ly_nhom.php):
+  - Bo sung chan cung trong `gui_yeu_cau_nhom` cho luong `SV`: neu su kien cau hinh `soThanhVienToiDa = 1` thi tu choi moi/tham gia thanh vien.
+  - Bo sung re-check tuong tu trong `duyet_yeu_cau_nhom` de tranh race condition khi cau hinh thay doi trong luc duyet.
+  - Giu nguyen hanh vi tao nhom ban dau (khong chan tao nhom), chi chan viec them nguoi de dam bao khong vuot qua so luong toi da.
+
+## 2026-03-13 — Pha 1: Chuan hoa contract GVHD theo su kien
+
+- Cap nhat tai lieu API su kien:
+  - Them contract moi `co_gvhd_theo_su_kien` de bat/tat luong GVHD o cap su kien.
+  - Quy dinh tuong thich nguoc: client cu khong gui field moi se mac dinh `1`.
+- Cap nhat tai lieu database:
+  - Dinh nghia cot moi `coGVHDTheoSuKien` trong bang `sukien` la nguon su that cho cau hinh GVHD theo event.
+  - Chot quy tac migration: giu mac dinh `1` cho du lieu cu de khong thay doi hanh vi hien tai.
+
 ## 2026-03-13 — Fix luong thong bao nhom (sai nguoi nhan)
 
 - Sua [api/nhom/gui_yeu_cau.php](api/nhom/gui_yeu_cau.php):

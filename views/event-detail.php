@@ -96,7 +96,7 @@ if ($_isGuest) {
 $tabTitles = [
     'overview'        => 'Tổng quan sự kiện',
     'config-basic'    => 'Cấu hình cơ bản',
-    'config-vongthi'  => 'Cấu hình vòng thi',
+    'config-vongthi'  => 'Cấu hình nhóm thi',
     'config-tailieu'  => 'Cấu hình loại tài liệu',
     'config-rules'    => 'Cấu hình quy chế',
     'config-criteria' => 'Thiết lập bộ tiêu chí',

@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../core/base.php';
+require_once __DIR__ . '/modules/gvhd_mode.php';
 
 function lay_nhom_theo_id($conn, int $id_nhom): ?array
 {
@@ -321,6 +322,10 @@ function gui_yeu_cau_nhom(PDO $conn, int $idTKThucHien, int $idNhom, int $idTKDo
     if (!$sukien) {
         return ['status' => false, 'message' => 'Sự kiện không tồn tại'];
     }
+
+    if ($loaiYeuCau === 'GVHD' && !su_kien_co_gvhd($sukien)) {
+        return ['status' => false, 'message' => 'Sự kiện này không áp dụng luồng giảng viên hướng dẫn (GVHD)'];
+    }
     $thongtinnhom = _select_info($conn, 'thongtinnhom', [], [
         'WHERE' => ['idnhom', '=', $idNhom, ''],
         'LIMIT' => [1],
@@ -371,11 +376,16 @@ function gui_yeu_cau_nhom(PDO $conn, int $idTKThucHien, int $idNhom, int $idTKDo
 
     // 9. Validate config SK
     if ($loaiYeuCau === 'SV') {
+        $soThanhVienToiDa = isset($sukien['soThanhVienToiDa']) ? (int) $sukien['soThanhVienToiDa'] : 0;
+        if ($soThanhVienToiDa === 1) {
+            return ['status' => false, 'message' => 'Sự kiện đang giới hạn tối đa 1 thành viên mỗi nhóm, không thể mời/thêm thành viên'];
+        }
+
         // Chỉ check dangTuyen khi SV tự xin vào, không áp dụng khi chủ nhóm chủ động mời
         if ($chieuMoi === 1 && $dangTuyen !== 1) {
             return ['status' => false, 'message' => 'Nhóm hiện không mở tuyển thành viên'];
         }
-        if (so_thanh_vien_sv($conn, $idNhom) >= (int) $sukien['soThanhVienToiDa']) {
+        if (so_thanh_vien_sv($conn, $idNhom) >= $soThanhVienToiDa) {
             return ['status' => false, 'message' => 'Nhóm đã đủ số lượng thành viên tối đa'];
         }
         if (kiem_tra_sv_co_nhom($conn, $idTKDoiPhuong, $idSK)) {
@@ -441,6 +451,23 @@ function duyet_yeu_cau_nhom(PDO $conn, int $idNguoiDuyet, int $idYeuCau, int $tr
         return ['status' => false, 'message' => 'Sự kiện không tồn tại'];
     }
 
+    if ($loaiYeuCau === 'GVHD' && !su_kien_co_gvhd($sukien)) {
+        if ($trangThaiMoi === 2) {
+            $ok = _update_info(
+                $conn,
+                'yeucau_thamgia',
+                ['trangThai', 'ngayPhanHoi'],
+                [2, date('Y-m-d H:i:s')],
+                ['idYeuCau' => ['=', $idYeuCau, '']]
+            );
+            return $ok
+                ? ['status' => true, 'message' => 'Đã từ chối yêu cầu']
+                : ['status' => false, 'message' => 'Lỗi khi cập nhật yêu cầu'];
+        }
+
+        return ['status' => false, 'message' => 'Sự kiện này đã tắt luồng GVHD, không thể duyệt yêu cầu GVHD'];
+    }
+
     // 3. Xác định quyền duyệt
     if ($chieuMoi === 0) {
         // Nhóm mời người: chỉ người được mời mới phản hồi
@@ -486,6 +513,12 @@ function duyet_yeu_cau_nhom(PDO $conn, int $idNguoiDuyet, int $idYeuCau, int $tr
         }
 
         if ($loaiYeuCau === 'SV') {
+            $soThanhVienToiDa = isset($sukien['soThanhVienToiDa']) ? (int) $sukien['soThanhVienToiDa'] : 0;
+            if ($soThanhVienToiDa === 1) {
+                $conn->rollBack();
+                return ['status' => false, 'message' => 'Sự kiện đang giới hạn tối đa 1 thành viên mỗi nhóm, không thể thêm thành viên'];
+            }
+
             // Re-check config SK
             $thongtinnhom = _select_info($conn, 'thongtinnhom', [], [
                 'WHERE' => ['idnhom', '=', $idNhom, ''],
@@ -496,7 +529,7 @@ function duyet_yeu_cau_nhom(PDO $conn, int $idNguoiDuyet, int $idYeuCau, int $tr
                 $conn->rollBack();
                 return ['status' => false, 'message' => 'Nhóm hiện không mở tuyển thành viên'];
             }
-            if (so_thanh_vien_sv($conn, $idNhom) >= (int) $sukien['soThanhVienToiDa']) {
+            if (so_thanh_vien_sv($conn, $idNhom) >= $soThanhVienToiDa) {
                 $conn->rollBack();
                 return ['status' => false, 'message' => 'Nhóm đã đủ số lượng thành viên tối đa'];
             }
@@ -709,6 +742,11 @@ function roi_nhom(PDO $conn, int $idNguoiThucHien, int $idNhom, int $idTKBiXoa):
 
 function tim_kiem_giang_vien(PDO $conn, string $keyword, int $idSK): array
 {
+    $suKien = truy_van_mot_ban_ghi($conn, 'sukien', 'idSK', $idSK);
+    if (!$suKien || !su_kien_co_gvhd($suKien)) {
+        return [];
+    }
+
     $keyword = trim($keyword);
 
     if ($keyword === '') {
@@ -853,6 +891,7 @@ function lay_tat_ca_nhom(PDO $conn, int $idSK): array
             tn.tennhom,
             tn.mota,
             tn.dangtuyen,
+            sk.coGVHDTheoSuKien as co_gvhd_theo_su_kien,
             sk.soThanhVienToiDa as soluongtoida,
             CASE WHEN tk_chu.idLoaiTK = 3 THEN sv_chu.tenSV
                  WHEN tk_chu.idLoaiTK = 2 THEN gv_chu.tenGV END AS ten_chu_nhom,
@@ -914,7 +953,8 @@ function lay_nhom_cua_toi(PDO $conn, int $idTK, int $idSK): ?array
                 tn.tennhom, tn.mota, tn.dangtuyen,
                 sk.soThanhVienToiDa,
                 sk.yeuCauCoGVHD,
-                sk.soGVHDToiDa
+                  sk.soGVHDToiDa,
+                  sk.coGVHDTheoSuKien
          FROM nhom n
          LEFT JOIN thongtinnhom tn ON tn.idnhom = n.idNhom
          LEFT JOIN sukien sk ON sk.idSK = n.idSK
@@ -929,7 +969,8 @@ function lay_nhom_cua_toi(PDO $conn, int $idTK, int $idSK): ?array
     $nhom['so_thanh_vien_toi_da'] = $nhom['soThanhVienToiDa'] !== null ? (int) $nhom['soThanhVienToiDa'] : null;
     $nhom['yeu_cau_co_gvhd'] = isset($nhom['yeuCauCoGVHD']) ? (int) $nhom['yeuCauCoGVHD'] : 0;
     $nhom['so_gvhd_toi_da'] = isset($nhom['soGVHDToiDa']) ? (int) $nhom['soGVHDToiDa'] : null;
-    unset($nhom['soThanhVienToiDa'], $nhom['yeuCauCoGVHD'], $nhom['soGVHDToiDa']);
+    $nhom['co_gvhd_theo_su_kien'] = isset($nhom['coGVHDTheoSuKien']) ? (int) $nhom['coGVHDTheoSuKien'] : 1;
+    unset($nhom['soThanhVienToiDa'], $nhom['yeuCauCoGVHD'], $nhom['soGVHDToiDa'], $nhom['coGVHDTheoSuKien']);
 
     // Lấy thành viên SV
     $stmtSV = $conn->prepare(
@@ -1081,7 +1122,8 @@ function lay_chi_tiet_nhom(PDO $conn, int $idNhom, int $idTKNguoiXem): ?array
         'SELECT n.idNhom, n.maNhom, n.ngayTao, n.isActive,
                 n.idChuNhom, n.idTruongNhom,
                 tn.tennhom, tn.mota, tn.dangtuyen,
-                sk.soThanhVienToiDa
+                  sk.soThanhVienToiDa,
+                  sk.coGVHDTheoSuKien
          FROM nhom n
          LEFT JOIN thongtinnhom tn ON tn.idnhom = n.idNhom
          LEFT JOIN sukien sk ON sk.idSK = n.idSK
@@ -1092,7 +1134,8 @@ function lay_chi_tiet_nhom(PDO $conn, int $idNhom, int $idTKNguoiXem): ?array
     if (!$data) return null;
 
     $data['so_thanh_vien_toi_da'] = $data['soThanhVienToiDa'] !== null ? (int) $data['soThanhVienToiDa'] : null;
-    unset($data['soThanhVienToiDa']);
+    $data['co_gvhd_theo_su_kien'] = isset($data['coGVHDTheoSuKien']) ? (int) $data['coGVHDTheoSuKien'] : 1;
+    unset($data['soThanhVienToiDa'], $data['coGVHDTheoSuKien']);
 
     // Thành viên SV
     $stmtSV = $conn->prepare(

@@ -364,8 +364,11 @@
             document.getElementById('ov-stat-cd').textContent = thong_ke.so_bai_nop ?? 0;
             document.getElementById('ov-stat-nhom-sub').innerHTML =
                 `<span class="material-symbols-outlined" style="font-size:13px;">groups</span>${thong_ke.so_vong_thi ?? 0} vòng thi`;
+            const coGvhdTheoSuKien = parseInt(su_kien.coGVHDTheoSuKien ?? su_kien.co_gvhd_theo_su_kien ?? 1) === 1;
             document.getElementById('ov-stat-gv-sub').innerHTML =
-                `<span class="material-symbols-outlined" style="font-size:13px;">check_circle</span>${thong_ke.so_gv_huong_dan ?? 0} GVHD`;
+                coGvhdTheoSuKien
+                    ? `<span class="material-symbols-outlined" style="font-size:13px;">check_circle</span>${thong_ke.so_gv_huong_dan ?? 0} GVHD`
+                    : `<span class="material-symbols-outlined" style="font-size:13px;">info</span>Không áp dụng GVHD`;
             document.getElementById('ov-stat-cd-sub').innerHTML =
                 `<span class="material-symbols-outlined" style="font-size:13px;">check_circle</span>${thong_ke.so_bai_nop ?? 0} sản phẩm`;
 

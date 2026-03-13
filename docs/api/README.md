@@ -45,7 +45,8 @@ $result = btc_tao_su_kien(
     $input['ngayDongDangKy'] ?? null,
     $input['ngayBatDau'] ?? null,
     $input['ngayKetThuc'] ?? null,
-    $input['isActive'] ?? 1
+    $input['isActive'] ?? 1,
+    isset($input['co_gvhd_theo_su_kien']) ? (int)$input['co_gvhd_theo_su_kien'] : 1
 );
 
 if (($result['status'] ?? false) === true) {
@@ -63,3 +64,9 @@ apiError($result['message'] ?? 'Có lỗi xảy ra', $result, 400);
 - `docs/api/quyche-phase2-negative-tests.md`
 - `docs/api/quyche-phase3-contract-tests.md`
 - `docs/api/quyche-runtime-observability.md`
+
+## 6) Ghi chú contract mới (Pha 1)
+- Payload tạo/cập nhật sự kiện hỗ trợ `co_gvhd_theo_su_kien`:
+  - `1`: sự kiện có luồng GVHD
+  - `0`: sự kiện không có luồng GVHD
+- Nếu không truyền field này, backend mặc định `1` để giữ tương thích với client cũ.

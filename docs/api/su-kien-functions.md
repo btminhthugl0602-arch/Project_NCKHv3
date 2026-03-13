@@ -1,9 +1,21 @@
 # Sự kiện Module (`api/su_kien`)
 
+## Contract cập nhật 2026-03-13 (Pha 1)
+
+- Thêm thuộc tính cấu hình mới ở cấp sự kiện: `co_gvhd_theo_su_kien`.
+- Ý nghĩa:
+	- `1`: sự kiện có luồng GVHD.
+	- `0`: sự kiện không có luồng GVHD.
+- Mục tiêu: tách rõ "bật/tắt luồng GVHD" khỏi các trường giới hạn số lượng.
+- Tương thích ngược tạm thời:
+	- Nếu client cũ chưa gửi `co_gvhd_theo_su_kien`, backend mặc định `1`.
+	- Quy ước `soGVHDToiDa = 0` chỉ dùng như fallback legacy khi chưa migrate, không khuyến nghị dùng lâu dài.
+
 ## 1) `quan_ly_su_kien.php`
 ### `btc_tao_su_kien(...)`
 - Tạo sự kiện mới trong `sukien`.
 - Validate dữ liệu cơ bản: tên sự kiện, mốc thời gian, `idCap`.
+- Nhận thêm cấu hình `co_gvhd_theo_su_kien` (mặc định `1`).
 - Tự động gán vai trò BTC cho người tạo vào `taikhoan_vaitro_sukien` (`idVaiTro=1`, `nguonTao='BTC_THEM'`).
 - Nếu sự kiện active thì gửi thông báo tới giảng viên/sinh viên.
 
@@ -13,6 +25,7 @@
 
 ### `btc_cap_nhat_su_kien(...)`
 - Cập nhật thông tin sự kiện và thời gian.
+- Cho phép cập nhật `co_gvhd_theo_su_kien` độc lập với các trường giới hạn GVHD.
 
 ### `btc_lay_chi_tiet_su_kien(...)`
 - Trả chi tiết sự kiện + thông tin `tenCap`, `nguoiTaoTen`.

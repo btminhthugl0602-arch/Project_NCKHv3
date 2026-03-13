@@ -3,6 +3,25 @@ document.addEventListener('DOMContentLoaded', function () {
     const tab = String(window.NHOM_THI_TAB || 'tat-ca');
     const qlNhomId = Number(window.QUAN_LY_NHOM_ID || 0);
     const qlTab = String(window.QUAN_LY_TAB || 'thanh-vien');
+    let eventGvhdEnabled = true;
+
+    function extractGvhdMode(obj) {
+        if (!obj || typeof obj !== 'object') return null;
+        const raw = obj.co_gvhd_theo_su_kien ?? obj.coGVHDTheoSuKien ?? obj.co_gvhd ?? obj.coGVHD;
+        if (raw === null || raw === undefined || raw === '') return null;
+        return parseInt(raw, 10) === 1;
+    }
+
+    function syncGvhdMode(...candidates) {
+        for (const item of candidates) {
+            const value = extractGvhdMode(item);
+            if (value !== null) {
+                eventGvhdEnabled = value;
+                return value;
+            }
+        }
+        return eventGvhdEnabled;
+    }
 
     // ── Load tên sự kiện lên sidebar ──
     const sidebarNameEl = document.getElementById('sidebarEventName');
@@ -12,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(d => {
                 if (d.status === 'success' && d.data) {
                     sidebarNameEl.textContent = d.data.tenSK || '';
+                    syncGvhdMode(d.data);
                 }
             }).catch(() => { });
     }
@@ -73,6 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btnSubmitTaoNhom')?.addEventListener('click', submitTaoNhom);
 
         function renderCard(g) {
+            const coGvhdTheoSuKien = syncGvhdMode(g);
             const soTV = parseInt(g.so_thanh_vien || 0);
             const toiDa = parseInt(g.soluongtoida || 5);
             const open = parseInt(g.dangtuyen) === 1;
@@ -89,7 +110,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     // GV: nút "Xin làm GVHD" — disable nếu đã đủ giới hạn
                     const soNhomToiDa = parseInt(g.so_nhom_toi_da_gvhd ?? -1);
                     const daDu = soNhomToiDa >= 0 && userSoNhomHuongDan >= soNhomToiDa;
-                    btn = daDu
+                    btn = !coGvhdTheoSuKien
+                        ? ''
+                        : daDu
                         ? `<button disabled title="Bạn đã đủ số nhóm hướng dẫn"
                                class="inline-flex items-center gap-1 px-4 py-1.5 text-xs font-semibold text-slate-400 rounded-lg bg-slate-100 cursor-not-allowed opacity-60">
                                <i class="fas fa-chalkboard-teacher"></i> Xin làm GVHD
@@ -134,6 +157,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 userHasGroup = !!d.user_has_group;
                 userLoaiTK = parseInt(d.user_loai_tk || 0);
                 userSoNhomHuongDan = parseInt(d.user_so_nhom_huong_dan || 0);
+                syncGvhdMode(d.meta, allGroups[0]);
                 const publicCount = allGroups.filter(g => parseInt(g.dangtuyen) === 1).length;
                 if (elCount) elCount.textContent = `${publicCount} nhóm công khai`;
                 renderGrid(allGroups);
@@ -182,6 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         return;
                     }
                     const nhom = d.data;
+                    syncGvhdMode(nhom);
                     if (elTitle) elTitle.textContent = `Quản lý nhóm: ${nhom.tennhom || ''}`;
 
                     // Badge yêu cầu
@@ -205,14 +230,15 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             function renderThanhVien(nhom) {
+                const coGvhdTheoSuKien = syncGvhdMode(nhom);
                 const svList = (nhom.thanh_vien || []).filter(tv => parseInt(tv.idvaitronhom) !== 3);
                 const gvhdList = (nhom.thanh_vien || []).filter(tv => parseInt(tv.idvaitronhom) === 3);
                 const soGVHDToiDa = nhom.so_gvhd_toi_da ?? null;
-                const coTheMotGVHD = soGVHDToiDa === null || gvhdList.length < soGVHDToiDa;
+                const coTheMotGVHD = coGvhdTheoSuKien && (soGVHDToiDa === null || gvhdList.length < soGVHDToiDa);
 
                 const roleLabel = r => {
                     if (r == 1) return '<span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-semibold">Trưởng nhóm</span>';
-                    if (r == 3) return '<span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-semibold">GVHD</span>';
+                    if (r == 3 && coGvhdTheoSuKien) return '<span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-semibold">GVHD</span>';
                     return '<span class="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">Thành viên</span>';
                 };
 
@@ -263,6 +289,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             function renderYeuCau(nhom) {
+                const coGvhdTheoSuKien = syncGvhdMode(nhom);
                 const list = nhom.yeu_cau_cho || [];
                 if (!list.length) return `<div class="text-center py-10 text-slate-400">
                     <i class="fas fa-inbox text-3xl mb-3 block"></i>
@@ -271,7 +298,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 return list.map(yc => {
                     const roleBadge = yc.loaiYeuCau === 'GVHD'
-                        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700"><i class="fas fa-chalkboard-teacher"></i> Xin làm GVHD</span>`
+                        ? (coGvhdTheoSuKien
+                            ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700"><i class="fas fa-chalkboard-teacher"></i> Xin làm GVHD</span>`
+                            : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700"><i class="fas fa-user-plus"></i> Xin tham gia</span>`)
                         : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700"><i class="fas fa-user-plus"></i> Xin tham gia</span>`;
                     return `
                     <div id="yc-${yc.idYeuCau}" class="flex items-center justify-between p-4 border border-slate-200 rounded-xl mb-3">
@@ -885,6 +914,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 searchUser('sv', '', 'svSearchResults');
             };
             window.openMoiGVHD = function () {
+                if (!eventGvhdEnabled) return;
                 document.getElementById('searchGVInput').value = '';
                 document.getElementById('modalMoiGVHD').classList.remove('hidden');
                 searchUser('gv', '', 'gvSearchResults');
@@ -901,6 +931,10 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             window.sendInvite = async function (idTK, loaiYeuCau = 'SV') {
+                if (loaiYeuCau === 'GVHD' && !eventGvhdEnabled) {
+                    Swal.fire({ icon: 'info', title: 'Sự kiện này không sử dụng GVHD', timer: 1400, showConfirmButton: false });
+                    return;
+                }
                 const res = await apiPost('/api/nhom/gui_yeu_cau.php', { id_sk: idSk, id_nhom: qlNhomId, chieu_moi: 0, id_tk_doi_phuong: idTK, loai_yeu_cau: loaiYeuCau });
                 document.getElementById('modalMoiTV')?.classList.add('hidden');
                 document.getElementById('modalMoiGVHD')?.classList.add('hidden');
@@ -953,12 +987,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const elContent = document.getElementById('myGroupContent');
 
         function renderGroupCard(nhom) {
+            const coGvhdTheoSuKien = syncGvhdMode(nhom);
             const gvhdList = (nhom.thanh_vien || []).filter(tv => parseInt(tv.idvaitronhom) === 3);
             const hasGvhd = gvhdList.length > 0;
             const yeuCauCoGVHD = parseInt(nhom.yeu_cau_co_gvhd) === 1;
             const soGVHDToiDa = nhom.so_gvhd_toi_da ?? null;
-            const coTheMotGVHD = soGVHDToiDa === null || gvhdList.length < soGVHDToiDa;
-            const showCanhBao = yeuCauCoGVHD && !hasGvhd;
+            const coTheMotGVHD = coGvhdTheoSuKien && (soGVHDToiDa === null || gvhdList.length < soGVHDToiDa);
+            const showCanhBao = coGvhdTheoSuKien && yeuCauCoGVHD && !hasGvhd;
             const open = parseInt(nhom.dangtuyen) === 1;
             const svList = (nhom.thanh_vien || []).filter(tv => parseInt(tv.idvaitronhom) !== 3);
 
@@ -976,7 +1011,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }).join('');
 
             // GVHD row: hiện danh sách nếu có, cảnh báo chỉ khi bắt buộc mà chưa có
-            const gvhdRow = hasGvhd
+            const gvhdRow = !coGvhdTheoSuKien
+                ? ''
+                : hasGvhd
                 ? gvhdList.map(gv => `
                     <div class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600">
                         <i class="fas fa-chalkboard-teacher"></i> GVHD: ${esc(gv.ten)}
@@ -1031,6 +1068,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // API trả về 1 nhóm hoặc null
                 const nhom = d.data;
                 if (!nhom) { elNoGroup.classList.remove('hidden'); return; }
+                syncGvhdMode(nhom);
 
                 elContent.innerHTML = renderGroupCard(nhom);
                 elContent.classList.remove('hidden');
@@ -1067,7 +1105,9 @@ document.addEventListener('DOMContentLoaded', function () {
             function renderInviteCard(inv) {
                 const soTV = parseInt(inv.so_thanh_vien_sv || 0);
                 const roleBadge = inv.loaiYeuCau === 'GVHD'
-                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700"><i class="fas fa-chalkboard-teacher"></i> Mời làm GVHD</span>`
+                    ? (eventGvhdEnabled
+                        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700"><i class="fas fa-chalkboard-teacher"></i> Mời làm GVHD</span>`
+                        : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700"><i class="fas fa-users"></i> Mời tham gia nhóm</span>`)
                     : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700"><i class="fas fa-users"></i> Mời tham gia nhóm</span>`;
                 return `<div id="invite-${inv.idYeuCau}" class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3 shadow-soft-sm">
                     <div class="flex items-center justify-between gap-2">
@@ -1091,7 +1131,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             function renderIncomingRequestCard(req) {
                 const roleBadge = req.loaiYeuCau === 'GVHD'
-                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700"><i class="fas fa-chalkboard-teacher"></i> Xin làm GVHD</span>`
+                    ? (eventGvhdEnabled
+                        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700"><i class="fas fa-chalkboard-teacher"></i> Xin làm GVHD</span>`
+                        : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700"><i class="fas fa-user-plus"></i> Xin vào nhóm</span>`)
                     : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700"><i class="fas fa-user-plus"></i> Xin vào nhóm</span>`;
 
                 return `<div id="incoming-${req.idYeuCau}" class="bg-white border border-purple-200 rounded-xl p-4 flex flex-col gap-3 shadow-soft-sm">
@@ -1142,6 +1184,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                     const pendingInvites = d.data?.loi_moi_den || [];
                     const incomingRequests = d.data?.yeu_cau_den_nhom_cua_toi || [];
+                    syncGvhdMode(d.meta, pendingInvites[0], incomingRequests[0]);
 
                     if (!pendingInvites.length && !incomingRequests.length) {
                         showInvitesEmpty();
@@ -1184,8 +1227,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const elHistList     = document.getElementById('sentHistoryList');
 
             function renderSentCard(yc) {
-                const roleLabel = yc.loaiYeuCau === 'GVHD' ? 'Xin làm GVHD' : 'Xin tham gia';
-                const roleBadge = yc.loaiYeuCau === 'GVHD'
+                const roleLabel = yc.loaiYeuCau === 'GVHD' && eventGvhdEnabled ? 'Xin làm GVHD' : 'Xin tham gia';
+                const roleBadge = yc.loaiYeuCau === 'GVHD' && eventGvhdEnabled
                     ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700"><i class="fas fa-chalkboard-teacher"></i> ${roleLabel}</span>`
                     : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700"><i class="fas fa-users"></i> ${roleLabel}</span>`;
                 return `<div id="sent-${yc.idYeuCau}" class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3 shadow-soft-sm">
@@ -1207,7 +1250,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             function renderHistoryItem(yc) {
                 const ok = parseInt(yc.trangThai) === 1;
-                const roleLabel = yc.loaiYeuCau === 'GVHD' ? 'GVHD' : 'Thành viên';
+                const roleLabel = yc.loaiYeuCau === 'GVHD' && eventGvhdEnabled ? 'GVHD' : 'Thành viên';
                 return `<div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                     <div>
                         <span class="text-sm text-slate-600">${esc(yc.tennhom || yc.maNhom)}</span>
@@ -1231,6 +1274,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const all     = d.data?.yeu_cau_gui_di || [];
                     const pending = all.filter(i => parseInt(i.trangThai) === 0);
                     const history = all.filter(i => parseInt(i.trangThai) !== 0);
+                    syncGvhdMode(d.meta, all[0]);
 
                     if (!pending.length) {
                         elPendingEmpty.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-center border border-dashed border-slate-300 rounded-xl bg-slate-50">
@@ -1275,6 +1319,10 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     window.xinLamGVHD = async function (idNhom) {
+        if (!eventGvhdEnabled) {
+            await Swal.fire({ icon: 'info', title: 'Sự kiện này không sử dụng GVHD', confirmButtonColor: '#5e72e4' });
+            return;
+        }
         const r = await Swal.fire({
             title: 'Xin làm Giảng viên hướng dẫn?', input: 'text',
             inputPlaceholder: 'Lời nhắn (tuỳ chọn)...',
@@ -1389,12 +1437,21 @@ document.addEventListener('DOMContentLoaded', function () {
     async function searchUser(loai, q, resultId) {
         const el = document.getElementById(resultId);
         if (!el) return;
+        if (loai === 'gv' && !eventGvhdEnabled) {
+            el.innerHTML = '<p class="text-xs text-slate-400 p-2">Sự kiện này không bật chức năng GVHD</p>';
+            return;
+        }
         // Cho phép q rỗng để load danh sách ban đầu; chặn khi gõ 1 ký tự
         if (q.length === 1) { el.innerHTML = '<p class="text-xs text-slate-400 p-2">Tiếp tục gõ để tìm kiếm...</p>'; return; }
         el.innerHTML = '<p class="text-xs text-slate-400 p-2"><i class="fas fa-circle-notch fa-spin mr-1"></i>Đang tải...</p>';
         const d = await apiFetch(`/api/nhom/tim_kiem_user.php?loai=${loai}&q=${encodeURIComponent(q)}&id_sk=${idSk}`);
+        if (d.status !== 'success') {
+            el.innerHTML = `<p class="text-xs text-rose-500 p-2">${esc(d.message || 'Không thể tải dữ liệu')}</p>`;
+            return;
+        }
         const list = d.data || [];
         const meta = d.meta || {};
+        syncGvhdMode(meta);
         if (!list.length) { el.innerHTML = '<p class="text-xs text-slate-400 p-2">Không tìm thấy kết quả</p>'; return; }
         el.innerHTML = list.map(u => {
             const name = esc(u.tenSV || u.tenGV || '');

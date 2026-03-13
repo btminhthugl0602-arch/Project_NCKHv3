@@ -39,14 +39,30 @@ if ($keyword !== '' && mb_strlen($keyword) < 2) {
 }
 
 try {
+    $sk = truy_van_mot_ban_ghi($conn, 'sukien', 'idSK', $idSk);
+    $coGVHDTheoSuKien = $sk ? (int) ($sk['coGVHDTheoSuKien'] ?? 1) : 1;
+
     if ($loai === 'sv') {
         $data = tim_kiem_sinh_vien($conn, $keyword, $idSk);
         echo json_encode(['status' => 'success', 'message' => 'OK', 'data' => $data], JSON_UNESCAPED_UNICODE);
     } else {
+        if ($coGVHDTheoSuKien !== 1) {
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Sự kiện đang tắt luồng GVHD',
+                'data' => [],
+                'meta' => [
+                    'so_nhom_toi_da_gvhd' => null,
+                    'co_gvhd_theo_su_kien' => 0,
+                ],
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
         $data = tim_kiem_giang_vien($conn, $keyword, $idSk);
-        $sk = truy_van_mot_ban_ghi($conn, 'sukien', 'idSK', $idSk);
         $meta = [
             'so_nhom_toi_da_gvhd' => $sk ? ($sk['soNhomToiDaGVHD'] !== null ? (int)$sk['soNhomToiDaGVHD'] : null) : null,
+            'co_gvhd_theo_su_kien' => $coGVHDTheoSuKien,
         ];
         echo json_encode(['status' => 'success', 'message' => 'OK', 'data' => $data, 'meta' => $meta], JSON_UNESCAPED_UNICODE);
     }

@@ -84,7 +84,7 @@ function _sb_link_if(array $tabAccess, string $section, string $current, int $id
                 ?>
                 <?php echo _sb_section_label('Cấu hình sự kiện'); ?>
                 <?php echo _sb_link_if($_sbTabAccess, 'config-basic',    $eventSidebarSection, $eventSidebarEventId, 'tune',        'Cấu hình cơ bản'); ?>
-                <?php echo _sb_link_if($_sbTabAccess, 'config-vongthi',  $eventSidebarSection, $eventSidebarEventId, 'flag',        'Cấu hình vòng thi'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'config-vongthi',  $eventSidebarSection, $eventSidebarEventId, 'flag',        'Cấu hình nhóm thi'); ?>
                 <?php echo _sb_link_if($_sbTabAccess, 'config-tailieu',  $eventSidebarSection, $eventSidebarEventId, 'folder_open', 'Cấu hình tài liệu'); ?>
                 <?php echo _sb_link_if($_sbTabAccess, 'config-rules',    $eventSidebarSection, $eventSidebarEventId, 'gavel',       'Cấu hình quy chế'); ?>
                 <?php echo _sb_link_if($_sbTabAccess, 'config-criteria', $eventSidebarSection, $eventSidebarEventId, 'checklist',   'Thiết lập bộ tiêu chí'); ?>

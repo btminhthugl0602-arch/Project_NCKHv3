@@ -47,7 +47,8 @@ $result = btc_cap_nhat_su_kien(
     array_key_exists('so_gvhd_toi_da',      $input) ? ($input['so_gvhd_toi_da']      !== null ? (int)$input['so_gvhd_toi_da']      : null) : false,
     array_key_exists('so_nhom_toi_da_gvhd', $input) ? ($input['so_nhom_toi_da_gvhd'] !== null ? (int)$input['so_nhom_toi_da_gvhd'] : null) : false,
     isset($input['yeu_cau_co_gvhd'])         ? ((int)$input['yeu_cau_co_gvhd']         === 1 ? 1 : 0) : null,
-    isset($input['cho_phep_gv_tao_nhom'])    ? ((int)$input['cho_phep_gv_tao_nhom']    === 1 ? 1 : 0) : null
+    isset($input['cho_phep_gv_tao_nhom'])    ? ((int)$input['cho_phep_gv_tao_nhom']    === 1 ? 1 : 0) : null,
+    isset($input['co_gvhd_theo_su_kien'])    ? ((int)$input['co_gvhd_theo_su_kien']    === 1 ? 1 : 0) : null
 );
 
 $success = isset($result['status']) && $result['status'] === true;
