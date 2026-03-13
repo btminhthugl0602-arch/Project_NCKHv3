@@ -67,6 +67,8 @@ $tabAccess = [
     'config-tailieu'  => $perm['cauhinh_sukien'],
     'config-rules'    => $perm['cauhinh_sukien'],
     'config-criteria' => $perm['cauhinh_sukien'],
+    'subcommittees'   => $perm['cauhinh_sukien'] || $perm['quan_ly_tieuban'],
+    'judges'          => $perm['cauhinh_sukien'] || $perm['quan_ly_tieuban'],
     'review-assign'   => $perm['phan_cong_cham'],
     'review-results'  => $perm['duyet_diem'],
     'scoring'         => $perm['phan_cong_cham'] || $perm['duyet_diem'],
@@ -100,6 +102,8 @@ $tabTitles = [
     'config-tailieu'  => 'Cấu hình loại tài liệu',
     'config-rules'    => 'Cấu hình quy chế',
     'config-criteria' => 'Thiết lập bộ tiêu chí',
+    'subcommittees'   => 'Quản lý Tiểu ban',
+    'judges'          => 'Phân công Ban Giám Khảo',
     'review-assign'   => 'Phân công phản biện',
     'review-results'  => 'Kết quả Review',
     'scoring'         => 'Phân công & Quản lý Điểm',
@@ -203,6 +207,9 @@ ob_start();
     <script src="<?php echo $basePath; ?>/assets/js/scoring.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/scoring.js'); ?>"></script>
 <?php elseif ($tab === 'scoring-gv'): ?>
     <script src="<?php echo $basePath; ?>/assets/js/scoring_gv.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/scoring_gv.js'); ?>"></script>
+    <script src="<?php echo $basePath; ?>/assets/js/phan_cong_phan_bien.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/phan_cong_phan_bien.js'); ?>"></script>
+<?php elseif ($tab === 'review-assign'): ?>
+    <script src="<?php echo $basePath; ?>/assets/js/phan_cong_phan_bien.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/phan_cong_phan_bien.js'); ?>"></script>
 <?php endif; ?>
 <?php if (in_array($tab, ['nhom-my', 'nhom-all', 'nhom-request'])): ?>
     <script src="<?php echo $basePath; ?>/assets/js/nhom_thi.js"></script>

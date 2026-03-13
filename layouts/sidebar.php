@@ -101,6 +101,16 @@ function _sb_link_if(array $tabAccess, string $section, string $current, int $id
                 <?php endif; ?>
 
                 <?php
+                $hasTieuBan = !empty($_sbTabAccess['subcommittees'])
+                           || !empty($_sbTabAccess['judges']);
+                if ($hasTieuBan):
+                ?>
+                <?php echo _sb_section_label('Tiểu ban & Hội đồng'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'subcommittees', $eventSidebarSection, $eventSidebarEventId, 'meeting_room',    'Quản lý Tiểu ban'); ?>
+                <?php echo _sb_link_if($_sbTabAccess, 'judges',        $eventSidebarSection, $eventSidebarEventId, 'supervisor_account', 'Phân công Ban GK'); ?>
+                <?php endif; ?>
+
+                <?php
                 $hasChamThi = !empty($_sbTabAccess['scoring'])
                            || !empty($_sbTabAccess['scoring-gv']);
                 if ($hasChamThi):
