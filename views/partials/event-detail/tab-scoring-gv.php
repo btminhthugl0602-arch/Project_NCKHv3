@@ -86,8 +86,7 @@
                             <i class="fas fa-clipboard-list mr-1"></i>--
                         </span>
                         <span id="gvChamStatusBadge"
-                            class="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-200 text-slate-600">Chưa
-                            chấm</span>
+                            class="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-200 text-slate-600">Chưa chấm</span>
                     </div>
                 </div>
                 <div id="gvTaiLieuSection" class="mt-3 hidden">
@@ -113,21 +112,17 @@
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-200">
                                 <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase w-8">#</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase">Nội dung tiêu
-                                    chí</th>
-                                <th class="px-3 py-2 text-center text-xs font-bold text-slate-500 uppercase w-28">Điểm /
-                                    Tối đa</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase w-40">Nhận xét
-                                </th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase">Nội dung tiêu chí</th>
+                                <th class="px-3 py-2 text-center text-xs font-bold text-slate-500 uppercase w-28">Điểm / Tối đa</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase w-40">Nhận xét</th>
                             </tr>
                         </thead>
                         <tbody id="gvTieuChiTableBody" class="divide-y divide-slate-100"></tbody>
                         <tfoot>
                             <tr class="bg-indigo-50 border-t-2 border-indigo-200">
-                                <td colspan="2" class="px-3 py-2 text-sm font-bold text-slate-700 text-right">Tổng điểm
-                                    (tạm tính)</td>
-                                <td class="px-3 py-2 text-center text-base font-bold text-indigo-700" id="gvTongDiem">--
-                                </td>
+                                <td colspan="2"
+                                    class="px-3 py-2 text-sm font-bold text-slate-700 text-right">Tổng điểm (tạm tính)</td>
+                                <td class="px-3 py-2 text-center text-base font-bold text-indigo-700" id="gvTongDiem">--</td>
                                 <td></td>
                             </tr>
                         </tfoot>
@@ -160,8 +155,7 @@
                 <i class="fas fa-balance-scale text-orange-500 text-xl flex-shrink-0"></i>
                 <div>
                     <p class="text-sm font-bold text-orange-800">Chế độ Trọng tài Phúc khảo</p>
-                    <p class="text-xs text-orange-600 mt-0.5">Bạn đang xem bức tranh tổng quát từ tất cả giám khảo
-                        chính. Phán quyết của bạn sẽ là điểm cuối cùng, thay thế điểm trung bình.</p>
+                    <p class="text-xs text-orange-600 mt-0.5">Bạn đang xem bức tranh tổng quát từ tất cả giám khảo chính. Phán quyết của bạn sẽ là điểm cuối cùng, thay thế điểm trung bình.</p>
                 </div>
             </div>
 
@@ -180,8 +174,7 @@
                             <i class="fas fa-balance-scale mr-1"></i>Trọng tài
                         </span>
                         <span id="gvTTChamStatusBadge"
-                            class="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-200 text-slate-600">Chưa phán
-                            quyết</span>
+                            class="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-200 text-slate-600">Chưa phán quyết</span>
                     </div>
                 </div>
             </div>
@@ -249,7 +242,8 @@
 <!-- Template: Item sản phẩm trong danh sách (dùng JS để clone & fill) -->
 <template id="gvSanPhamItemTemplate">
     <div class="gv-sp-item group p-3 border rounded-lg cursor-pointer transition-all
-                border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50" data-id="">
+                border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50"
+        data-id="">
         <div class="flex items-start justify-between gap-2">
             <div class="flex-1 min-w-0">
                 <p class="text-xs font-bold text-slate-700 truncate gv-sp-ten-san-pham"></p>
@@ -265,8 +259,7 @@
                 <span class="gv-sp-tien-do-text">0 / 0 tiêu chí</span>
             </div>
             <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                <div class="gv-sp-tien-do-bar h-full bg-emerald-500 rounded-full transition-all" style="width: 0%">
-                </div>
+                <div class="gv-sp-tien-do-bar h-full bg-emerald-500 rounded-full transition-all" style="width: 0%"></div>
             </div>
         </div>
     </div>
@@ -279,15 +272,16 @@
         <td class="px-3 py-2 text-sm text-slate-700 gv-tc-noi-dung"></td>
         <td class="px-3 py-2">
             <div class="flex items-center justify-center gap-1">
-                <input type="number" class="gv-tc-input w-16 px-2 py-1 text-sm text-center border rounded-lg border-slate-300
-                           focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-200" min="0"
-                    step="0.5" placeholder="0">
-                <span class="text-xs text-slate-400">/ <span
-                        class="gv-tc-diem-toi-da font-medium text-slate-600"></span></span>
+                <input type="number"
+                    class="gv-tc-input w-16 px-2 py-1 text-sm text-center border rounded-lg border-slate-300
+                           focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-200"
+                    min="0" step="0.5" placeholder="0">
+                <span class="text-xs text-slate-400">/ <span class="gv-tc-diem-toi-da font-medium text-slate-600"></span></span>
             </div>
         </td>
         <td class="px-3 py-2">
-            <input type="text" class="gv-tc-nhan-xet w-full px-2 py-1 text-xs border rounded-lg border-slate-200
+            <input type="text"
+                class="gv-tc-nhan-xet w-full px-2 py-1 text-xs border rounded-lg border-slate-200
                        focus:border-indigo-400 focus:outline-none placeholder-slate-400"
                 placeholder="Nhận xét (tuỳ chọn)">
         </td>
@@ -313,15 +307,17 @@
         <!-- Điểm phán quyết TT -->
         <td class="px-3 py-2.5 align-top text-center">
             <div class="flex items-center justify-center gap-1">
-                <input type="number" class="gv-tt-input w-16 px-2 py-1 text-sm text-center border rounded-lg
-                           focus:outline-none focus:ring-1 focus:ring-orange-300" min="0" step="0.5" placeholder="—">
-                <span class="text-xs text-slate-400">/ <span
-                        class="gv-tt-diem-toi-da font-medium text-slate-600"></span></span>
+                <input type="number"
+                    class="gv-tt-input w-16 px-2 py-1 text-sm text-center border rounded-lg
+                           focus:outline-none focus:ring-1 focus:ring-orange-300"
+                    min="0" step="0.5" placeholder="—">
+                <span class="text-xs text-slate-400">/ <span class="gv-tt-diem-toi-da font-medium text-slate-600"></span></span>
             </div>
         </td>
         <!-- Lý do phán quyết (bắt buộc nếu tiêu chí lệch cao) -->
         <td class="px-3 py-2.5 align-top">
-            <input type="text" class="gv-tt-nhan-xet w-full px-2 py-1 text-xs border rounded-lg border-slate-200
+            <input type="text"
+                class="gv-tt-nhan-xet w-full px-2 py-1 text-xs border rounded-lg border-slate-200
                        focus:border-orange-400 focus:outline-none placeholder-slate-400"
                 placeholder="Lý do / nhận xét">
         </td>
@@ -335,8 +331,7 @@
 <div id="pbTieuBanSection" class="mt-6 hidden">
     <div class="flex items-center gap-3 mb-4">
         <div class="flex-1 h-px bg-slate-200"></div>
-        <span
-            class="flex items-center gap-2 px-3 py-1 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-full">
+        <span class="flex items-center gap-2 px-3 py-1 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-full">
             <i class="fas fa-sitemap text-[10px]"></i>Phản biện tiểu ban
         </span>
         <div class="flex-1 h-px bg-slate-200"></div>
@@ -418,23 +413,17 @@
                         <table class="w-full text-sm">
                             <thead>
                                 <tr class="bg-slate-50 border-b border-slate-200">
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase w-8">#
-                                    </th>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase">Nội dung
-                                        tiêu chí</th>
-                                    <th class="px-3 py-2 text-center text-xs font-bold text-slate-500 uppercase w-28">
-                                        Điểm / Tối đa</th>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase w-40">Nhận
-                                        xét</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase w-8">#</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase">Nội dung tiêu chí</th>
+                                    <th class="px-3 py-2 text-center text-xs font-bold text-slate-500 uppercase w-28">Điểm / Tối đa</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase w-40">Nhận xét</th>
                                 </tr>
                             </thead>
                             <tbody id="pbTieuChiTbody" class="divide-y divide-slate-100"></tbody>
                             <tfoot>
                                 <tr class="bg-purple-50 border-t-2 border-purple-200">
-                                    <td colspan="2" class="px-3 py-2 text-sm font-bold text-slate-700 text-right">Tổng
-                                        điểm (tạm tính)</td>
-                                    <td class="px-3 py-2 text-center text-base font-bold text-purple-700"
-                                        id="pbTongDiem">--</td>
+                                    <td colspan="2" class="px-3 py-2 text-sm font-bold text-slate-700 text-right">Tổng điểm (tạm tính)</td>
+                                    <td class="px-3 py-2 text-center text-base font-bold text-purple-700" id="pbTongDiem">--</td>
                                     <td></td>
                                 </tr>
                             </tfoot>
@@ -466,14 +455,13 @@
 
 <!-- Template: Item bài phản biện trong danh sách -->
 <template id="pbSanPhamItemTemplate">
-    <div class="pb-sp-item p-3 border rounded-lg cursor-pointer transition-all border-slate-200 hover:border-purple-300 hover:bg-purple-50/50"
-        data-id="">
+    <div class="pb-sp-item p-3 border rounded-lg cursor-pointer transition-all border-slate-200 hover:border-purple-300 hover:bg-purple-50/50" data-id="">
         <div class="flex items-start justify-between gap-2">
             <div class="flex-1 min-w-0">
                 <p class="text-xs font-bold text-slate-700 truncate pb-sp-ten"></p>
                 <p class="text-xs text-slate-500 mt-0.5">
                     <i class="fas fa-sitemap mr-1 text-slate-400"></i>
-                    <span class="pb-sp-tieubán"></span>
+                    <span class="pb-sp-tieuban"></span>
                 </p>
             </div>
             <div class="flex-shrink-0 pb-sp-badge"></div>

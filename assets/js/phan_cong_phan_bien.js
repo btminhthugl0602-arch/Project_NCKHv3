@@ -266,7 +266,7 @@
                 const el    = clone.querySelector('.pb-sp-item');
                 el.dataset.id = b.idSanPham;
                 el.querySelector('.pb-sp-ten').textContent         = b.tenSanPham || '';
-                el.querySelector('.pb-sp-tieubán').textContent     = b.tenTieuBan || '';
+                el.querySelector('.pb-sp-tieuban').textContent     = b.tenTieuBan || '';
                 el.querySelector('.pb-sp-tiendo-text').textContent = `${b.soTieuChiDaNhap}/${b.soTieuChiTong} tiêu chí`;
                 el.querySelector('.pb-sp-tiendo-bar').style.width  = pct + '%';
                 el.querySelector('.pb-sp-badge').innerHTML =
