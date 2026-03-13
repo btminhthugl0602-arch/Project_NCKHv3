@@ -21,6 +21,7 @@ if (!defined('_AUTHEN')) {
 require_once __DIR__ . '/modules/score_analyzer.php';
 require_once __DIR__ . '/modules/statistical_test.php';
 require_once __DIR__ . '/modules/warning_system.php';
+require_once __DIR__ . '/../su_kien/quan_ly_quy_che.php';
 
 /**
  * ==========================================
@@ -904,7 +905,7 @@ function cham_diem_duyet_diem($conn, $idSanPham, $idVongThi, $diemChot, $trangTh
 /**
  * Duyệt điểm với kiểm tra quy chế
  */
-function cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemChot, $idSK)
+function cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemChot, $idSK, $maNguCanh = 'DUYET_VONG_THI')
 {
     try {
         $conn->beginTransaction();
@@ -913,7 +914,8 @@ function cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemCho
         cham_diem_duyet_diem($conn, $idSanPham, $idVongThi, $diemChot, 'Đang xét');
 
         // 2. Kiểm tra quy chế vòng thi (nếu có)
-        $datQuyChe = cham_diem_kiem_tra_quy_che($conn, $idSanPham, $idVongThi, $idSK);
+        $ketQuaQuyChe = cham_diem_kiem_tra_quy_che($conn, $idSanPham, $idVongThi, $idSK, $maNguCanh);
+        $datQuyChe = !empty($ketQuaQuyChe['hopLe']);
 
         // 3. Cập nhật trạng thái cuối
         $trangThaiCuoi = $datQuyChe ? 'Đã duyệt' : 'Bị loại';
@@ -932,7 +934,8 @@ function cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemCho
         return [
             'success' => true,
             'trangThai' => $trangThaiCuoi,
-            'message' => $datQuyChe ? 'Bài thi đã được duyệt thành công' : 'Bài thi không đạt quy chế, đã bị loại'
+            'message' => $datQuyChe ? 'Bài thi đã được duyệt thành công' : 'Bài thi không đạt quy chế, đã bị loại',
+            'quyChe' => $ketQuaQuyChe,
         ];
     } catch (Throwable $e) {
         $conn->rollBack();
@@ -942,164 +945,129 @@ function cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemCho
 }
 
 /**
- * Lấy dữ liệu sản phẩm & vòng thi để đánh giá quy chế
- * Trả về mảng [tenTruongDL => giaTriThucTe] cho tất cả thuộc tính VONGTHI
- */
-function dk_lay_du_lieu_spv($conn, $idSanPham, $idVongThi)
-{
-    // Fetch cả sanpham_vongthi (VONGTHI attributes) + sanpham (SANPHAM attributes)
-    // để dk_evaluate() có thể resolve mọi loaiApDung khi kiểm tra quy chế
-    $sql = "SELECT spv.diemTrungBinh,
-                   spv.xepLoai,
-                   spv.trangThai,
-                   sp.trangThai AS trangThaiSanPham
-            FROM sanpham_vongthi spv
-            INNER JOIN sanpham sp ON sp.idSanPham = spv.idSanPham
-            WHERE spv.idSanPham = :idSanPham AND spv.idVongThi = :idVongThi
-            LIMIT 1";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([':idSanPham' => $idSanPham, ':idVongThi' => $idVongThi]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-
-    if (empty($row)) return [];
-
-    // Flatten: thuoctinh_kiemtra dùng tenTruongDL làm key để tra
-    // VONGTHI: diemTrungBinh, xepLoai, trangThai (= sanpham_vongthi.trangThai)
-    // SANPHAM: trangThai (= sanpham.trangThai) — alias tránh xung đột với VONGTHI
-    return [
-        'diemTrungBinh'    => $row['diemTrungBinh'],
-        'xepLoai'          => $row['xepLoai'],
-        'trangThai'        => $row['trangThai'],          // VONGTHI state
-        'trangThaiSanPham' => $row['trangThaiSanPham'],  // SANPHAM.trangThai
-    ];
-}
-
-/**
- * Đánh giá đệ quy một nút điều kiện với dữ liệu sản phẩm đã cho.
- * Trả về true nếu điều kiện thỏa mãn, false nếu không.
- * @param PDO   $conn
- * @param int   $idDieuKien   ID nút điều kiện
- * @param array $spvData      Dữ liệu từ dk_lay_du_lieu_spv()
- * @param int   $depth        Độ sâu đệ quy (tránh vòng lặp vô hạn, max 20)
- */
-function dk_evaluate($conn, $idDieuKien, $spvData, $depth = 0)
-{
-    if ($depth > 20) return false; // bảo vệ khỏi đệ quy vô hạn nếu dữ liệu lỗi
-
-    $sqlDK = "SELECT loaiDieuKien FROM dieukien WHERE idDieuKien = :id LIMIT 1";
-    $stmt = $conn->prepare($sqlDK);
-    $stmt->execute([':id' => $idDieuKien]);
-    $node = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$node) return false;
-
-    if ($node['loaiDieuKien'] === 'DON') {
-        // Lấy điều kiện đơn: trường cần kiểm tra, toán tử, giá trị so sánh
-        $sqlDon = "SELECT dd.giaTriSoSanh, tt.kyHieu, tk.tenTruongDL
-                   FROM dieukien_don dd
-                   INNER JOIN toantu tt ON tt.idToanTu = dd.idToanTu
-                   INNER JOIN thuoctinh_kiemtra tk ON tk.idThuocTinhKiemTra = dd.idThuocTinhKiemTra
-                   WHERE dd.idDieuKien = :id LIMIT 1";
-        $stmtDon = $conn->prepare($sqlDon);
-        $stmtDon->execute([':id' => $idDieuKien]);
-        $don = $stmtDon->fetch(PDO::FETCH_ASSOC);
-        if (!$don) return false;
-
-        $field      = $don['tenTruongDL'];
-        $operator   = $don['kyHieu'];
-        $threshold  = $don['giaTriSoSanh'];
-        $actualVal  = $spvData[$field] ?? null;
-
-        if ($actualVal === null) return false;
-
-        // So sánh số học nếu cả 2 đều là số; còn lại so sánh chuỗi
-        if (is_numeric($threshold) && is_numeric($actualVal)) {
-            $actualVal = (float)$actualVal;
-            $threshold = (float)$threshold;
-        }
-
-        switch ($operator) {
-            case '=':
-                return $actualVal == $threshold;
-            case '>':
-                return $actualVal >  $threshold;
-            case '<':
-                return $actualVal <  $threshold;
-            case '>=':
-                return $actualVal >= $threshold;
-            case '<=':
-                return $actualVal <= $threshold;
-            default:
-                return false;
-        }
-    } elseif ($node['loaiDieuKien'] === 'TOHOP') {
-        // Lấy 2 nhánh con và toán tử logic (AND/OR)
-        $sqlTohop = "SELECT td.idDieuKienTrai, td.idDieuKienPhai, tt.kyHieu
-                     FROM tohop_dieukien td
-                     INNER JOIN toantu tt ON tt.idToanTu = td.idToanTu
-                     WHERE td.idDieuKien = :id LIMIT 1";
-        $stmtTohop = $conn->prepare($sqlTohop);
-        $stmtTohop->execute([':id' => $idDieuKien]);
-        $tohop = $stmtTohop->fetch(PDO::FETCH_ASSOC);
-        if (!$tohop) return false;
-
-        $leftResult  = dk_evaluate($conn, (int)$tohop['idDieuKienTrai'],  $spvData, $depth + 1);
-        // Short-circuit evaluation
-        if ($tohop['kyHieu'] === 'AND' && !$leftResult)  return false;
-        if ($tohop['kyHieu'] === 'OR'  &&  $leftResult)  return true;
-
-        return dk_evaluate($conn, (int)$tohop['idDieuKienPhai'], $spvData, $depth + 1);
-    }
-
-    return false;
-}
-
-/**
  * Kiểm tra quy chế vòng thi cho sản phẩm.
- * Sử dụng động cơ điều kiện đệ quy để đánh giá toàn bộ cây quy chế.
- * Trả về true nếu sản phẩm đạt tất cả quy chế, false nếu vi phạm bất kỳ quy chế nào.
+ * Dùng chung engine xet_duyet_quy_che_theo_ngucanh để tránh 2 luồng logic song song.
  */
-function cham_diem_kiem_tra_quy_che($conn, $idSanPham, $idVongThi, $idSK)
+function cham_diem_kiem_tra_quy_che($conn, $idSanPham, $idVongThi, $idSK, $maNguCanh = 'DUYET_VONG_THI')
 {
-    // Lấy tất cả quy chế loại VONGTHI của sự kiện
-    $sqlQC = "SELECT qc.idQuyChe
-              FROM quyche qc
-              WHERE qc.idSK = :idSK AND qc.loaiQuyChe = 'VONGTHI'";
-    $stmtQC = $conn->prepare($sqlQC);
-    $stmtQC->execute([':idSK' => $idSK]);
-    $danhSachQC = $stmtQC->fetchAll(PDO::FETCH_COLUMN);
+    $idSanPham = (int) $idSanPham;
+    $idVongThi = (int) $idVongThi;
+    $idSK = (int) $idSK;
 
-    if (empty($danhSachQC)) {
-        // Không có quy chế nào => mặc định đạt
-        return true;
+    if ($idSanPham <= 0 || $idVongThi <= 0 || $idSK <= 0) {
+        return [
+            'hopLe' => false,
+            'message' => 'Thiếu dữ liệu để kiểm tra quy chế duyệt vòng',
+            'tongQuyChe' => 0,
+            'viPham' => [],
+        ];
     }
 
-    // Lấy dữ liệu vòng thi hiện tại của sản phẩm (sau bước cham_diem_duyet_diem đã chốt điểm)
-    $spvData = dk_lay_du_lieu_spv($conn, $idSanPham, $idVongThi);
-    if (empty($spvData)) {
-        error_log("dk_evaluate: Không tìm thấy dữ liệu sanpham_vongthi cho SP={$idSanPham}, VT={$idVongThi}");
-        return false;
+    return xet_duyet_quy_che_theo_ngucanh(
+        $conn,
+        $idSK,
+        $maNguCanh,
+        [
+            'idSanPham' => $idSanPham,
+            'idVongThi' => $idVongThi,
+        ]
+    );
+}
+
+/**
+ * Áp dụng hạn mức số bài "Đã duyệt" cho một vòng thi.
+ * Giữ lại top điểm cao nhất, các bài vượt hạn mức sẽ chuyển thành "Bị loại".
+ */
+function cham_diem_ap_dung_han_muc_duyet($conn, $idVongThi, $hanMuc = 10)
+{
+    $idVongThi = (int) $idVongThi;
+    $hanMuc = (int) $hanMuc;
+
+    if (!$conn instanceof PDO || $idVongThi <= 0) {
+        return [
+            'applied' => false,
+            'message' => 'Thiếu dữ liệu để áp dụng hạn mức duyệt',
+            'hanMuc' => $hanMuc,
+            'tongDaDuyet' => 0,
+            'giuLai' => 0,
+            'biLoaiBoiHanMuc' => 0,
+        ];
     }
 
-    // Mỗi quy chế phải có điều kiện cuối (idDieuKienCuoi) — lấy và đánh giá
-    $sqlRoot = "SELECT qcd.idDieuKienCuoi
-                FROM quyche_dieukien qcd
-                WHERE qcd.idQuyChe = :idQuyChe
-                LIMIT 1";
-    $stmtRoot = $conn->prepare($sqlRoot);
+    if ($hanMuc < 0) {
+        $hanMuc = 0;
+    }
 
-    foreach ($danhSachQC as $idQuyChe) {
-        $stmtRoot->execute([':idQuyChe' => $idQuyChe]);
-        $rootRow = $stmtRoot->fetch(PDO::FETCH_ASSOC);
-        if (!$rootRow) continue; // Quy chế không có điều kiện => bỏ qua
+    try {
+        $stmt = $conn->prepare(
+            "SELECT idSanPham, diemTrungBinh, ngayCapNhat
+             FROM sanpham_vongthi
+             WHERE idVongThi = :idVongThi
+               AND trangThai = 'Đã duyệt'
+               AND diemTrungBinh IS NOT NULL
+             ORDER BY diemTrungBinh DESC, ngayCapNhat ASC, idSanPham ASC"
+        );
+        $stmt->execute([':idVongThi' => $idVongThi]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-        $passed = dk_evaluate($conn, (int)$rootRow['idDieuKienCuoi'], $spvData);
-        if (!$passed) {
-            // Vi phạm một quy chế => loại ngay
-            return false;
+        $tongDaDuyet = count($rows);
+        if ($tongDaDuyet <= $hanMuc) {
+            return [
+                'applied' => true,
+                'message' => 'Không vượt hạn mức duyệt',
+                'hanMuc' => $hanMuc,
+                'tongDaDuyet' => $tongDaDuyet,
+                'giuLai' => $tongDaDuyet,
+                'biLoaiBoiHanMuc' => 0,
+            ];
         }
-    }
 
-    return true;
+        $keepIds = [];
+        for ($i = 0; $i < $hanMuc && $i < $tongDaDuyet; $i++) {
+            $keepIds[] = (int) ($rows[$i]['idSanPham'] ?? 0);
+        }
+        $keepIds = array_values(array_filter($keepIds, fn($id) => $id > 0));
+
+        if (empty($keepIds)) {
+            $stmtDropAll = $conn->prepare(
+                "UPDATE sanpham_vongthi
+                 SET trangThai = 'Bị loại', ngayCapNhat = NOW()
+                 WHERE idVongThi = :idVongThi AND trangThai = 'Đã duyệt'"
+            );
+            $stmtDropAll->execute([':idVongThi' => $idVongThi]);
+        } else {
+            $placeholders = implode(',', array_fill(0, count($keepIds), '?'));
+            $sqlDropOverflow =
+                "UPDATE sanpham_vongthi
+                 SET trangThai = 'Bị loại', ngayCapNhat = NOW()
+                 WHERE idVongThi = ?
+                   AND trangThai = 'Đã duyệt'
+                   AND idSanPham NOT IN ({$placeholders})";
+
+            $stmtDropOverflow = $conn->prepare($sqlDropOverflow);
+            $stmtDropOverflow->execute(array_merge([$idVongThi], $keepIds));
+        }
+
+        $giuLai = min($tongDaDuyet, $hanMuc);
+        return [
+            'applied' => true,
+            'message' => 'Đã áp dụng hạn mức duyệt theo vòng thi',
+            'hanMuc' => $hanMuc,
+            'tongDaDuyet' => $tongDaDuyet,
+            'giuLai' => $giuLai,
+            'biLoaiBoiHanMuc' => $tongDaDuyet - $giuLai,
+        ];
+    } catch (Throwable $exception) {
+        error_log('Error in cham_diem_ap_dung_han_muc_duyet: ' . $exception->getMessage());
+        return [
+            'applied' => false,
+            'message' => 'Lỗi hệ thống khi áp dụng hạn mức duyệt',
+            'hanMuc' => $hanMuc,
+            'tongDaDuyet' => 0,
+            'giuLai' => 0,
+            'biLoaiBoiHanMuc' => 0,
+        ];
+    }
 }
 
 /**

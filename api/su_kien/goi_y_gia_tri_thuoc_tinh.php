@@ -4,6 +4,7 @@ define('_AUTHEN', true);
 
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../core/auth_guard.php';
+require_once __DIR__ . '/quan_ly_quy_che.php';
 
 
 header('Content-Type: application/json; charset=utf-8');
@@ -22,11 +23,33 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 $idThuocTinh = isset($_GET['id_thuoc_tinh']) ? (int) $_GET['id_thuoc_tinh'] : 0;
+$idSk = isset($_GET['id_sk']) ? (int) $_GET['id_sk'] : 0;
 if ($idThuocTinh <= 0) {
     http_response_code(400);
     echo json_encode([
         'status' => 'error',
         'message' => 'Thiếu hoặc sai id_thuoc_tinh',
+        'data' => null,
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if ($idSk <= 0) {
+    http_response_code(400);
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Thiếu hoặc sai id_sk',
+        'data' => null,
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+$idUser = (int) ($actor['idTK'] ?? 0);
+if ($idUser <= 0 || !xac_thuc_quyen_quy_che($conn, $idUser, $idSk)) {
+    http_response_code(403);
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Bạn không có quyền truy cập gợi ý dữ liệu của sự kiện này',
         'data' => null,
     ], JSON_UNESCAPED_UNICODE);
     exit;
@@ -55,8 +78,14 @@ try {
     $bangDuLieu = (string) ($thuocTinh['bangDuLieu'] ?? '');
     $tenTruongDL = (string) ($thuocTinh['tenTruongDL'] ?? '');
 
-    if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $bangDuLieu) || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $tenTruongDL)) {
-        throw new RuntimeException('Cấu hình bảng/trường dữ liệu không hợp lệ');
+    if (!cot_du_lieu_an_toan_cho_goi_y($conn, $bangDuLieu, $tenTruongDL)) {
+        http_response_code(403);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Thuộc tính không nằm trong danh mục gợi ý an toàn',
+            'data' => null,
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
     }
 
     $sql = "SELECT DISTINCT {$tenTruongDL} AS giaTri\n            FROM {$bangDuLieu}\n            WHERE {$tenTruongDL} IS NOT NULL AND TRIM(CAST({$tenTruongDL} AS CHAR)) <> ''\n            ORDER BY {$tenTruongDL} ASC\n            LIMIT 30";

@@ -1468,7 +1468,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'approve_score_manual',
+                    action: 'approve_score_auto',
                     id_san_pham: idSanPham,
                     id_vong_thi: state.idVongThi
                 })
@@ -1782,7 +1782,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'approve_score_manual',
+                    action: 'approve_score_auto',
                     id_san_pham: idSanPham,
                     id_vong_thi: state.idVongThi,
                     diem_chot: diemChot

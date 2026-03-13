@@ -97,6 +97,10 @@ try {
         exit;
     }
 
+    if (bang_ton_tai($conn, 'quyche_ngucanh_apdung')) {
+        _delete_info($conn, 'quyche_ngucanh_apdung', ['idQuyChe' => ['=', $idQuyChe, '']]);
+    }
+
     _delete_info($conn, 'quyche_dieukien', ['idQuyChe' => ['=', $idQuyChe, '']]);
     $ok = _delete_info($conn, 'quyche', ['idQuyChe' => ['=', $idQuyChe, '']]);
 

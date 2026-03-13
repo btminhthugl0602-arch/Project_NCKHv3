@@ -1,5 +1,209 @@
 # CHANGELOG
 
+## 2026-03-13 — Phase 5: Van hanh, kiem thu, giam sat
+
+### Test baseline
+- Them bo test baseline co the chay CI:
+  - `tests/unit/semantic_parser_test.php`
+  - `tests/integration/rule_context_integration_test.php`
+  - `tests/regression/approve_actions_regression_test.php`
+  - `tests/run.php`
+- Them workflow CI: `.github/workflows/rules-quality.yml`
+  - Lint cac API quan trong
+  - Chay test baseline
+
+### Observability va alert
+- Them script monitor nguong loi evaluate:
+  - `scripts/monitor_rule_eval.php`
+- Them tai lieu dashboard/alert:
+  - `docs/api/quyche-runtime-observability.md`
+
+### Playbook
+- Them playbook xu ly su co mapping context:
+  - `docs/user-guide/playbook-context-mapping-incident.md`
+
+## 2026-03-13 — Phase 4: Nang chat runtime va hieu nang
+
+### Runtime performance
+- `api/su_kien/chi_tiet_quy_che.php`
+  - Refactor bo doc AST theo preload batch map (giam N+1)
+  - Them structured log duration/node count cho benchmark p95
+
+### Error contract
+- Chuan hoa phan loai loi 422/403/500 cho cac API quy che chinh:
+  - `api/su_kien/chi_tiet_quy_che.php`
+  - `api/su_kien/luu_quy_che.php`
+  - `api/su_kien/quy_che_metadata.php`
+
+### Engine thong nhat
+- `api/cham_diem/quan_ly_cham_diem.php`
+  - Loai bo duong danh gia quy che legacy (`dk_evaluate`)
+  - Dung thong nhat `xet_duyet_quy_che_theo_ngucanh`
+- `api/su_kien/quan_ly_quy_che.php`
+  - Them structured log cho luong evaluate
+
+### Frontend UX loi
+- `assets/js/event-detail.js`
+  - Phan biet loi validation/authorization/system dua tren HTTP status
+
+## 2026-03-13 — Phase 3: Chuan hoa contract loai quy che va ngu canh
+
+### Contract API
+- **api/su_kien/quy_che_metadata.php**:
+  - Bat buoc query `loai_quy_che` theo danh muc governance
+  - Bat buoc query `ma_ngu_canh` (ho tro CSV multi-context)
+  - Metadata thuoc tinh duoc filter theo giao cua `loai_quy_che` va `ma_ngu_canh`
+  - Bo sung `loai_quy_che_catalog`, `selected_loai_quy_che`, `selected_ngu_canh` trong response
+- **api/su_kien/luu_quy_che.php**:
+  - Enforce `loai_quy_che` thuoc danh muc chuan, chan free-text drift
+
+### Shared governance
+- **api/su_kien/quan_ly_quy_che.php**:
+  - Them helper danh muc `loai_quy_che`
+  - Them helper mapping `ngu_canh -> loai_ap_dung` de dong bo FE/BE
+
+### Frontend
+- **assets/js/event-detail.js**:
+  - Chuyen sang contract metadata co filter that (`loai_quy_che` + `ma_ngu_canh`), khong goi rong
+  - Rule type su dung catalog governance
+  - Rule context ho tro multi-select va hien thi chips ngu canh da chon
+- **views/partials/event-detail/tab-config-rules.php**:
+  - `ruleTypeInput` doi thanh dropdown danh muc chuan
+  - `ruleContextInput` doi thanh multi-select va bo sung khu vuc chips
+
+### Test
+- Them tai lieu test contract: **docs/api/quyche-phase3-contract-tests.md**
+
+## 2026-03-13 — Phase 2: Siet phan quyen va pham vi du lieu metadata Quy che
+
+### API
+- **`api/su_kien/quy_che_metadata.php`**:
+  - Bat buoc `id_sk` tren query string
+  - Kiem tra quyen theo su kien (chi tai khoan co quyen cau hinh quy che moi duoc truy cap)
+  - Loc danh sach `thuoc_tinh` theo whitelist bang/cot an toan
+- **`api/su_kien/goi_y_gia_tri_thuoc_tinh.php`**:
+  - Bat buoc `id_sk` tren query string
+  - Kiem tra quyen theo su kien truoc khi tra goi y
+  - Chi cho phep goi y khi thuoc tinh nam trong whitelist an toan va cot ton tai trong CSDL
+- **`api/su_kien/quan_ly_quy_che.php`**:
+  - Them helper dung chung: whitelist an toan + kiem tra ton tai cot trong bang
+
+### Frontend
+- **`assets/js/event-detail.js`**:
+  - Truyen them `id_sk` khi goi API `quy_che_metadata.php`
+  - Truyen them `id_sk` khi goi API `goi_y_gia_tri_thuoc_tinh.php`
+
+### Test
+- Them tai lieu test am tinh: **`docs/api/quyche-phase2-negative-tests.md`**
+  - Xac nhan 403 khi user khong co quyen su kien
+  - Xac nhan chan truy cap field ngoai whitelist (anti-pentest)
+
+## 2026-03-13 — Phase 1: Dam bao toan ven du lieu khi luu Quy che
+
+### Backend
+- **`api/su_kien/luu_quy_che.php`**:
+  - Gom toan bo flow luu quy che vao mot transaction duy nhat (tao quy che -> tao cay dieu kien -> gan root -> gan ngu canh)
+  - Them co che theo doi danh sach `idDieuKien` da tao trong qua trinh parse de cleanup khi fail
+  - Rollback truoc, sau do cleanup fallback theo danh sach node da tao de tranh rac du lieu
+- **`api/su_kien/quan_ly_quy_che.php`**:
+  - Chuyen cac ham con (`tao_dieu_kien_don`, `tao_to_hop_dieu_kien`, `gan_ngucanh_ap_dung_cho_quy_che`) sang che do transaction-aware
+  - Neu da co transaction ngoai thi khong `begin/commit` noi bo nua, tranh transaction long nhau
+
+### Database
+- Them migration **`database/migrations/2026_03_13_enforce_quyche_tree_integrity_fk.sql`**:
+  - Don dep orphan truoc khi siet rang buoc
+  - Chuan hoa FK voi `ON DELETE CASCADE` cho cac lien ket cot loi: `dieukien_don -> dieukien`, `tohop_dieukien -> dieukien`, `quyche_dieukien -> quyche`, `quyche_dieukien -> dieukien`
+- Them script verify **`database/migrations/2026_03_13_verify_quyche_orphans.sql`**:
+  - Tra ve tung orphan counter va ket qua tong hop `PASS/FAIL`
+  - Tieu chi dat: tat ca orphan_count = 0
+
+## 2026-03-13 — Seed danh muc ngu canh cho UI
+
+### Database
+- Them migration **`database/migrations/2026_03_13_seed_quyche_context_catalog_for_ui.sql`**
+  - Seed cac ngu canh he thong phuc vu dropdown chon ngu canh quy che
+  - Danh dau cac context cu (`THAMGIA`, `VONGTHI`, `SANPHAM`, `GIAITHUONG`) la legacy (`isHeThong=0`)
+
+### API
+- **`api/su_kien/quy_che_metadata.php`**:
+  - Chi tra ve ngu canh he thong (`isHeThong=1`) de nguoi dung tuong tac dung danh muc chuan
+
+## 2026-03-13 — Chuan hoa module Quy che theo phase (nghiem thu)
+
+### Phase 1 - Chuan hoa du lieu loaiApDung
+- Them migration **`database/migrations/2026_03_13_normalize_thuoctinh_loaiapdung.sql`**
+  - Chuan hoa `thuoctinh_kiemtra.loaiApDung`: `THAMGIA` -> `THAMGIA_SV`/`THAMGIA_GV`
+  - Cap nhat default `quyche.loaiQuyChe` ve `TUY_CHINH`
+
+### Phase 2 - Danh muc hoa ngu canh ap dung
+- Them migration **`database/migrations/2026_03_13_add_quyche_context_catalog.sql`**
+  - Tao bang `quyche_danhmuc_ngucanh`
+  - Seed context he thong (`DANG_KY_THAM_GIA_SV`, `DANG_KY_THAM_GIA_GV`, `DUYET_VONG_THI`, `DUYET_VONG_THI_HANG_LOAT`, `XET_GIAI_THUONG`)
+  - Backfill mapping tu `loaiQuyChe` cu
+  - Them FK `quyche_ngucanh_apdung.maNguCanh` -> `quyche_danhmuc_ngucanh.maNguCanh`
+
+### Phase 3 - Gan quy che vao diem nghiep vu duyet vong
+- **`api/cham_diem/quan_ly_cham_diem.php`**
+  - `cham_diem_duyet_diem_voi_quyche()` ho tro truyen context linh hoat
+  - `cham_diem_kiem_tra_quy_che()` chuyen sang evaluator context `xet_duyet_quy_che_theo_ngucanh()`
+- **`api/cham_diem/xet_ket_qua.php`**
+  - `approve_score_auto`: tra them du lieu quy che trong response
+  - `approve_multiple`: ap dung context `DUYET_VONG_THI_HANG_LOAT`, thong ke bai vi pham quy che
+
+### Phase 4 - Explain fail + tuong thich nguoc
+- **`api/su_kien/quan_ly_quy_che.php`**
+  - Them danh gia dieu kien chi tiet (`chiTiet`) de debug vi pham quy che
+  - Validate context theo danh muc (neu da co bang catalog)
+  - Fallback legacy: van xet duyet theo `loaiQuyChe` neu du lieu cu chua map context
+  - Tuong thich `loaiApDung='THAMGIA'` theo `bangDuLieu`
+- **`api/su_kien/quy_che_metadata.php`**
+  - Ho tro backward-compatible filter `THAMGIA`
+  - Tra them danh sach `ngu_canh_ap_dung` cho frontend
+
+### Phase 5 - Tai lieu nghiem thu
+- Them tai lieu **`docs/user-guide/quy-che-phase-acceptance.md`**
+  - Checklist nghiem thu tung phase
+  - Tieu chi `done` de xac nhan ban giao
+
+## 2026-03-13 — Refactor Quy chế theo ngữ cảnh áp dụng
+
+### Tính năng mới
+- **`database/migrations/2026_03_13_add_quyche_context_mapping.sql`** *(mới)*: Thêm bảng `quyche_ngucanh_apdung` để map 1 quy chế vào nhiều ngữ cảnh nghiệp vụ (không còn phụ thuộc fix cứng theo `loaiQuyChe`)
+- **`api/su_kien/quan_ly_quy_che.php`**:
+  - Thêm `gan_ngucanh_ap_dung_cho_quy_che()` và `lay_ngucanh_ap_dung_theo_quy_che()`
+  - Thêm `xet_duyet_quy_che_theo_ngucanh()` trả về kết quả chi tiết (`hopLe`, `tongQuyChe`, `viPham`)
+  - Giữ `xet_duyet_quy_che_su_kien()` để tương thích ngược, nhưng chuyển nội bộ sang evaluator mới
+
+### Cải tiến API
+- **`api/su_kien/luu_quy_che.php`**:
+  - Bỏ validate cứng danh sách `loai_quy_che`
+  - Hỗ trợ payload mới `ngu_canh_ap_dung` (array/string, bắt buộc >= 1)
+  - Lưu mapping ngữ cảnh vào `quyche_ngucanh_apdung`
+- **`api/su_kien/danh_sach_quy_che.php`**:
+  - Hỗ trợ filter theo `ma_ngu_canh`
+  - Trả thêm mảng `nguCanhApDung` cho từng quy chế
+- **`api/su_kien/chi_tiet_quy_che.php`**: Trả thêm `nguCanhApDung`
+- **`api/su_kien/xoa_quy_che.php`**: Xóa cả mapping ngữ cảnh khi xóa quy chế
+- **`api/su_kien/quy_che_metadata.php`**:
+  - Chuyển sang filter động `loai_ap_dung` (comma-separated)
+  - Không còn map cứng `loai_quy_che` trong backend metadata
+
+### Áp dụng quy chế vào luồng nghiệp vụ
+- **`api/su_kien/dang_ky_tham_gia.php`**:
+  - Thêm kiểm tra quy chế theo ngữ cảnh trước khi gán vai trò:
+    - SV: `DANG_KY_THAM_GIA_SV`
+    - GV: `DANG_KY_THAM_GIA_GV`
+  - Nếu không đạt, trả lỗi kèm danh sách quy chế vi phạm
+
+### Cập nhật giao diện
+- **`views/partials/event-detail/tab-config-rules.php`**:
+  - Đổi “Loại quy chế” thành “Nhãn quy chế (tùy chọn)”
+  - Thêm input “Ngữ cảnh áp dụng (bắt buộc)” dạng comma-separated
+- **`assets/js/event-detail.js`**:
+  - Gửi `ngu_canh_ap_dung` khi lưu
+  - Danh sách/chi tiết quy chế hiển thị ngữ cảnh áp dụng
+  - Danh sách quy chế hỗ trợ lọc nhanh theo ngữ cảnh nhập vào
+
 ## [Unreleased] — Part B: Giao diện Nộp tài liệu (Sinh viên/Nhóm)
 
 ### Tính năng mới

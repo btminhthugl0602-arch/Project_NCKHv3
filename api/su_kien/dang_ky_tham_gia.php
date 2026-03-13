@@ -14,6 +14,7 @@
 define('_AUTHEN', true);
 require_once __DIR__ . '/../core/base.php';
 require_once __DIR__ . '/../core/auth_guard.php';
+require_once __DIR__ . '/quan_ly_quy_che.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -93,6 +94,33 @@ try {
     // ── 5. Xác định idVaiTro ──────────────────────────────
     // SV (idLoaiTK=3) → THAM_GIA, GV (idLoaiTK=2) → GV_HUONG_DAN
     $maVaiTro = $idLoaiTK === 3 ? 'THAM_GIA' : 'GV_HUONG_DAN';
+
+    // ── 5.1 Kiểm tra quy chế theo ngữ cảnh áp dụng ───────
+    $maNguCanh = $idLoaiTK === 3 ? 'DANG_KY_THAM_GIA_SV' : 'DANG_KY_THAM_GIA_GV';
+    $ketQuaQuyChe = xet_duyet_quy_che_theo_ngucanh($conn, $idSk, $maNguCanh, $idTK);
+    if (empty($ketQuaQuyChe['hopLe'])) {
+        $viPham = is_array($ketQuaQuyChe['viPham'] ?? null) ? $ketQuaQuyChe['viPham'] : [];
+        $tenViPham = array_values(array_filter(array_map(function ($item) {
+            return trim((string) ($item['tenQuyChe'] ?? ''));
+        }, $viPham)));
+
+        $message = 'Bạn chưa đạt quy chế áp dụng cho đăng ký tham gia.';
+        if (!empty($tenViPham)) {
+            $message .= ' Không đạt: ' . implode(', ', $tenViPham);
+        }
+
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $message,
+            'data' => [
+                'ma_ngu_canh' => $maNguCanh,
+                'tong_quy_che' => (int) ($ketQuaQuyChe['tongQuyChe'] ?? 0),
+                'vi_pham' => $viPham,
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 
     $stmt = $conn->prepare("SELECT idVaiTro FROM vaitro WHERE maVaiTro = ? LIMIT 1");
     $stmt->execute([$maVaiTro]);

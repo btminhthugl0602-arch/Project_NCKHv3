@@ -60,3 +60,6 @@ apiError($result['message'] ?? 'Có lỗi xảy ra', $result, 400);
 - `docs/api/su-kien-functions.md`
 - `docs/api/nhom-functions.md`
 - `docs/api/tai-khoan-functions.md`
+- `docs/api/quyche-phase2-negative-tests.md`
+- `docs/api/quyche-phase3-contract-tests.md`
+- `docs/api/quyche-runtime-observability.md`

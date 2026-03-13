@@ -9,7 +9,7 @@
     <!-- Builder quy chế -->
     <div class="xl:col-span-2 p-4 border rounded-xl border-slate-200 bg-white">
         <p class="mb-1 text-xs font-bold uppercase text-slate-400">Trình xây dựng quy chế logic</p>
-        <p class="mb-3 text-sm text-slate-500">Tạo các điều kiện đơn, sau đó ghép token logic để tạo cây quy chế.</p>
+        <p class="mb-3 text-sm text-slate-500">Tạo các điều kiện đơn và ghép token để hoàn thiện quy chế trước. Ngữ cảnh áp dụng sẽ chọn ở bước cuối trước khi lưu.</p>
 
         <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
             <div class="md:col-span-2">
@@ -59,22 +59,30 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-3 mt-4 md:grid-cols-3">
-            <div class="md:col-span-2">
+        <div class="grid grid-cols-1 gap-3 mt-4 md:grid-cols-2">
+            <div>
                 <label class="block mb-1 text-xs font-semibold text-slate-700">Tên quy chế</label>
                 <input id="ruleNameInput" type="text" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300"
                     placeholder="Ví dụ: Quy chế tham gia SV" />
             </div>
             <div>
-                <label class="block mb-1 text-xs font-semibold text-slate-700">Loại quy chế</label>
+                <label class="block mb-1 text-xs font-semibold text-slate-700">Loại quy chế (danh mục chuẩn)</label>
                 <select id="ruleTypeInput" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300">
-                    <option value="THAMGIA_SV">THAMGIA_SV</option>
-                    <option value="THAMGIA_GV">THAMGIA_GV</option>
-                    <option value="VONGTHI">VONGTHI</option>
-                    <option value="SANPHAM">SANPHAM</option>
-                    <option value="GIAITHUONG">GIAITHUONG</option>
+                    <option value="THAMGIA_SV">Tham gia sinh vien (THAMGIA_SV)</option>
+                    <option value="THAMGIA_GV">Tham gia giang vien (THAMGIA_GV)</option>
+                    <option value="VONGTHI">Duyet vong thi (VONGTHI)</option>
+                    <option value="SANPHAM">Xu ly san pham (SANPHAM)</option>
+                    <option value="GIAITHUONG">Xet giai thuong (GIAITHUONG)</option>
+                    <option value="TUY_CHINH">Tuy chinh (TUY_CHINH)</option>
                 </select>
             </div>
+        </div>
+        <div class="mt-3">
+            <label class="block mb-1 text-xs font-semibold text-slate-700">Ngữ cảnh áp dụng (bắt buộc, cho phép nhiều)</label>
+            <select id="ruleContextInput" multiple size="6" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300">
+            </select>
+            <div id="ruleContextChips" class="flex flex-wrap gap-2 mt-2"></div>
+            <p class="mt-1 mb-0 text-xs text-slate-500">Chỉ cho phép chọn từ danh mục ngữ cảnh chuẩn của hệ thống để đảm bảo mapping chính xác.</p>
         </div>
         <input id="rules_json" type="hidden" value="" />
         <div class="flex flex-wrap items-center gap-2 mt-3">

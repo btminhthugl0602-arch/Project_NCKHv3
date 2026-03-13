@@ -33,25 +33,8 @@ if ($idSk <= 0) {
     exit;
 }
 
-$loaiQuyCheRaw = strtoupper(trim((string) ($_GET['loai_quy_che'] ?? '')));
-$normalizeLoai = [
-    'THAMGIA' => 'THAMGIA_SV',
-    'THAMGIA_SV' => 'THAMGIA_SV',
-    'THAMGIA_GV' => 'THAMGIA_GV',
-    'VONGTHI' => 'VONGTHI',
-    'SANPHAM' => 'SANPHAM',
-    'GIAITHUONG' => 'GIAITHUONG',
-];
-$loaiQuyChe = $loaiQuyCheRaw !== '' ? ($normalizeLoai[$loaiQuyCheRaw] ?? '') : '';
-if ($loaiQuyCheRaw !== '' && $loaiQuyChe === '') {
-    http_response_code(400);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'loai_quy_che không hợp lệ',
-        'data' => null,
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
-}
+$loaiQuyChe = strtoupper(trim((string) ($_GET['loai_quy_che'] ?? '')));
+$maNguCanh = chuan_hoa_ma_ngu_canh($_GET['ma_ngu_canh'] ?? '');
 
 $idUser = isset($_SESSION['idTK']) ? (int) $_SESSION['idTK'] : 0;
 if ($idUser > 0 && !xac_thuc_quyen_quy_che($conn, $idUser, $idSk)) {
@@ -65,29 +48,67 @@ if ($idUser > 0 && !xac_thuc_quyen_quy_che($conn, $idUser, $idSk)) {
 }
 
 try {
-    if ($loaiQuyChe !== '') {
+    $hasContextTable = bang_ton_tai($conn, 'quyche_ngucanh_apdung');
+
+    if ($hasContextTable) {
+        $where = ['q.idSK = :idSK'];
+        $params = [':idSK' => $idSk];
+
+        if ($loaiQuyChe !== '') {
+            $where[] = 'UPPER(q.loaiQuyChe) = :loaiQuyChe';
+            $params[':loaiQuyChe'] = $loaiQuyChe;
+        }
+
+        if ($maNguCanh !== '') {
+            $where[] = 'EXISTS (
+                SELECT 1 FROM quyche_ngucanh_apdung nx
+                WHERE nx.idQuyChe = q.idQuyChe AND nx.maNguCanh = :maNguCanh
+            )';
+            $params[':maNguCanh'] = $maNguCanh;
+        }
+
         $stmt = $conn->prepare(
-            'SELECT q.idQuyChe, q.idSK, q.tenQuyChe, q.moTa, q.loaiQuyChe, qd.idDieuKienCuoi
+            'SELECT
+                q.idQuyChe,
+                q.idSK,
+                q.tenQuyChe,
+                q.moTa,
+                q.loaiQuyChe,
+                qd.idDieuKienCuoi,
+                GROUP_CONCAT(DISTINCT n.maNguCanh ORDER BY n.maNguCanh SEPARATOR ",") AS nguCanhApDungRaw
              FROM quyche q
              LEFT JOIN quyche_dieukien qd ON q.idQuyChe = qd.idQuyChe
-             WHERE q.idSK = :idSK AND q.loaiQuyChe = :loaiQuyChe
+             LEFT JOIN quyche_ngucanh_apdung n ON n.idQuyChe = q.idQuyChe
+             WHERE ' . implode(' AND ', $where) . '
+             GROUP BY q.idQuyChe, q.idSK, q.tenQuyChe, q.moTa, q.loaiQuyChe, qd.idDieuKienCuoi
              ORDER BY q.idQuyChe DESC'
         );
-        $stmt->execute([
-            ':idSK' => $idSk,
-            ':loaiQuyChe' => $loaiQuyChe,
-        ]);
+        $stmt->execute($params);
     } else {
+        $where = ['q.idSK = :idSK'];
+        $params = [':idSK' => $idSk];
+        if ($loaiQuyChe !== '') {
+            $where[] = 'UPPER(q.loaiQuyChe) = :loaiQuyChe';
+            $params[':loaiQuyChe'] = $loaiQuyChe;
+        }
+
         $stmt = $conn->prepare(
             'SELECT q.idQuyChe, q.idSK, q.tenQuyChe, q.moTa, q.loaiQuyChe, qd.idDieuKienCuoi
              FROM quyche q
              LEFT JOIN quyche_dieukien qd ON q.idQuyChe = qd.idQuyChe
-             WHERE q.idSK = :idSK
+             WHERE ' . implode(' AND ', $where) . '
              ORDER BY q.idQuyChe DESC'
         );
-        $stmt->execute([':idSK' => $idSk]);
+        $stmt->execute($params);
     }
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $rows = array_map(function ($row) {
+        $raw = trim((string) ($row['nguCanhApDungRaw'] ?? ''));
+        $row['nguCanhApDung'] = $raw !== '' ? array_values(array_filter(array_map('trim', explode(',', $raw)))) : [];
+        unset($row['nguCanhApDungRaw']);
+        return $row;
+    }, is_array($rows) ? $rows : []);
 
     echo json_encode([
         'status' => 'success',

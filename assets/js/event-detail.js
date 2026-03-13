@@ -65,6 +65,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const ruleGiaTriHint = document.getElementById('ruleGiaTriHint');
     const ruleNameInput = document.getElementById('ruleNameInput');
     const ruleTypeInput = document.getElementById('ruleTypeInput');
+    const ruleContextInput = document.getElementById('ruleContextInput');
+    const ruleContextChips = document.getElementById('ruleContextChips');
     const rulesJsonInput = document.getElementById('rules_json');
     const btnSaveRuleConfig = document.getElementById('btnSaveRuleConfig');
     const astStatusText = document.getElementById('astStatusText');
@@ -89,16 +91,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const tokens = [];
     let compareOperators = [];
     let criteriaUsageMap = {};
-    const allowedRuleTypes = ['THAMGIA_SV', 'THAMGIA_GV', 'VONGTHI', 'SANPHAM', 'GIAITHUONG'];
-    const ruleTypeAliasMap = {
-        THAMGIA: 'THAMGIA_SV',
-        THAMGIA_SV: 'THAMGIA_SV',
-        THAMGIA_GV: 'THAMGIA_GV',
-        VONGTHI: 'VONGTHI',
-        SANPHAM: 'SANPHAM',
-        GIAITHUONG: 'GIAITHUONG',
-    };
-    let activeRuleType = 'THAMGIA_SV';
+    const fallbackRuleTypeCatalog = [
+        { maLoai: 'THAMGIA_SV', tenLoai: 'Tham gia sinh vien' },
+        { maLoai: 'THAMGIA_GV', tenLoai: 'Tham gia giang vien' },
+        { maLoai: 'VONGTHI', tenLoai: 'Duyet vong thi' },
+        { maLoai: 'SANPHAM', tenLoai: 'Xu ly san pham' },
+        { maLoai: 'GIAITHUONG', tenLoai: 'Xet giai thuong' },
+        { maLoai: 'TUY_CHINH', tenLoai: 'Tuy chinh' },
+    ];
+    const DEFAULT_RULE_TYPE = 'THAMGIA_SV';
+    const DEFAULT_RULE_CONTEXT = 'DANG_KY_THAM_GIA_SV';
+    let ruleTypeCatalogCodes = fallbackRuleTypeCatalog.map((item) => String(item.maLoai || '').toUpperCase()).filter((item) => item !== '');
+    let activeRuleType = DEFAULT_RULE_TYPE;
 
     function formatDateTime(value) {
         if (!value) {
@@ -143,6 +147,24 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         return payload.data;
+    }
+
+    function buildApiError(response, payload, fallbackMessage) {
+        const statusCode = Number(response?.status || 0);
+        const serverMessage = payload && typeof payload.message === 'string' ? payload.message : '';
+        const baseMessage = serverMessage || fallbackMessage || 'Yeu cau API that bai';
+
+        let prefix = 'Loi he thong';
+        if (statusCode === 422) {
+            prefix = 'Loi du lieu';
+        } else if (statusCode === 403) {
+            prefix = 'Khong du quyen';
+        }
+
+        const error = new Error(`${prefix}: ${baseMessage}`);
+        error.statusCode = statusCode;
+        error.errorType = statusCode === 422 ? 'validation' : (statusCode === 403 ? 'authorization' : 'system');
+        return error;
     }
 
     async function layDanhSachCapToChuc() {
@@ -199,26 +221,38 @@ document.addEventListener('DOMContentLoaded', function () {
         return result.data || {};
     }
 
-    async function layMetadataQuyChe(loaiQuyChe) {
-        const response = await fetch(`${BASE_PATH}/api/su_kien/quy_che_metadata.php?loai_quy_che=${encodeURIComponent(loaiQuyChe)}`, {
+    async function layMetadataQuyChe(filters = {}) {
+        const loaiQuyChe = String(filters.loaiQuyChe || '').trim().toUpperCase();
+        const maNguCanh = Array.isArray(filters.maNguCanh) ? filters.maNguCanh.map((item) => String(item || '').trim()).filter((item) => item !== '') : [];
+
+        const query = new URLSearchParams();
+        query.set('id_sk', String(idSk));
+        if (loaiQuyChe) {
+            query.set('loai_quy_che', loaiQuyChe);
+        }
+        if (maNguCanh.length > 0) {
+            query.set('ma_ngu_canh', maNguCanh.join(','));
+        }
+
+        const response = await fetch(`${BASE_PATH}/api/su_kien/quy_che_metadata.php?${query.toString()}`, {
             method: 'GET',
             credentials: 'same-origin',
         });
         const payload = await response.json();
-        if (payload.status !== 'success' || !payload.data) {
-            throw new Error(payload.message || 'Không lấy được metadata quy chế');
+        if (!response.ok || payload.status !== 'success' || !payload.data) {
+            throw buildApiError(response, payload, 'Khong lay duoc metadata quy che');
         }
         return payload.data;
     }
 
     async function layGoiYGiaTriTheoThuocTinh(idThuocTinh) {
-        const response = await fetch(`${BASE_PATH}/api/su_kien/goi_y_gia_tri_thuoc_tinh.php?id_thuoc_tinh=${encodeURIComponent(idThuocTinh)}`, {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/goi_y_gia_tri_thuoc_tinh.php?id_sk=${encodeURIComponent(idSk)}&id_thuoc_tinh=${encodeURIComponent(idThuocTinh)}`, {
             method: 'GET',
             credentials: 'same-origin',
         });
         const payload = await response.json();
-        if (payload.status !== 'success' || !payload.data) {
-            throw new Error(payload.message || 'Không lấy được gợi ý giá trị');
+        if (!response.ok || payload.status !== 'success' || !payload.data) {
+            throw buildApiError(response, payload, 'Khong lay duoc goi y gia tri');
         }
         return payload.data;
     }
@@ -231,20 +265,20 @@ document.addEventListener('DOMContentLoaded', function () {
             body: JSON.stringify(payload),
         });
         const result = await response.json();
-        if (result.status !== 'success') {
-            throw new Error(result.message || 'Không thể lưu quy chế');
+        if (!response.ok || result.status !== 'success') {
+            throw buildApiError(response, result, 'Khong the luu quy che');
         }
         return result.data || {};
     }
 
-    async function layDanhSachQuyChe(id, loaiQuyChe) {
-        const response = await fetch(`${BASE_PATH}/api/su_kien/danh_sach_quy_che.php?id_sk=${encodeURIComponent(id)}&loai_quy_che=${encodeURIComponent(loaiQuyChe)}`, {
+    async function layDanhSachQuyChe(id, maNguCanh = '') {
+        const response = await fetch(`${BASE_PATH}/api/su_kien/danh_sach_quy_che.php?id_sk=${encodeURIComponent(id)}&ma_ngu_canh=${encodeURIComponent(maNguCanh)}`, {
             method: 'GET',
             credentials: 'same-origin',
         });
         const payload = await response.json();
-        if (payload.status !== 'success' || !Array.isArray(payload.data)) {
-            throw new Error(payload.message || 'Không lấy được danh sách quy chế');
+        if (!response.ok || payload.status !== 'success' || !Array.isArray(payload.data)) {
+            throw buildApiError(response, payload, 'Khong lay duoc danh sach quy che');
         }
         return payload.data;
     }
@@ -255,8 +289,8 @@ document.addEventListener('DOMContentLoaded', function () {
             credentials: 'same-origin',
         });
         const payload = await response.json();
-        if (payload.status !== 'success' || !payload.data) {
-            throw new Error(payload.message || 'Không lấy được chi tiết quy chế');
+        if (!response.ok || payload.status !== 'success' || !payload.data) {
+            throw buildApiError(response, payload, 'Khong lay duoc chi tiet quy che');
         }
         return payload.data;
     }
@@ -705,6 +739,186 @@ document.addEventListener('DOMContentLoaded', function () {
         return ast;
     }
 
+    function semanticBuildConjunctions(node) {
+        if (!node) {
+            return [];
+        }
+
+        if (node.type === 'rule') {
+            return [[node]];
+        }
+
+        if (node.type === 'group' && Array.isArray(node.children) && node.children.length === 2) {
+            const operator = String(node.operator || '').toUpperCase();
+            const leftConjunctions = semanticBuildConjunctions(node.children[0]);
+            const rightConjunctions = semanticBuildConjunctions(node.children[1]);
+
+            if (operator === 'OR') {
+                return [...leftConjunctions, ...rightConjunctions];
+            }
+
+            if (operator === 'AND') {
+                const merged = [];
+                leftConjunctions.forEach((leftBranch) => {
+                    rightConjunctions.forEach((rightBranch) => {
+                        merged.push([...(Array.isArray(leftBranch) ? leftBranch : []), ...(Array.isArray(rightBranch) ? rightBranch : [])]);
+                    });
+                });
+                return merged;
+            }
+        }
+
+        return [];
+    }
+
+    function semanticAnalyzeAttributeConstraints(attrName, constraints) {
+        const normalized = Array.isArray(constraints) ? constraints : [];
+        if (normalized.length === 0) {
+            return null;
+        }
+
+        const numericMode = normalized.every((constraint) => {
+            const raw = String(constraint.giaTriSoSanh ?? '').trim();
+            return raw !== '' && Number.isFinite(Number(raw));
+        });
+
+        if (!numericMode) {
+            const equals = new Set();
+            const notEquals = new Set();
+            normalized.forEach((constraint) => {
+                const operator = String(constraint.label?.toanTu || '').trim();
+                const value = String(constraint.giaTriSoSanh ?? '').trim();
+                if (operator === '=') {
+                    equals.add(value);
+                }
+                if (operator === '!=' || operator === '<>') {
+                    notEquals.add(value);
+                }
+            });
+
+            if (equals.size > 1) {
+                return `Thuộc tính "${attrName}" đang có nhiều điều kiện bằng khác nhau trong cùng một nhánh AND.`;
+            }
+
+            if (equals.size === 1) {
+                const eqValue = Array.from(equals)[0];
+                if (notEquals.has(eqValue)) {
+                    return `Thuộc tính "${attrName}" vừa yêu cầu bằng vừa khác "${eqValue}" trong cùng một nhánh AND.`;
+                }
+            }
+
+            return null;
+        }
+
+        let lowerBound = null; // { value, inclusive }
+        let upperBound = null; // { value, inclusive }
+        const equals = new Set();
+        const notEquals = new Set();
+
+        const updateLowerBound = (value, inclusive) => {
+            if (!lowerBound || value > lowerBound.value || (value === lowerBound.value && inclusive === false && lowerBound.inclusive === true)) {
+                lowerBound = { value, inclusive };
+            }
+        };
+
+        const updateUpperBound = (value, inclusive) => {
+            if (!upperBound || value < upperBound.value || (value === upperBound.value && inclusive === false && upperBound.inclusive === true)) {
+                upperBound = { value, inclusive };
+            }
+        };
+
+        normalized.forEach((constraint) => {
+            const operator = String(constraint.label?.toanTu || '').trim();
+            const value = Number(constraint.giaTriSoSanh);
+
+            switch (operator) {
+                case '>':
+                    updateLowerBound(value, false);
+                    break;
+                case '>=':
+                    updateLowerBound(value, true);
+                    break;
+                case '<':
+                    updateUpperBound(value, false);
+                    break;
+                case '<=':
+                    updateUpperBound(value, true);
+                    break;
+                case '=':
+                    equals.add(value);
+                    break;
+                case '!=':
+                case '<>':
+                    notEquals.add(value);
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        if (equals.size > 1) {
+            return `Thuộc tính "${attrName}" đang có nhiều điều kiện bằng khác nhau trong cùng một nhánh AND.`;
+        }
+
+        if (lowerBound && upperBound) {
+            if (lowerBound.value > upperBound.value) {
+                return `Thuộc tính "${attrName}" có khoảng giá trị rỗng (cận dưới lớn hơn cận trên).`;
+            }
+            if (lowerBound.value === upperBound.value && (!lowerBound.inclusive || !upperBound.inclusive)) {
+                return `Thuộc tính "${attrName}" có khoảng giá trị rỗng tại điểm biên ${lowerBound.value}.`;
+            }
+        }
+
+        if (equals.size === 1) {
+            const eq = Array.from(equals)[0];
+            if (lowerBound && (eq < lowerBound.value || (eq === lowerBound.value && !lowerBound.inclusive))) {
+                return `Thuộc tính "${attrName}" có điều kiện bằng ${eq} nhưng không thỏa cận dưới.`;
+            }
+            if (upperBound && (eq > upperBound.value || (eq === upperBound.value && !upperBound.inclusive))) {
+                return `Thuộc tính "${attrName}" có điều kiện bằng ${eq} nhưng không thỏa cận trên.`;
+            }
+            if (notEquals.has(eq)) {
+                return `Thuộc tính "${attrName}" vừa yêu cầu bằng vừa khác ${eq} trong cùng một nhánh AND.`;
+            }
+        } else if (lowerBound && upperBound && lowerBound.value === upperBound.value && lowerBound.inclusive && upperBound.inclusive) {
+            if (notEquals.has(lowerBound.value)) {
+                return `Thuộc tính "${attrName}" chỉ có thể nhận ${lowerBound.value} nhưng lại bị loại trừ giá trị này.`;
+            }
+        }
+
+        return null;
+    }
+
+    function semanticValidateAst(ast) {
+        const conjunctions = semanticBuildConjunctions(ast);
+        if (!Array.isArray(conjunctions) || conjunctions.length === 0) {
+            return [];
+        }
+
+        const semanticErrors = [];
+
+        conjunctions.forEach((branch, branchIndex) => {
+            const constraintsByAttr = new Map();
+            (Array.isArray(branch) ? branch : []).forEach((rule) => {
+                const attrId = Number(rule.idThuocTinhKiemTra || 0);
+                const attrName = String(rule.label?.thuocTinh || `#${attrId}`).trim();
+                if (!constraintsByAttr.has(attrName)) {
+                    constraintsByAttr.set(attrName, []);
+                }
+                constraintsByAttr.get(attrName).push(rule);
+            });
+
+            constraintsByAttr.forEach((constraints, attrName) => {
+                const contradiction = semanticAnalyzeAttributeConstraints(attrName, constraints);
+                if (contradiction) {
+                    semanticErrors.push(`Nhánh AND #${branchIndex + 1}: ${contradiction}`);
+                }
+            });
+        });
+
+        return semanticErrors;
+    }
+
     function kiemTraQuyTacToken(tokenList) {
         const errors = [];
 
@@ -762,28 +976,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (balance !== 0) {
             errors.push('Số lượng ngoặc mở/đóng chưa cân bằng.');
-        }
-
-        const attributeUsed = new Map();
-        for (let i = 0; i < tokenList.length; i += 1) {
-            const token = tokenList[i];
-            if (!isOperand(token) || !conditionsMap[token]) {
-                continue;
-            }
-
-            const condition = conditionsMap[token];
-            const attrId = Number(condition.idThuocTinhKiemTra || 0);
-            const attrName = String(condition.label?.thuocTinh || `#${attrId}`);
-
-            if (attrId <= 0) {
-                continue;
-            }
-
-            if (attributeUsed.has(attrId)) {
-                errors.push(`Thuộc tính "${attrName}" chỉ được phép xuất hiện 1 lần trong biểu thức.`);
-            } else {
-                attributeUsed.set(attrId, token);
-            }
         }
 
         const stack = [];
@@ -910,6 +1102,11 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const ast = buildAstFromTokens(tokens);
+            const semanticErrors = semanticValidateAst(ast);
+            if (semanticErrors.length > 0) {
+                throw new Error(semanticErrors.join('. '));
+            }
+
             rulesJsonInput.value = JSON.stringify(ast);
             btnSaveRuleConfig.disabled = false;
             astStatusText.textContent = 'Cây logic hợp lệ, sẵn sàng lưu.';
@@ -952,20 +1149,104 @@ document.addEventListener('DOMContentLoaded', function () {
         renderTokenPreview();
     }
 
-    function detectRuleTypeFromQuery() {
-        const search = new URLSearchParams(window.location.search);
-        const queryValue = search.get('rule_type') || search.get('loai');
-        const normalized = String(queryValue || '').toUpperCase().trim();
-        const mapped = ruleTypeAliasMap[normalized] || '';
-        if (allowedRuleTypes.includes(mapped)) {
-            return mapped;
+    function parseRuleContexts(value) {
+        if (!value) {
+            return [];
         }
-        return 'THAMGIA_SV';
+
+        const parts = String(value)
+            .split(',')
+            .map((item) => item.trim().toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, ''))
+            .filter((item) => item !== '');
+
+        return [...new Set(parts)];
+    }
+
+    function getSelectedRuleContexts() {
+        if (!ruleContextInput) {
+            return [];
+        }
+
+        if (ruleContextInput.tagName === 'SELECT') {
+            const selected = Array.from(ruleContextInput.selectedOptions || [])
+                .map((option) => String(option.value || '').trim())
+                .filter((value) => value !== '');
+            return [...new Set(selected)];
+        }
+
+        return parseRuleContexts(ruleContextInput.value);
+    }
+
+    function getSelectedRuleType() {
+        const raw = String((ruleTypeInput ? ruleTypeInput.value : activeRuleType) || '').trim().toUpperCase();
+        if (raw && ruleTypeCatalogCodes.includes(raw)) {
+            return raw;
+        }
+        return DEFAULT_RULE_TYPE;
+    }
+
+    function renderRuleContextChips() {
+        if (!ruleContextChips || !ruleContextInput) {
+            return;
+        }
+
+        const selected = getSelectedRuleContexts();
+        if (selected.length === 0) {
+            ruleContextChips.innerHTML = '<span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-700">Chưa chọn ngữ cảnh</span>';
+            return;
+        }
+
+        const chipHtml = selected
+            .map((maNguCanh) => {
+                const option = ruleContextInput.querySelector(`option[value="${maNguCanh}"]`);
+                const label = option ? String(option.textContent || maNguCanh).trim() : maNguCanh;
+                return `<span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-cyan-100 text-cyan-700">${label}</span>`;
+            })
+            .join('');
+
+        ruleContextChips.innerHTML = chipHtml;
+    }
+
+    function pickMetadataFilters() {
+        return {};
     }
 
     function applyMetadataToInputs(metadata) {
         const thuocTinh = Array.isArray(metadata.thuoc_tinh) ? metadata.thuoc_tinh : [];
         const toanTu = Array.isArray(metadata.toan_tu) ? metadata.toan_tu : [];
+        const nguCanhApDung = Array.isArray(metadata.ngu_canh_ap_dung) ? metadata.ngu_canh_ap_dung : [];
+        const loaiQuyCheCatalog = Array.isArray(metadata.loai_quy_che_catalog) && metadata.loai_quy_che_catalog.length > 0
+            ? metadata.loai_quy_che_catalog
+            : fallbackRuleTypeCatalog;
+        const selectedLoaiQuyChe = String(metadata.selected_loai_quy_che || '').trim().toUpperCase();
+        const selectedNguCanhFromApi = Array.isArray(metadata.selected_ngu_canh)
+            ? metadata.selected_ngu_canh.map((item) => String(item || '').trim()).filter((item) => item !== '')
+            : [];
+
+        ruleTypeCatalogCodes = loaiQuyCheCatalog
+            .map((item) => String(item.maLoai || '').trim().toUpperCase())
+            .filter((item) => item !== '');
+
+        if (ruleTypeInput) {
+            const currentSelectedType = getSelectedRuleType();
+            ruleTypeInput.innerHTML = loaiQuyCheCatalog
+                .map((item) => {
+                    const maLoai = String(item.maLoai || '').trim().toUpperCase();
+                    const tenLoai = String(item.tenLoai || maLoai).trim();
+                    if (!maLoai) {
+                        return '';
+                    }
+                    return `<option value="${maLoai}">${tenLoai} (${maLoai})</option>`;
+                })
+                .filter((item) => item !== '')
+                .join('');
+
+            const nextType = [currentSelectedType, selectedLoaiQuyChe, DEFAULT_RULE_TYPE].find((value) => value && ruleTypeCatalogCodes.includes(value));
+            if (nextType) {
+                ruleTypeInput.value = nextType;
+                activeRuleType = nextType;
+            }
+        }
 
         compareOperators = toanTu.filter((item) => String(item.loaiToanTu || '').toLowerCase() === 'compare');
 
@@ -981,9 +1262,51 @@ document.addEventListener('DOMContentLoaded', function () {
                 .join('');
         }
 
+        if (ruleContextInput) {
+            const selectedBefore = getSelectedRuleContexts();
+            const contextOptions = nguCanhApDung
+                .map((item) => {
+                    const maNguCanh = String(item.maNguCanh || '').trim();
+                    const tenNguCanh = String(item.tenNguCanh || maNguCanh).trim();
+                    if (!maNguCanh) {
+                        return '';
+                    }
+                    return `<option value="${maNguCanh}">${tenNguCanh} (${maNguCanh})</option>`;
+                })
+                .filter((item) => item !== '')
+                .join('');
+
+            if (contextOptions) {
+                ruleContextInput.innerHTML = contextOptions;
+                const selectedSet = new Set([...selectedBefore, ...selectedNguCanhFromApi]);
+                let hasSelected = false;
+                Array.from(ruleContextInput.options || []).forEach((option) => {
+                    const value = String(option.value || '').trim();
+                    option.selected = selectedSet.has(value);
+                    if (option.selected) {
+                        hasSelected = true;
+                    }
+                });
+
+                if (!hasSelected) {
+                    const fallback = Array.from(ruleContextInput.options || [])
+                        .find((option) => String(option.value || '').trim() === DEFAULT_RULE_CONTEXT)
+                        || ruleContextInput.options[0];
+                    if (fallback) {
+                        fallback.selected = true;
+                    }
+                }
+            } else {
+                ruleContextInput.innerHTML = '';
+            }
+        }
+
+        renderRuleContextChips();
+
         return {
             thuocTinhCount: thuocTinh.length,
             compareCount: compareOperators.length,
+            nguCanhCount: nguCanhApDung.length,
         };
     }
 
@@ -1056,7 +1379,8 @@ document.addEventListener('DOMContentLoaded', function () {
         ruleListContainer.innerHTML = '<div class="px-3 py-2 border rounded-lg border-slate-200 bg-slate-50">Đang tải danh sách quy chế...</div>';
 
         try {
-            const list = await layDanhSachQuyChe(idSk, activeRuleType);
+            const filterContext = getSelectedRuleContexts()[0] || '';
+            const list = await layDanhSachQuyChe(idSk, filterContext);
             if (list.length === 0) {
                 ruleListContainer.innerHTML = '<div class="px-3 py-2 border rounded-lg border-slate-200 bg-slate-50 text-slate-500">Chưa có quy chế nào cho sự kiện này.</div>';
                 return;
@@ -1067,6 +1391,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     return `<div class="p-3 border rounded-lg border-slate-200 bg-slate-50">
                                 <p class="mb-0 text-sm font-semibold text-slate-700">${item.tenQuyChe || '--'}</p>
                                 <p class="mb-2 text-xs text-slate-500">Loại: ${item.loaiQuyChe || '--'}</p>
+                                <p class="mb-2 text-xs text-slate-500">Ngữ cảnh: ${(Array.isArray(item.nguCanhApDung) && item.nguCanhApDung.length > 0) ? item.nguCanhApDung.join(', ') : '--'}</p>
                                 <div class="flex flex-wrap gap-2">
                                     <button type="button" data-rule-view="${item.idQuyChe}" class="rule-view-btn px-2.5 py-1 text-xs font-bold rounded border border-slate-300 bg-white">Xem</button>
                                     <button type="button" data-rule-delete="${item.idQuyChe}" class="rule-delete-btn px-2.5 py-1 text-xs font-bold rounded border border-rose-300 text-rose-600 bg-white">Xóa</button>
@@ -1089,14 +1414,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (ruleTypeInput) {
-            const detected = detectRuleTypeFromQuery();
-            const selectedType = allowedRuleTypes.includes(ruleTypeInput.value) ? ruleTypeInput.value : detected;
-            activeRuleType = selectedType;
-            ruleTypeInput.value = selectedType;
+            activeRuleType = getSelectedRuleType();
         }
 
         try {
-            const metadata = await layMetadataQuyChe('');
+            const metadata = await layMetadataQuyChe(pickMetadataFilters());
             const applied = applyMetadataToInputs(metadata);
 
             if (applied.thuocTinhCount === 0 || applied.compareCount === 0) {
@@ -1501,33 +1823,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function reloadRuleTypeContext(nextType) {
-        if (!allowedRuleTypes.includes(nextType)) {
-            return;
+        activeRuleType = String(nextType || '').trim().toUpperCase() || DEFAULT_RULE_TYPE;
+        if (ruleTypeInput && ruleTypeCatalogCodes.includes(activeRuleType)) {
+            ruleTypeInput.value = activeRuleType;
         }
 
-        activeRuleType = nextType;
-        resetRuleBuilder();
-
-        try {
-            const metadata = await layMetadataQuyChe('');
-            const applied = applyMetadataToInputs(metadata);
-
-            if (applied.thuocTinhCount === 0 || applied.compareCount === 0) {
-                if (tokenError) {
-                    tokenError.textContent = 'Metadata thuộc tính/toán tử đang rỗng. Vui lòng kiểm tra dữ liệu CSDL.';
-                    tokenError.classList.remove('hidden');
-                }
-            }
-
-            await napGoiYGiaTriTheoThuocTinhDangChon();
-
-            await renderRuleList();
-        } catch (error) {
-            if (tokenError) {
-                tokenError.textContent = error.message || 'Không tải được dữ liệu quy chế theo loại';
-                tokenError.classList.remove('hidden');
-            }
-        }
+        await renderRuleList();
     }
 
     function toDatetimeLocal(value) {
@@ -2372,14 +2673,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnSaveRuleConfig) {
         btnSaveRuleConfig.addEventListener('click', async function () {
             const tenQuyChe = ruleNameInput ? ruleNameInput.value.trim() : '';
-            const loaiQuyChe = activeRuleType;
+            const loaiQuyChe = getSelectedRuleType();
+            const nguCanhApDung = getSelectedRuleContexts();
             const rulesJson = rulesJsonInput ? rulesJsonInput.value : '';
 
-            if (!tenQuyChe || !loaiQuyChe || !rulesJson) {
+            if (!tenQuyChe || !rulesJson || nguCanhApDung.length === 0) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Thiếu dữ liệu',
-                    text: 'Vui lòng nhập tên quy chế và xây dựng biểu thức logic hợp lệ.',
+                    text: 'Vui lòng nhập tên quy chế, chọn ít nhất một ngữ cảnh áp dụng và xây dựng biểu thức logic hợp lệ.',
                 });
                 return;
             }
@@ -2389,6 +2691,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     id_sk: idSk,
                     ten_quy_che: tenQuyChe,
                     loai_quy_che: loaiQuyChe,
+                    ngu_canh_ap_dung: nguCanhApDung,
                     rules_json: rulesJson,
                 });
 
@@ -2433,6 +2736,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         html:
                             '<div class="text-left space-y-2 text-sm text-slate-600">' +
                             `<div><span class="font-semibold text-slate-700">Loại:</span> ${detail.loaiQuyChe || '--'}</div>` +
+                            `<div><span class="font-semibold text-slate-700">Ngữ cảnh:</span> ${(Array.isArray(detail.nguCanhApDung) && detail.nguCanhApDung.length > 0) ? detail.nguCanhApDung.join(', ') : '--'}</div>` +
                             `<div><span class="font-semibold text-slate-700">Mô tả:</span> ${detail.moTa || '--'}</div>` +
                             `<div><span class="font-semibold text-slate-700">Diễn giải:</span> ${naturalText}</div>` +
                             `<div><span class="font-semibold text-slate-700">Biểu thức:</span> <div class="mt-1">${astHtml}</div></div>` +
@@ -2491,6 +2795,13 @@ document.addEventListener('DOMContentLoaded', function () {
         ruleTypeInput.addEventListener('change', function () {
             const nextType = String(ruleTypeInput.value || '').trim();
             reloadRuleTypeContext(nextType);
+        });
+    }
+
+    if (ruleContextInput) {
+        ruleContextInput.addEventListener('change', async function () {
+            renderRuleContextChips();
+            renderRuleList();
         });
     }
 

@@ -1,0 +1,37 @@
+name: Rules Quality Baseline
+
+on:
+  pull_request:
+    paths:
+      - 'api/**'
+      - 'assets/js/**'
+      - 'tests/**'
+      - '.github/workflows/**'
+  push:
+    branches:
+      - main
+      - MinhThu
+
+jobs:
+  php-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Lint changed backend modules
+        run: |
+          php -l api/su_kien/chi_tiet_quy_che.php
+          php -l api/su_kien/luu_quy_che.php
+          php -l api/su_kien/quy_che_metadata.php
+          php -l api/su_kien/quan_ly_quy_che.php
+          php -l api/cham_diem/quan_ly_cham_diem.php
+          php -l api/cham_diem/xet_ket_qua.php
+
+      - name: Run baseline tests
+        run: php tests/run.php

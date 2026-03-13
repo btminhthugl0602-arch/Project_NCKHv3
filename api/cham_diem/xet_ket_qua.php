@@ -240,8 +240,9 @@ function handlePostRequest($conn) {
     $action = $input['action'] ?? '';
     $idSanPham = isset($input['id_san_pham']) ? (int) $input['id_san_pham'] : 0;
     $idVongThi = isset($input['id_vong_thi']) ? (int) $input['id_vong_thi'] : 0;
-    $idSK = isset($input['id_sk']) ? (int) $input['id_sk'] : 0;
+    $idSK = isset($input['id_sk']) ? (int) $input['id_sk'] : (isset($_GET['id_sk']) ? (int) $_GET['id_sk'] : 0);
     $diemChot = isset($input['diem_chot']) ? (float) $input['diem_chot'] : null;
+    $hanMucDuyet = isset($input['han_muc_duyet']) ? max(0, (int) $input['han_muc_duyet']) : 10;
     
     // Validate common params
     if (in_array($action, ['approve_score_manual', 'approve_score_auto', 'reject_score', 'cancel_approval']) && ($idSanPham <= 0 || $idVongThi <= 0)) {
@@ -256,7 +257,17 @@ function handlePostRequest($conn) {
     
     switch ($action) {
         case 'approve_score_manual':
-            // Duyệt điểm thủ công (không qua quy chế)
+            // Duyệt điểm thủ công nhưng vẫn áp dụng engine quy chế + hạn mức top N
+            if ($idSK <= 0) {
+                http_response_code(400);
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Thiếu tham số id_sk để kiểm tra quy chế',
+                    'data' => null
+                ], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
             if ($diemChot === null) {
                 // Nếu không truyền điểm, tự tính điểm TB
                 $diemChot = cham_diem_tinh_diem_trung_binh($conn, $idSanPham, $idVongThi);
@@ -271,11 +282,17 @@ function handlePostRequest($conn) {
                 return;
             }
             
-            $result = cham_diem_duyet_diem($conn, $idSanPham, $idVongThi, $diemChot, 'Đã duyệt');
+            $result = cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemChot, $idSK, 'DUYET_VONG_THI');
+            $ketQuaHanMuc = cham_diem_ap_dung_han_muc_duyet($conn, $idVongThi, $hanMucDuyet);
             echo json_encode([
-                'status' => $result ? 'success' : 'error',
-                'message' => $result ? 'Duyệt điểm thành công' : 'Lỗi khi duyệt điểm',
-                'data' => ['diemChot' => $diemChot, 'trangThai' => 'Đã duyệt']
+                'status' => !empty($result['success']) ? 'success' : 'error',
+                'message' => !empty($result['success']) ? 'Duyệt điểm thành công' : ($result['message'] ?? 'Lỗi khi duyệt điểm'),
+                'data' => [
+                    'diemChot' => $diemChot,
+                    'trangThai' => $result['trangThai'] ?? null,
+                    'quyChe' => $result['quyChe'] ?? null,
+                    'hanMuc' => $ketQuaHanMuc,
+                ]
             ], JSON_UNESCAPED_UNICODE);
             break;
             
@@ -304,13 +321,16 @@ function handlePostRequest($conn) {
                 return;
             }
             
-            $result = cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemChot, $idSK);
+            $result = cham_diem_duyet_diem_voi_quyche($conn, $idSanPham, $idVongThi, $diemChot, $idSK, 'DUYET_VONG_THI');
+            $ketQuaHanMuc = cham_diem_ap_dung_han_muc_duyet($conn, $idVongThi, $hanMucDuyet);
             echo json_encode([
                 'status' => $result['success'] ? 'success' : 'error',
                 'message' => $result['message'],
                 'data' => [
                     'diemChot' => $diemChot, 
-                    'trangThai' => $result['trangThai'] ?? null
+                    'trangThai' => $result['trangThai'] ?? null,
+                    'quyChe' => $result['quyChe'] ?? null,
+                    'hanMuc' => $ketQuaHanMuc,
                 ]
             ], JSON_UNESCAPED_UNICODE);
             break;
@@ -340,11 +360,11 @@ function handlePostRequest($conn) {
             // skip_warned=true: bỏ qua bài có cảnh báo IRR thay vì duyệt hết
             $dsSanPham  = $input['ds_san_pham'] ?? [];
             $skipWarned = !empty($input['skip_warned']);
-            if (empty($dsSanPham) || $idVongThi <= 0) {
+            if (empty($dsSanPham) || $idVongThi <= 0 || $idSK <= 0) {
                 http_response_code(400);
                 echo json_encode([
                     'status' => 'error',
-                    'message' => 'Thiếu tham số ds_san_pham hoặc id_vong_thi',
+                    'message' => 'Thiếu tham số ds_san_pham, id_vong_thi hoặc id_sk',
                     'data' => null
                 ], JSON_UNESCAPED_UNICODE);
                 return;
@@ -353,6 +373,7 @@ function handlePostRequest($conn) {
             $successCount = 0;
             $skippedCount = 0;
             $errors = [];
+            $viPhamQuyChe = [];
             foreach ($dsSanPham as $spId) {
                 $spId = (int) $spId;
 
@@ -372,16 +393,23 @@ function handlePostRequest($conn) {
 
                 $diemTB = cham_diem_tinh_diem_trung_binh($conn, $spId, $idVongThi);
                 if ($diemTB !== null) {
-                    $result = cham_diem_duyet_diem($conn, $spId, $idVongThi, $diemTB, 'Đã duyệt');
-                    if ($result) {
+                    $result = cham_diem_duyet_diem_voi_quyche($conn, $spId, $idVongThi, $diemTB, $idSK, 'DUYET_VONG_THI_HANG_LOAT');
+                    if (!empty($result['success']) && (($result['trangThai'] ?? '') === 'Đã duyệt')) {
                         $successCount++;
+                    } elseif (!empty($result['success']) && (($result['trangThai'] ?? '') === 'Bị loại')) {
+                        $viPhamQuyChe[] = [
+                            'idSanPham' => $spId,
+                            'quyChe' => $result['quyChe']['viPham'] ?? [],
+                        ];
                     } else {
-                        $errors[] = "SP $spId: Lỗi khi duyệt";
+                        $errors[] = "SP $spId: " . ($result['message'] ?? 'Lỗi khi duyệt theo quy chế');
                     }
                 } else {
                     $errors[] = "SP $spId: Chưa có điểm";
                 }
             }
+
+            $ketQuaHanMuc = cham_diem_ap_dung_han_muc_duyet($conn, $idVongThi, $hanMucDuyet);
 
             $msg = "Đã duyệt $successCount/" . count($dsSanPham) . " bài thi";
             if ($skippedCount > 0) {
@@ -390,10 +418,22 @@ function handlePostRequest($conn) {
             if (count($errors) > 0) {
                 $msg .= ". Lỗi: " . implode(', ', $errors);
             }
+            if (!empty($viPhamQuyChe)) {
+                $msg .= ". Có " . count($viPhamQuyChe) . " bài không đạt quy chế và bị loại";
+            }
+            if (!empty($ketQuaHanMuc['biLoaiBoiHanMuc'])) {
+                $msg .= ". Hệ thống tự lọc theo hạn mức: chỉ giữ " . (int) ($ketQuaHanMuc['giuLai'] ?? 0) . "/" . (int) ($ketQuaHanMuc['tongDaDuyet'] ?? 0) . " bài Đã duyệt";
+            }
             echo json_encode([
                 'status' => $successCount > 0 ? 'success' : 'error',
                 'message' => $msg,
-                'data' => ['successCount' => $successCount, 'skippedCount' => $skippedCount, 'totalCount' => count($dsSanPham)]
+                'data' => [
+                    'successCount' => $successCount,
+                    'skippedCount' => $skippedCount,
+                    'totalCount' => count($dsSanPham),
+                    'viPhamQuyChe' => $viPhamQuyChe,
+                    'hanMuc' => $ketQuaHanMuc,
+                ]
             ], JSON_UNESCAPED_UNICODE);
             break;
             
