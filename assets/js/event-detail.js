@@ -2457,23 +2457,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // =============================================================
 // MODULE: Quản lý Tiểu ban
+
+// =============================================================
+// MODULE: Quản lý Tiểu ban & Hội đồng Giám khảo
 // khoiTaoTabSubcommittees() — tab "subcommittees"
 // khoiTaoTabJudges()        — tab "judges"
 // =============================================================
 (function () {
     'use strict';
 
-    const TB_API = BASE_PATH + '/api/su_kien/tieu_ban.php';
+    const _BASE     = window.APP_BASE_PATH || '';
+    const TB_API    = _BASE + '/api/su_kien/tieu_ban.php';
+    const VT_API    = _BASE + '/api/su_kien/danh_sach_vong_thi.php';
+    const idSk      = Number(window.EVENT_DETAIL_ID || 0);
     const canEditTB = window.TB_CAN_EDIT === true;
 
-    // Cache dùng chung giữa 2 tab
+    // ── State ────────────────────────────────────────────────
     let _tieubanList = [];
     let _gvList      = [];
     let _btcList     = [];
     let _vtList      = [];
     let _tbLoaded    = false;
+    let _filterText  = '';
+    let _filterVong  = '';
 
-    // ── Helpers ─────────────────────────────────────────────
+    // ── Helpers ──────────────────────────────────────────────
+    function esc(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function fmtDateTB(d) {
+        if (!d) return '—';
+        const p = String(d).split('-');
+        return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+    }
+
+    function nhomLabel(sp) { return sp.tennhom || sp.manhom || 'Cá nhân'; }
+
+    function toast(icon, title, text) {
+        Swal.fire({ icon, title, text: text || undefined,
+            toast: true, position: 'top-end',
+            showConfirmButton: false, timer: 2000, timerProgressBar: true });
+    }
+
+    // ── API ──────────────────────────────────────────────────
     async function tbApiGet(params) {
         const qs = new URLSearchParams(params).toString();
         const r  = await fetch(TB_API + '?' + qs, { credentials: 'same-origin' });
@@ -2490,25 +2519,13 @@ document.addEventListener('DOMContentLoaded', function () {
         return r.json();
     }
 
-    function fmtDateTB(d) {
-        if (!d) return '—';
-        const parts = String(d).split('-');
-        return parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : d;
-    }
-
-    function nhomLabel(sp) { return sp.tennhom || sp.manhom || 'Cá nhân'; }
-
-    function esc(str) {
-        return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    // ── Load tất cả dữ liệu ─────────────────────────────────
+    // ── Load ─────────────────────────────────────────────────
     async function tbLoadAll() {
         const [tbRes, gvRes, btcRes, vtRes] = await Promise.all([
             tbApiGet({ action: 'danh_sach', id_sk: idSk }),
-            tbApiGet({ action: 'ds_giang_vien' }),
+            tbApiGet({ action: 'ds_giang_vien', id_sk: idSk }),
             tbApiGet({ action: 'ds_bo_tieu_chi' }),
-            fetch(BASE_PATH + '/api/su_kien/danh_sach_vong_thi.php?id_sk=' + encodeURIComponent(idSk), { credentials: 'same-origin' }).then(r => r.json()),
+            fetch(VT_API + '?id_sk=' + encodeURIComponent(idSk), { credentials: 'same-origin' }).then(r => r.json()),
         ]);
 
         if (tbRes.status !== 'success') throw new Error(tbRes.message || 'Không tải được tiểu ban');
@@ -2518,108 +2535,195 @@ document.addEventListener('DOMContentLoaded', function () {
         _btcList     = btcRes.data || [];
         _vtList      = vtRes.data  || [];
         _tbLoaded    = true;
-
         return tbRes.data;
     }
 
-    // ── Stats ────────────────────────────────────────────────
+    async function tbReload() {
+        const data = await tbLoadAll();
+        tbRenderStats(data);
+        tbRenderList();
+        tbRenderJudgesTable();
+        _populateVongFilter();
+    }
+
+    // ── Stats ─────────────────────────────────────────────────
     function tbRenderStats(data) {
         const s1 = document.getElementById('statSoTieuBan');
         const s2 = document.getElementById('statSoBaiXep');
-        if (s1) s1.textContent = _tieubanList.length;
+        if (s1) { s1.textContent = _tieubanList.length; s1.classList.add('text-purple-700'); }
         if (s2) s2.textContent = (data.assigned_ids || []).length;
-
-        tbApiGet({ action: 'sp_chua_xep', id_sk: idSk }).then(r => {
-            const s3 = document.getElementById('statSoBaiCho');
-            if (s3) s3.textContent = (r.data || []).length;
-        }).catch(() => {});
+        tbApiGet({ action: 'sp_chua_xep', id_sk: idSk })
+            .then(r => { const s3 = document.getElementById('statSoBaiCho'); if (s3) s3.textContent = (r.data || []).length; })
+            .catch(() => {});
     }
 
-    // ── Render danh sách tiểu ban ────────────────────────────
+    // ── Vong filter ───────────────────────────────────────────
+    function _populateVongFilter() {
+        const sel = document.getElementById('tbFilterVong');
+        if (!sel) return;
+        const existing = new Set(Array.from(sel.options).map(o => o.value));
+        _vtList.forEach(v => {
+            if (!existing.has(String(v.idVongThi))) {
+                const opt = document.createElement('option');
+                opt.value = v.idVongThi;
+                opt.textContent = v.tenVongThi;
+                sel.appendChild(opt);
+            }
+        });
+    }
+
+    function _getFiltered() {
+        return _tieubanList.filter(tb => {
+            const t = _filterText.toLowerCase();
+            const matchText = !t ||
+                (tb.tenTieuBan || '').toLowerCase().includes(t) ||
+                (tb.diaDiem    || '').toLowerCase().includes(t) ||
+                (tb.tenVongThi || '').toLowerCase().includes(t);
+            const matchVong = !_filterVong || String(tb.idVongThi) === String(_filterVong);
+            return matchText && matchVong;
+        });
+    }
+
+    // ── Render list ───────────────────────────────────────────
     function tbRenderList() {
         const el = document.getElementById('subcommitteeList');
         if (!el) return;
 
+        const filtered = _getFiltered();
+        const cntEl = document.getElementById('tbFilterCount');
+        if (cntEl) cntEl.textContent = _tieubanList.length
+            ? `Hiển thị ${filtered.length} / ${_tieubanList.length}`
+            : '';
+
         if (!_tieubanList.length) {
             el.innerHTML =
-                '<div class="p-10 text-center text-slate-400 border border-dashed border-slate-200 rounded-xl">' +
-                '<i class="fas fa-sitemap text-4xl mb-3 block text-slate-300"></i>' +
-                '<p class="text-sm font-semibold text-slate-500">Chưa có tiểu ban nào</p>' +
-                '<p class="text-xs text-slate-400 mt-1">Nhấn "Tạo tiểu ban mới" để bắt đầu phân phòng báo cáo</p>' +
+                '<div class="p-12 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">' +
+                '<i class="fas fa-sitemap text-5xl mb-4 block text-slate-200"></i>' +
+                '<p class="text-sm font-bold text-slate-500 mb-1">Chưa có tiểu ban nào</p>' +
+                '<p class="text-xs text-slate-400">Nhấn "Tạo tiểu ban mới" để bắt đầu phân phòng báo cáo</p>' +
+                (canEditTB ? '<button id="btnTaoTieuBanEmpty" class="mt-4 inline-flex items-center px-4 py-2 text-xs font-bold text-white uppercase bg-gradient-to-tl from-purple-700 to-fuchsia-500 rounded-lg shadow-soft-md"><i class="fas fa-plus mr-1.5"></i>Tạo tiểu ban mới</button>' : '') +
                 '</div>';
+            const bE = document.getElementById('btnTaoTieuBanEmpty');
+            if (bE) bE.addEventListener('click', tbShowCreateModal);
             return;
         }
 
-        el.innerHTML = _tieubanList.map(tbCardHtml).join('');
+        if (!filtered.length) {
+            el.innerHTML = '<div class="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">' +
+                '<i class="fas fa-search text-3xl mb-2 block text-slate-300"></i>' +
+                '<p class="text-sm">Không tìm thấy tiểu ban phù hợp với bộ lọc</p></div>';
+            return;
+        }
+
+        el.innerHTML = filtered.map(tbCardHtml).join('');
         el.querySelectorAll('[data-tb-action]').forEach(b => b.addEventListener('click', tbHandleAction));
     }
 
+    // ── Card HTML ─────────────────────────────────────────────
     function tbCardHtml(tb) {
         const id  = tb.idTieuBan;
         const gvs = tb.giang_vien || [];
         const sps = tb.san_pham   || [];
 
-        const btcBadge = tb.tenBoTieuChi
-            ? '<span class="font-semibold text-cyan-600">' + esc(tb.tenBoTieuChi) + '</span>'
-            : '<span class="text-slate-400 italic">Dùng chung theo Vòng</span>';
+        // Badge màu theo vai trò
+        const vaiTroStyle = {
+            'Trưởng tiểu ban': 'bg-emerald-50 border-emerald-200 text-emerald-700',
+            'Thư ký':          'bg-blue-50 border-blue-200 text-blue-700',
+            'Thành viên':      'bg-slate-50 border-slate-200 text-slate-600',
+        };
+        const vaiTroIcon = {
+            'Trưởng tiểu ban': '<i class="fas fa-star text-xs text-emerald-400 mr-0.5"></i>',
+            'Thư ký':          '<i class="fas fa-pen text-xs text-blue-400 mr-0.5"></i>',
+        };
 
         const gvChips = gvs.length
-            ? gvs.map(g =>
-                '<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs border border-slate-200 rounded-full bg-slate-50 text-slate-600">' +
-                esc(g.tenGV) +
-                (canEditTB ? ' <button class="text-rose-400 hover:text-rose-600 leading-none font-bold" data-tb-action="xoa_gv" data-tb="' + id + '" data-gv="' + g.idGV + '" title="Rút GK">×</button>' : '') +
-                '</span>').join('')
+            ? gvs.map(g => {
+                const style = vaiTroStyle[g.vaiTro] || vaiTroStyle['Thành viên'];
+                const icon  = vaiTroIcon[g.vaiTro]  || '';
+                return (
+                    `<span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs border rounded-full font-medium ${style}">` +
+                    icon + esc(g.tenGV) +
+                    (g.vaiTro !== 'Thành viên' ? ` <span class="opacity-70 font-bold">(${esc(g.vaiTro)})</span>` : '') +
+                    (canEditTB ? ` <button class="ml-0.5 text-rose-400 hover:text-rose-600 leading-none font-bold" data-tb-action="xoa_gv" data-tb="${id}" data-gv="${g.idGV}" data-name="${esc(g.tenGV)}" title="Rút khỏi HĐ">×</button>` : '') +
+                    '</span>'
+                );
+            }).join('')
             : '<span class="text-slate-400 italic text-xs">Chưa có thành viên nào.</span>';
 
         const spRows = sps.length
             ? sps.map(sp =>
-                '<div class="flex items-center justify-between py-2 border-b border-dashed border-slate-100 last:border-0">' +
-                '<span class="text-sm text-slate-700">' +
-                '<span class="inline-block px-1.5 py-0.5 text-xs bg-slate-100 text-slate-500 rounded mr-1.5">' + esc(nhomLabel(sp)) + '</span>' +
-                '<span class="font-medium">' + esc(sp.tenSanPham) + '</span>' +
-                '</span>' +
-                (canEditTB ? '<button class="text-xs text-rose-500 hover:text-rose-700 font-semibold px-2 flex-shrink-0" data-tb-action="xoa_sp" data-tb="' + id + '" data-sp="' + sp.idSanPham + '" data-name="' + esc(sp.tenSanPham) + '">Rút bài</button>' : '') +
-                '</div>').join('')
-            : '<p class="text-xs text-slate-400 italic text-center py-3 bg-slate-50 rounded-lg">Trống.</p>';
+                '<div class="flex items-center justify-between py-2 border-b border-dashed border-slate-100 last:border-0 group">' +
+                `<span class="text-sm text-slate-700 flex items-center gap-1.5 min-w-0">` +
+                `<span class="inline-block px-1.5 py-0.5 text-xs bg-slate-100 text-slate-500 rounded font-medium flex-shrink-0">${esc(nhomLabel(sp))}</span>` +
+                `<span class="font-medium truncate">${esc(sp.tenSanPham)}</span></span>` +
+                (canEditTB ? `<button class="text-xs text-rose-500 hover:text-rose-700 font-semibold px-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" data-tb-action="xoa_sp" data-tb="${id}" data-sp="${sp.idSanPham}" data-name="${esc(sp.tenSanPham)}">Rút bài</button>` : '') +
+                '</div>'
+            ).join('')
+            : '<p class="text-xs text-slate-400 italic text-center py-3 bg-slate-50 rounded-lg">Chưa có bài báo cáo nào.</p>';
+
+        const btcBadge = tb.tenBoTieuChi
+            ? `<span class="font-semibold text-cyan-600">${esc(tb.tenBoTieuChi)}</span>`
+            : '<span class="text-slate-400 italic text-xs">Dùng chung theo Vòng</span>';
+
+        const moTaHtml = tb.moTa
+            ? `<p class="mt-1 text-xs text-slate-400 italic truncate max-w-lg">${esc(tb.moTa)}</p>` : '';
 
         return (
-            '<div class="border border-slate-200 rounded-xl overflow-hidden shadow-soft-sm" id="tb-card-' + id + '">' +
-            '  <div class="flex items-start justify-between px-5 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">' +
-            '    <div>' +
-            '      <p class="mb-0 text-sm font-bold text-emerald-700">' + esc(tb.tenTieuBan) + '</p>' +
-            '      <p class="mb-0 text-xs text-slate-500 mt-0.5">' +
-            fmtDateTB(tb.ngayBaoCao) + ' &nbsp;|&nbsp; Phòng: <strong>' + esc(tb.diaDiem || '—') + '</strong>' +
-            ' &nbsp;|&nbsp; Vòng: <strong>' + esc(tb.tenVongThi || '—') + '</strong>' +
-            ' &nbsp;|&nbsp; Tiêu chí: ' + btcBadge +
-            '      </p>' +
-            '    </div>' +
+            `<div class="border border-slate-200 rounded-2xl overflow-hidden shadow-soft-sm mb-4 hover:shadow-soft-xl transition-shadow" id="tb-card-${id}">` +
+
+            // Card header
+            `<div class="flex items-start justify-between px-5 py-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-white border-b border-slate-100">` +
+            `  <div class="flex-1 min-w-0">` +
+            `    <div class="flex flex-wrap items-center gap-2 mb-1">` +
+            `      <i class="fas fa-sitemap text-emerald-500 text-sm flex-shrink-0"></i>` +
+            `      <p class="mb-0 text-sm font-bold text-emerald-700 truncate">${esc(tb.tenTieuBan)}</p>` +
+            `      <span class="px-2 py-0.5 text-xs bg-teal-100 text-teal-700 rounded-full font-semibold flex-shrink-0">${esc(tb.tenVongThi || '—')}</span>` +
+            `    </div>` +
+            `    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">` +
+            `      <span><i class="fas fa-calendar-alt mr-1 text-slate-400"></i>${fmtDateTB(tb.ngayBaoCao)}</span>` +
+            `      <span><i class="fas fa-map-marker-alt mr-1 text-slate-400"></i><strong class="text-slate-600">${esc(tb.diaDiem || '—')}</strong></span>` +
+            `      <span><i class="fas fa-clipboard-list mr-1 text-slate-400"></i>Tiêu chí: ${btcBadge}</span>` +
+            `    </div>` +
+            moTaHtml +
+            `  </div>` +
             (canEditTB ?
-            '    <div class="flex gap-2 ml-4 flex-shrink-0">' +
-            '      <button class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 shadow-sm" data-tb-action="edit" data-tb="' + id + '" title="Sửa"><i class="fas fa-pencil-alt text-xs"></i></button>' +
-            '      <button class="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 shadow-sm" data-tb-action="xoa" data-tb="' + id + '" data-name="' + esc(tb.tenTieuBan) + '" title="Xóa"><i class="fas fa-trash text-xs"></i></button>' +
-            '    </div>' : '') +
-            '  </div>' +
-            '  <div class="p-5 grid grid-cols-1 gap-5 md:grid-cols-2">' +
-            '    <div>' +
-            '      <div class="flex items-center justify-between mb-2">' +
-            '        <p class="text-xs font-bold text-slate-600 uppercase"><i class="fas fa-user-tie mr-1 text-slate-400"></i>Hội đồng Ban giám khảo</p>' +
-            (canEditTB ? '        <button class="text-xs text-blue-600 hover:text-blue-800 font-semibold" data-tb-action="them_gv" data-tb="' + id + '" data-tbname="' + esc(tb.tenTieuBan) + '">+ Thêm GK</button>' : '') +
-            '      </div>' +
-            '      <div class="flex flex-wrap gap-2">' + gvChips + '</div>' +
-            '    </div>' +
-            '    <div>' +
-            '      <div class="flex items-center justify-between mb-2">' +
-            '        <p class="text-xs font-bold text-slate-600 uppercase"><i class="fas fa-file-alt mr-1 text-slate-400"></i>Bài báo cáo (' + sps.length + ')</p>' +
-            (canEditTB ? '        <button class="text-xs text-emerald-600 hover:text-emerald-800 font-semibold" data-tb-action="them_sp" data-tb="' + id + '" data-tbname="' + esc(tb.tenTieuBan) + '">+ Thêm bài</button>' : '') +
-            '      </div>' +
-            '      <div>' + spRows + '</div>' +
-            '    </div>' +
-            '  </div>' +
-            '</div>'
+            `  <div class="flex gap-2 ml-4 flex-shrink-0">` +
+            `    <button class="w-9 h-9 rounded-full bg-gradient-to-tl from-blue-600 to-cyan-400 text-white flex items-center justify-center hover:shadow-soft-md shadow-soft-sm transition-all" data-tb-action="edit" data-tb="${id}" title="Sửa tiểu ban"><i class="fas fa-pencil-alt text-xs"></i></button>` +
+            `    <button class="w-9 h-9 rounded-full bg-gradient-to-tl from-rose-600 to-pink-400 text-white flex items-center justify-center hover:shadow-soft-md shadow-soft-sm transition-all" data-tb-action="xoa" data-tb="${id}" data-name="${esc(tb.tenTieuBan)}" title="Xóa tiểu ban"><i class="fas fa-trash text-xs"></i></button>` +
+            `  </div>` : '') +
+            `</div>` +
+
+            // Card body — 2 cột
+            `<div class="p-5 grid grid-cols-1 gap-5 md:grid-cols-2 bg-white">` +
+            // Cột GK
+            `  <div>` +
+            `    <div class="flex items-center justify-between mb-3">` +
+            `      <p class="text-xs font-bold text-slate-600 uppercase tracking-wide mb-0"><i class="fas fa-user-tie mr-1.5 text-slate-400"></i>Hội đồng GK <span class="font-normal text-slate-400">(${gvs.length})</span></p>` +
+            (canEditTB ? `      <button class="inline-flex items-center text-xs text-blue-600 hover:text-blue-800 font-bold gap-1" data-tb-action="them_gv" data-tb="${id}" data-tbname="${esc(tb.tenTieuBan)}"><i class="fas fa-plus text-xs"></i>Thêm GK</button>` : '') +
+            `    </div>` +
+            `    <div class="flex flex-wrap gap-2">${gvChips}</div>` +
+            `  </div>` +
+            // Cột SP
+            `  <div>` +
+            `    <div class="flex items-center justify-between mb-3">` +
+            `      <p class="text-xs font-bold text-slate-600 uppercase tracking-wide mb-0"><i class="fas fa-file-alt mr-1.5 text-slate-400"></i>Bài báo cáo <span class="font-normal text-slate-400">(${sps.length})</span></p>` +
+            (canEditTB ? `      <button class="inline-flex items-center text-xs text-emerald-600 hover:text-emerald-800 font-bold gap-1" data-tb-action="them_sp" data-tb="${id}" data-tbname="${esc(tb.tenTieuBan)}"><i class="fas fa-plus text-xs"></i>Thêm bài</button>` : '') +
+            `    </div>` +
+            `    <div class="max-h-52 overflow-y-auto pr-0.5">${spRows}</div>` +
+            `  </div>` +
+            `</div>` +
+
+            // Card footer
+            `<div class="px-5 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center gap-4 text-xs text-slate-400">` +
+            `  <span><i class="fas fa-users mr-1"></i>${gvs.length} giám khảo</span>` +
+            `  <span><i class="fas fa-file-alt mr-1"></i>${sps.length} bài</span>` +
+            `  <span class="ml-auto">#${id}</span>` +
+            `</div>` +
+            `</div>`
         );
     }
 
-    // ── Handle card actions ──────────────────────────────────
+    // ── Handle actions ────────────────────────────────────────
     async function tbHandleAction(e) {
         const btn    = e.currentTarget;
         const action = btn.dataset.tbAction;
@@ -2627,101 +2731,168 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (action === 'edit') {
             const tb = _tieubanList.find(t => t.idTieuBan == tbId);
-            if (tb) tbShowEditModal(tb);
+            if (tb) await tbShowEditModal(tb);
+            return;
         }
         if (action === 'xoa') {
             const cf = await Swal.fire({
                 icon: 'warning', title: 'Xóa tiểu ban?',
-                html: 'Tiểu ban <strong>' + esc(btn.dataset.name) + '</strong> và toàn bộ GK, bài báo cáo sẽ bị xóa.',
-                showCancelButton: true, confirmButtonText: 'Xóa', cancelButtonText: 'Hủy', confirmButtonColor: '#ef4444',
+                html: `Tiểu ban <strong>${esc(btn.dataset.name)}</strong> và toàn bộ GK, bài báo cáo liên quan sẽ bị xóa.<br><small class="text-slate-400">Hành động không thể hoàn tác.</small>`,
+                showCancelButton: true, confirmButtonText: 'Xóa ngay', cancelButtonText: 'Hủy', confirmButtonColor: '#ef4444',
             });
             if (!cf.isConfirmed) return;
             const res = await tbApiPost({ action: 'xoa', id_tieu_ban: tbId });
-            if (res.status === 'success') {
-                Swal.fire({ icon: 'success', title: 'Đã xóa', text: res.message, timer: 1500, showConfirmButton: false });
-                await tbReload();
-            } else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
-        }
-        if (action === 'them_gv') await tbShowAddGvModal(tbId, btn.dataset.tbname);
-        if (action === 'xoa_gv') {
-            const res = await tbApiPost({ action: 'xoa_gv', id_tieu_ban: tbId, id_gv: parseInt(btn.dataset.gv) });
-            if (res.status === 'success') await tbReload();
+            if (res.status === 'success') { toast('success', 'Đã xóa tiểu ban'); await tbReload(); }
             else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+            return;
         }
-        if (action === 'them_sp') await tbShowAddSpModal(tbId, btn.dataset.tbname);
+        if (action === 'them_gv') { await tbShowAddGvModal(tbId, btn.dataset.tbname); return; }
+        if (action === 'xoa_gv') {
+            const cf = await Swal.fire({
+                icon: 'question', title: 'Rút giám khảo?',
+                text: `Rút "${btn.dataset.name}" khỏi hội đồng này?`,
+                showCancelButton: true, confirmButtonText: 'Rút', cancelButtonText: 'Hủy', confirmButtonColor: '#ef4444',
+            });
+            if (!cf.isConfirmed) return;
+            const res = await tbApiPost({ action: 'xoa_gv', id_tieu_ban: tbId, id_gv: parseInt(btn.dataset.gv) });
+            if (res.status === 'success') { toast('success', 'Đã rút giám khảo'); await tbReload(); }
+            else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+            return;
+        }
+        if (action === 'them_sp') { await tbShowAddSpModal(tbId, btn.dataset.tbname); return; }
         if (action === 'xoa_sp') {
+            const cf = await Swal.fire({
+                icon: 'question', title: 'Rút bài báo cáo?',
+                text: `Rút "${btn.dataset.name}" khỏi tiểu ban này?`,
+                showCancelButton: true, confirmButtonText: 'Rút bài', cancelButtonText: 'Hủy', confirmButtonColor: '#ef4444',
+            });
+            if (!cf.isConfirmed) return;
             const res = await tbApiPost({ action: 'xoa_sp', id_tieu_ban: tbId, id_san_pham: parseInt(btn.dataset.sp) });
-            if (res.status === 'success') await tbReload();
+            if (res.status === 'success') { toast('success', 'Đã rút bài'); await tbReload(); }
             else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
         }
     }
 
-    // ── Modal: Tạo ──────────────────────────────────────────
+    // ── Modal: Tạo tiểu ban ───────────────────────────────────
     async function tbShowCreateModal() {
-        const vtOpts  = _vtList.map(v  => '<option value="' + v.idVongThi + '">' + esc(v.tenVongThi) + '</option>').join('');
-        const btcOpts = _btcList.map(b => '<option value="' + b.idBoTieuChi + '">' + esc(b.tenBoTieuChi) + '</option>').join('');
+        const vtOpts  = _vtList.map(v  => `<option value="${v.idVongThi}">${esc(v.tenVongThi)}</option>`).join('');
+        const btcOpts = _btcList.map(b => `<option value="${b.idBoTieuChi}">${esc(b.tenBoTieuChi)}</option>`).join('');
+
+        // Giảng viên: checkbox list để chọn ngay khi tạo
+        const gvCheckboxes = _gvList.length
+            ? _gvList.map(g =>
+                `<label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-purple-50 cursor-pointer text-sm text-slate-700">` +
+                `<input type="checkbox" class="sw-gv-cb w-4 h-4 accent-purple-600 cursor-pointer" value="${g.idGV}">` +
+                `<span>${esc(g.tenGV)}</span></label>`
+            ).join('')
+            : '<p class="text-xs text-slate-400 italic px-2 py-2">Không có giảng viên nào trong sự kiện này.</p>';
 
         const { value } = await Swal.fire({
-            title: 'Khởi tạo Tiểu ban', width: 560,
+            title: '<i class="fas fa-sitemap text-purple-600 mr-2 text-base"></i><span class="text-base font-bold text-slate-700">Khởi tạo Tiểu ban</span>',
+            width: 640,
             html:
-                '<div class="text-left space-y-3">' +
-                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Tên tiểu ban <span class="text-rose-500">*</span></label>' +
-                '<input id="sw-ten" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300" placeholder="VD: Tiểu ban Công nghệ AI"></div>' +
-                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Thuộc vòng thi <span class="text-rose-500">*</span></label>' +
-                '<select id="sw-vt" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300"><option value="">-- Chọn vòng thi --</option>' + vtOpts + '</select></div>' +
-                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Bộ tiêu chí riêng <span class="text-slate-400 font-normal">(Tùy chọn)</span></label>' +
-                '<select id="sw-btc" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300"><option value="">-- Dùng chung tiêu chí của Vòng --</option>' + btcOpts + '</select></div>' +
+                '<div class="text-left space-y-4 mt-2">' +
+
+                // Tên tiểu ban
+                '<div>' +
+                '<label class="block text-xs font-bold text-slate-700 mb-1">Tên tiểu ban <span class="text-rose-500">*</span></label>' +
+                '<input id="sw-ten" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-200" placeholder="VD: Tiểu ban Công nghệ AI">' +
+                '</div>' +
+
+                // Vòng thi + Bộ tiêu chí
                 '<div class="grid grid-cols-2 gap-3">' +
-                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Ngày báo cáo</label>' +
-                '<input id="sw-ngay" type="date" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300"></div>' +
-                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Địa điểm / Phòng</label>' +
-                '<input id="sw-dia" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300" placeholder="VD: Phòng 404K"></div>' +
-                '</div></div>',
-            focusConfirm: false, showCancelButton: true, confirmButtonText: 'Khởi tạo', cancelButtonText: 'Hủy',
+                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Thuộc vòng thi <span class="text-rose-500">*</span></label>' +
+                `<select id="sw-vt" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-purple-400"><option value="">-- Chọn vòng thi --</option>${vtOpts}</select></div>` +
+                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Bộ tiêu chí <span class="text-slate-400 font-normal">(Tùy chọn)</span></label>' +
+                `<select id="sw-btc" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-purple-400"><option value="">-- Dùng chung theo Vòng --</option>${btcOpts}</select></div>` +
+                '</div>' +
+
+                // Ngày + Địa điểm
+                '<div class="grid grid-cols-2 gap-3">' +
+                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Ngày báo cáo</label>' +
+                '<input id="sw-ngay" type="date" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-purple-400"></div>' +
+                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Địa điểm / Phòng</label>' +
+                '<input id="sw-dia" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-purple-400" placeholder="VD: Phòng 404K"></div>' +
+                '</div>' +
+
+                // Phần chọn giảng viên
+                '<div>' +
+                '<label class="block text-xs font-bold text-slate-700 mb-1"><i class="fas fa-user-tie mr-1 text-purple-400"></i>Thêm Giảng viên vào Hội đồng <span class="text-slate-400 font-normal">(Tùy chọn)</span></label>' +
+                '<div id="sw-gv-list" class="max-h-36 overflow-y-auto border border-slate-200 rounded-lg p-1 bg-white">' +
+                gvCheckboxes +
+                '</div>' +
+                '<p class="text-xs text-slate-400 mt-1 italic">Có thể thêm thêm sau khi tạo xong.</p>' +
+                '</div>' +
+
+                // Mô tả
+                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Mô tả <span class="text-slate-400 font-normal">(Tùy chọn)</span></label>' +
+                '<textarea id="sw-mota" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-purple-400 resize-none" placeholder="Ghi chú..."></textarea></div>' +
+
+                '</div>',
+            focusConfirm: false, showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-plus mr-1"></i> Khởi tạo',
+            cancelButtonText: 'Hủy', confirmButtonColor: '#7c3aed',
             preConfirm: () => {
                 const ten = document.getElementById('sw-ten').value.trim();
                 const vt  = document.getElementById('sw-vt').value;
                 if (!ten) { Swal.showValidationMessage('Vui lòng nhập tên tiểu ban'); return false; }
                 if (!vt)  { Swal.showValidationMessage('Vui lòng chọn vòng thi'); return false; }
+                const selectedGvIds = Array.from(document.querySelectorAll('.sw-gv-cb:checked')).map(cb => parseInt(cb.value));
                 return {
                     ten_tieu_ban:   ten,
                     id_vong_thi:    parseInt(vt),
                     id_bo_tieu_chi: document.getElementById('sw-btc').value  || null,
                     ngay_bao_cao:   document.getElementById('sw-ngay').value || null,
-                    dia_diem:       document.getElementById('sw-dia').value.trim() || null,
+                    dia_diem:       document.getElementById('sw-dia').value.trim()  || null,
+                    mo_ta:          document.getElementById('sw-mota').value.trim() || null,
+                    _gv_ids:        selectedGvIds,
                 };
             },
         });
 
         if (!value) return;
-        const res = await tbApiPost(Object.assign({ action: 'tao', id_sk: idSk }, value));
+        const { _gv_ids, ...payload } = value;
+        const res = await tbApiPost(Object.assign({ action: 'tao', id_sk: idSk }, payload));
         if (res.status === 'success') {
-            Swal.fire({ icon: 'success', title: 'Đã tạo tiểu ban', text: res.message, timer: 1500, showConfirmButton: false });
+            // Nếu có chọn GV, thêm lần lượt vào tiểu ban vừa tạo
+            if (_gv_ids && _gv_ids.length && res.data && res.data.idTieuBan) {
+                const newId = res.data.idTieuBan;
+                await Promise.all(_gv_ids.map(gvId =>
+                    tbApiPost({ action: 'them_gv', id_tieu_ban: newId, id_gv: gvId, vai_tro: 'Thành viên' })
+                ));
+            }
+            toast('success', 'Đã tạo tiểu ban!');
             await tbReload();
         } else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
     }
 
-    // ── Modal: Sửa ──────────────────────────────────────────
+    // ── Modal: Sửa tiểu ban ───────────────────────────────────
     async function tbShowEditModal(tb) {
         const btcOpts = _btcList.map(b =>
-            '<option value="' + b.idBoTieuChi + '" ' + (tb.idBoTieuChi == b.idBoTieuChi ? 'selected' : '') + '>' + esc(b.tenBoTieuChi) + '</option>'
+            `<option value="${b.idBoTieuChi}" ${tb.idBoTieuChi == b.idBoTieuChi ? 'selected' : ''}>${esc(b.tenBoTieuChi)}</option>`
         ).join('');
 
         const { value } = await Swal.fire({
-            title: 'Sửa: ' + esc(tb.tenTieuBan), width: 520,
+            title: `<i class="fas fa-pencil-alt text-blue-500 mr-2 text-base"></i><span class="text-base">Sửa: ${esc(tb.tenTieuBan)}</span>`,
+            width: 560,
             html:
-                '<div class="text-left space-y-3">' +
-                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Tên tiểu ban <span class="text-rose-500">*</span></label>' +
-                '<input id="sw-eten" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300" value="' + esc(tb.tenTieuBan) + '"></div>' +
-                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Bộ tiêu chí riêng <span class="text-slate-400 font-normal">(Tùy chọn)</span></label>' +
-                '<select id="sw-ebtc" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300"><option value="">-- Dùng chung tiêu chí của Vòng --</option>' + btcOpts + '</select></div>' +
+                '<div class="text-left space-y-4 mt-2">' +
+                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Tên tiểu ban <span class="text-rose-500">*</span></label>' +
+                `<input id="sw-eten" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-blue-400" value="${esc(tb.tenTieuBan)}"></div>` +
+                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Bộ tiêu chí <span class="text-slate-400 font-normal">(Tùy chọn)</span></label>' +
+                `<select id="sw-ebtc" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-blue-400"><option value="">-- Dùng chung theo Vòng --</option>${btcOpts}</select>` +
+                `<p class="text-xs text-slate-400 mt-1">Hiện tại: <strong>${esc(tb.tenBoTieuChi || 'Dùng chung')}</strong></p></div>` +
                 '<div class="grid grid-cols-2 gap-3">' +
-                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Ngày báo cáo</label>' +
-                '<input id="sw-engay" type="date" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300" value="' + esc(tb.ngayBaoCao || '') + '"></div>' +
-                '<div><label class="block text-xs font-semibold text-slate-700 mb-1">Địa điểm / Phòng</label>' +
-                '<input id="sw-edia" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300" value="' + esc(tb.diaDiem || '') + '"></div>' +
-                '</div></div>',
-            focusConfirm: false, showCancelButton: true, confirmButtonText: 'Lưu thay đổi', cancelButtonText: 'Hủy',
+                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Ngày báo cáo</label>' +
+                `<input id="sw-engay" type="date" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-blue-400" value="${esc(tb.ngayBaoCao || '')}"></div>` +
+                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Địa điểm / Phòng</label>' +
+                `<input id="sw-edia" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-blue-400" value="${esc(tb.diaDiem || '')}"></div></div>` +
+                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Mô tả</label>' +
+                `<textarea id="sw-emota" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-blue-400 resize-none">${esc(tb.moTa || '')}</textarea></div>` +
+                '</div>',
+            focusConfirm: false, showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-save mr-1"></i> Lưu thay đổi',
+            cancelButtonText: 'Hủy', confirmButtonColor: '#2563eb',
             preConfirm: () => {
                 const ten = document.getElementById('sw-eten').value.trim();
                 if (!ten) { Swal.showValidationMessage('Tên tiểu ban không được để trống'); return false; }
@@ -2730,50 +2901,59 @@ document.addEventListener('DOMContentLoaded', function () {
                     id_bo_tieu_chi: document.getElementById('sw-ebtc').value  || null,
                     ngay_bao_cao:   document.getElementById('sw-engay').value || null,
                     dia_diem:       document.getElementById('sw-edia').value.trim()  || null,
+                    mo_ta:          document.getElementById('sw-emota').value.trim(),
                 };
             },
         });
 
         if (!value) return;
         const res = await tbApiPost(Object.assign({ action: 'cap_nhat', id_tieu_ban: tb.idTieuBan }, value));
-        if (res.status === 'success') {
-            Swal.fire({ icon: 'success', title: 'Đã cập nhật', text: res.message, timer: 1500, showConfirmButton: false });
-            await tbReload();
-        } else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+        if (res.status === 'success') { toast('success', 'Đã cập nhật tiểu ban'); await tbReload(); }
+        else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
     }
 
-    // ── Modal: Thêm GV ───────────────────────────────────────
+    // ── Modal: Thêm GK ────────────────────────────────────────
     async function tbShowAddGvModal(tbId, tbName) {
-        const tb       = _tieubanList.find(t => t.idTieuBan == tbId);
-        const taken    = (tb && tb.giang_vien || []).map(g => parseInt(g.idGV));
-        const avail    = _gvList.filter(g => !taken.includes(parseInt(g.idGV)));
+        const tb    = _tieubanList.find(t => t.idTieuBan == tbId);
+        const taken = ((tb && tb.giang_vien) || []).map(g => parseInt(g.idGV));
+        const avail = _gvList.filter(g => !taken.includes(parseInt(g.idGV)));
 
         if (!avail.length) {
-            Swal.fire({ icon: 'info', title: 'Không còn giảng viên', text: 'Tất cả giảng viên đã được phân công.' });
+            Swal.fire({ icon: 'info', title: 'Không còn giảng viên', text: 'Tất cả giảng viên đã được phân công vào tiểu ban này.' });
             return;
         }
 
-        const opts = avail.map(g => '<option value="' + g.idGV + '">' + esc(g.tenGV) + '</option>').join('');
+        const gvOpts = avail.map(g => `<option value="${g.idGV}">${esc(g.tenGV)}</option>`).join('');
+        const roleOpts = ['Thành viên', 'Trưởng tiểu ban', 'Thư ký']
+            .map(r => `<option value="${r}">${r}</option>`).join('');
 
         const { value } = await Swal.fire({
-            title: 'Thêm Giám khảo vào: ' + esc(tbName),
-            html: '<div class="text-left"><label class="block text-xs font-semibold text-slate-700 mb-1">Chọn giảng viên</label>' +
-                  '<select id="sw-gv" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300"><option value="">-- Chọn --</option>' + opts + '</select></div>',
-            showCancelButton: true, confirmButtonText: 'Thêm', cancelButtonText: 'Hủy',
+            title: `<i class="fas fa-user-plus text-blue-500 mr-2 text-base"></i><span class="text-base">Thêm GK vào: ${esc(tbName)}</span>`,
+            width: 480,
+            html:
+                '<div class="text-left space-y-3 mt-2">' +
+                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Chọn giảng viên <span class="text-rose-500">*</span></label>' +
+                `<select id="sw-gv" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-blue-400"><option value="">-- Chọn --</option>${gvOpts}</select></div>` +
+                '<div><label class="block text-xs font-bold text-slate-700 mb-1">Vai trò trong Hội đồng</label>' +
+                `<select id="sw-vaitro" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-blue-400">${roleOpts}</select></div>` +
+                '</div>',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-plus mr-1"></i> Thêm vào HĐ',
+            cancelButtonText: 'Hủy', confirmButtonColor: '#2563eb',
             preConfirm: () => {
                 const v = document.getElementById('sw-gv').value;
                 if (!v) { Swal.showValidationMessage('Vui lòng chọn giảng viên'); return false; }
-                return parseInt(v);
+                return { id_gv: parseInt(v), vai_tro: document.getElementById('sw-vaitro').value };
             },
         });
 
         if (!value) return;
-        const res = await tbApiPost({ action: 'them_gv', id_tieu_ban: tbId, id_gv: value });
-        if (res.status === 'success') await tbReload();
+        const res = await tbApiPost({ action: 'them_gv', id_tieu_ban: tbId, id_gv: value.id_gv, vai_tro: value.vai_tro });
+        if (res.status === 'success') { toast('success', 'Đã thêm vào hội đồng'); await tbReload(); }
         else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
     }
 
-    // ── Modal: Thêm SP ───────────────────────────────────────
+    // ── Modal: Thêm SP ────────────────────────────────────────
     async function tbShowAddSpModal(tbId, tbName) {
         const spRes = await tbApiGet({ action: 'sp_chua_xep', id_sk: idSk });
         const list  = spRes.data || [];
@@ -2783,35 +2963,44 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const opts = list.map(sp => '<option value="' + sp.idSanPham + '">' + esc(nhomLabel(sp)) + ' — ' + esc(sp.tenSanPham) + '</option>').join('');
+        const opts = list.map(sp =>
+            `<option value="${sp.idSanPham}">${esc(nhomLabel(sp))} — ${esc(sp.tenSanPham)}</option>`
+        ).join('');
 
         const { value } = await Swal.fire({
-            title: 'Thêm bài vào: ' + esc(tbName),
-            html: '<div class="text-left"><label class="block text-xs font-semibold text-slate-700 mb-1">Chọn bài báo cáo (đã duyệt)</label>' +
-                  '<select id="sw-sp" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300"><option value="">-- Chọn --</option>' + opts + '</select></div>',
-            showCancelButton: true, confirmButtonText: 'Xếp vào phòng', cancelButtonText: 'Hủy',
+            title: `<i class="fas fa-file-alt text-emerald-500 mr-2 text-base"></i><span class="text-base">Xếp bài vào: ${esc(tbName)}</span>`,
+            width: 540,
+            html:
+                '<div class="text-left mt-2">' +
+                '<label class="block text-xs font-bold text-slate-700 mb-1">Chọn bài báo cáo <span class="text-rose-500">*</span> <span class="text-slate-400 font-normal">(giữ Ctrl/⌘ để chọn nhiều)</span></label>' +
+                `<select id="sw-sp" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-400" size="6" multiple>${opts}</select>` +
+                '<p class="text-xs text-slate-400 mt-1.5 italic">Chỉ hiển thị bài đã duyệt chưa xếp phòng nào.</p>' +
+                '</div>',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-check mr-1"></i> Xếp vào phòng',
+            cancelButtonText: 'Hủy', confirmButtonColor: '#7c3aed',
             preConfirm: () => {
-                const v = document.getElementById('sw-sp').value;
-                if (!v) { Swal.showValidationMessage('Vui lòng chọn bài'); return false; }
-                return parseInt(v);
+                const sel = document.getElementById('sw-sp');
+                const ids = Array.from(sel.selectedOptions).map(o => parseInt(o.value));
+                if (!ids.length) { Swal.showValidationMessage('Vui lòng chọn ít nhất 1 bài'); return false; }
+                return ids;
             },
         });
 
         if (!value) return;
-        const res = await tbApiPost({ action: 'them_sp', id_tieu_ban: tbId, id_san_pham: value });
-        if (res.status === 'success') await tbReload();
-        else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+
+        if (value.length === 1) {
+            const res = await tbApiPost({ action: 'them_sp', id_tieu_ban: tbId, id_san_pham: value[0] });
+            if (res.status === 'success') { toast('success', 'Đã xếp bài vào phòng'); await tbReload(); }
+            else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+        } else {
+            const res = await tbApiPost({ action: 'them_nhieu_sp', id_tieu_ban: tbId, ids: value });
+            if (res.status === 'success') { toast('success', res.message || 'Đã xếp bài'); await tbReload(); }
+            else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+        }
     }
 
-    // ── Reload ───────────────────────────────────────────────
-    async function tbReload() {
-        const data = await tbLoadAll();
-        tbRenderList();
-        tbRenderStats(data);
-        tbRenderJudgesTable();
-    }
-
-    // ── Tab Judges: bảng phân công ───────────────────────────
+    // ── Judges table ──────────────────────────────────────────
     function tbRenderJudgesTable() {
         const w = document.getElementById('judgesTableWrapper');
         if (!w) return;
@@ -2820,68 +3009,97 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!_tieubanList.length) {
             w.innerHTML =
-                '<div class="p-10 text-center text-slate-400">' +
-                '<i class="fas fa-info-circle text-2xl mb-2 block"></i>' +
-                '<p class="text-sm">Chưa có tiểu ban nào. Hãy tạo tiểu ban ở tab <strong>Quản lý Tiểu ban</strong> trước.</p>' +
+                '<div class="p-10 text-center text-slate-400 bg-slate-50">' +
+                '<i class="fas fa-info-circle text-3xl mb-3 block text-slate-200"></i>' +
+                '<p class="text-sm font-medium text-slate-500">Chưa có tiểu ban nào</p>' +
+                '<p class="text-xs text-slate-400 mt-1">Hãy tạo tiểu ban ở tab <strong>Quản lý Tiểu ban</strong> trước.</p>' +
                 '</div>';
             return;
         }
 
+        const vaiTroStyle = {
+            'Trưởng tiểu ban': 'bg-emerald-50 border-emerald-200 text-emerald-700',
+            'Thư ký':          'bg-blue-50 border-blue-200 text-blue-700',
+            'Thành viên':      'bg-slate-50 border-slate-200 text-slate-600',
+        };
+
         const rows = _tieubanList.map(tb => {
             const gvs   = tb.giang_vien || [];
             const chips = gvs.length
-                ? gvs.map(g =>
-                    '<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs border rounded-full bg-slate-50 border-slate-200 text-slate-600">' +
-                    esc(g.tenGV) +
-                    (judgesCanEdit ? ' <button class="text-rose-400 hover:text-rose-600 font-bold leading-none" data-tb-j-action="xoa_gv" data-tb="' + tb.idTieuBan + '" data-gv="' + g.idGV + '">×</button>' : '') +
-                    '</span>').join('')
+                ? gvs.map(g => {
+                    const style = vaiTroStyle[g.vaiTro] || vaiTroStyle['Thành viên'];
+                    return (
+                        `<span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs border rounded-full font-medium ${style}">` +
+                        (g.vaiTro === 'Trưởng tiểu ban' ? '<i class="fas fa-star text-xs text-emerald-400"></i>' : '') +
+                        (g.vaiTro === 'Thư ký' ? '<i class="fas fa-pen text-xs text-blue-400"></i>' : '') +
+                        esc(g.tenGV) +
+                        (judgesCanEdit ? ` <button class="text-rose-400 hover:text-rose-600 font-bold leading-none" data-tb-j-action="xoa_gv" data-tb="${tb.idTieuBan}" data-gv="${g.idGV}" data-name="${esc(g.tenGV)}" title="Rút khỏi HĐ">×</button>` : '') +
+                        '</span>'
+                    );
+                }).join('')
                 : '<span class="text-slate-400 italic text-xs">Chưa có</span>';
 
             return (
                 '<tr class="hover:bg-slate-50 transition-colors">' +
-                '<td class="px-4 py-3 text-sm font-semibold text-slate-700 border-b border-slate-100">' + esc(tb.tenTieuBan) +
-                '<span class="block text-xs font-normal text-slate-400">' + esc(tb.tenVongThi || '—') + '</span></td>' +
-                '<td class="px-4 py-3 text-sm text-slate-500 border-b border-slate-100 text-center">' + fmtDateTB(tb.ngayBaoCao) + '</td>' +
-                '<td class="px-4 py-3 text-sm text-slate-500 border-b border-slate-100 text-center">' + esc(tb.diaDiem || '—') + '</td>' +
-                '<td class="px-4 py-3 border-b border-slate-100"><div class="flex flex-wrap gap-1.5">' + chips + '</div></td>' +
-                '<td class="px-4 py-3 text-center border-b border-slate-100">' +
+                `<td class="px-4 py-3 border-b border-slate-100">` +
+                `<p class="text-sm font-semibold text-slate-700 mb-0 leading-tight">${esc(tb.tenTieuBan)}</p>` +
+                `<span class="text-xs text-slate-400">${esc(tb.tenVongThi || '—')}</span></td>` +
+                `<td class="px-4 py-3 text-sm text-slate-500 border-b border-slate-100 text-center whitespace-nowrap">${fmtDateTB(tb.ngayBaoCao)}</td>` +
+                `<td class="px-4 py-3 text-sm text-slate-600 border-b border-slate-100 text-center font-medium">${esc(tb.diaDiem || '—')}</td>` +
+                `<td class="px-4 py-3 border-b border-slate-100"><div class="flex flex-wrap gap-1.5">${chips}</div></td>` +
+                '<td class="px-4 py-3 text-center border-b border-slate-100 whitespace-nowrap">' +
                 (judgesCanEdit
-                    ? '<button class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-tl from-blue-600 to-cyan-400 rounded-lg shadow-soft-sm hover:shadow-soft-lg transition-all" data-tb-j-action="them_gv" data-tb="' + tb.idTieuBan + '" data-tbname="' + esc(tb.tenTieuBan) + '"><i class="fas fa-user-plus mr-1"></i> Phân công</button>'
-                    : '—') +
+                    ? `<button class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-tl from-blue-600 to-cyan-400 rounded-lg shadow-soft-sm hover:shadow-soft-xl transition-all" data-tb-j-action="them_gv" data-tb="${tb.idTieuBan}" data-tbname="${esc(tb.tenTieuBan)}"><i class="fas fa-user-plus mr-1"></i>Phân công</button>`
+                    : '<span class="text-slate-400 text-xs">—</span>') +
                 '</td></tr>'
             );
         }).join('');
+
+        // Thống kê tóm tắt
+        const totalGv  = _tieubanList.reduce((s, tb) => s + (tb.giang_vien || []).length, 0);
+        const noGvCnt  = _tieubanList.filter(tb => !(tb.giang_vien || []).length).length;
+        const sumEl    = document.getElementById('judgesStatSummary');
+        const sumTxt   = document.getElementById('judgesStatText');
+        if (sumEl && sumTxt) {
+            sumTxt.textContent = `${_tieubanList.length} tiểu ban — ${totalGv} phân công giảng viên` +
+                (noGvCnt ? ` — ⚠ ${noGvCnt} tiểu ban chưa có giám khảo` : '');
+            sumEl.classList.remove('hidden');
+        }
 
         w.innerHTML =
             '<table class="min-w-full text-sm">' +
             '<thead class="bg-gradient-to-r from-slate-700 to-slate-600 text-white">' +
             '<tr>' +
             '<th class="px-4 py-3 text-left text-xs font-bold uppercase text-slate-200">Tiểu ban</th>' +
-            '<th class="px-4 py-3 text-center text-xs font-bold uppercase text-slate-200 w-32">Ngày BC</th>' +
-            '<th class="px-4 py-3 text-center text-xs font-bold uppercase text-slate-200 w-28">Phòng</th>' +
-            '<th class="px-4 py-3 text-left text-xs font-bold uppercase text-slate-200">Ban giám khảo</th>' +
+            '<th class="px-4 py-3 text-center text-xs font-bold uppercase text-slate-200 w-28">Ngày BC</th>' +
+            '<th class="px-4 py-3 text-center text-xs font-bold uppercase text-slate-200 w-24">Phòng</th>' +
+            '<th class="px-4 py-3 text-left text-xs font-bold uppercase text-slate-200">Hội đồng Giám khảo</th>' +
             '<th class="px-4 py-3 text-center text-xs font-bold uppercase text-slate-200 w-32">Thao tác</th>' +
             '</tr></thead>' +
-            '<tbody>' + rows + '</tbody>' +
-            '</table>';
+            '<tbody>' + rows + '</tbody></table>';
 
         w.querySelectorAll('[data-tb-j-action]').forEach(b => b.addEventListener('click', async (e) => {
             const btn    = e.currentTarget;
             const action = btn.dataset.tbJAction;
             const tbId   = parseInt(btn.dataset.tb || 0);
-            if (action === 'them_gv') await tbShowAddGvModal(tbId, btn.dataset.tbname);
+            if (action === 'them_gv') { await tbShowAddGvModal(tbId, btn.dataset.tbname); return; }
             if (action === 'xoa_gv') {
+                const cf = await Swal.fire({
+                    icon: 'question', title: 'Rút giám khảo?',
+                    text: `Rút "${btn.dataset.name}" khỏi hội đồng?`,
+                    showCancelButton: true, confirmButtonText: 'Rút', cancelButtonText: 'Hủy', confirmButtonColor: '#ef4444',
+                });
+                if (!cf.isConfirmed) return;
                 const res = await tbApiPost({ action: 'xoa_gv', id_tieu_ban: tbId, id_gv: parseInt(btn.dataset.gv) });
-                if (res.status === 'success') await tbReload();
+                if (res.status === 'success') { toast('success', 'Đã rút giám khảo'); await tbReload(); }
                 else Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
             }
         }));
     }
 
-    // ─────────────────────────────────────────────────────────
-    // PUBLIC
-    // ─────────────────────────────────────────────────────────
+    // ── PUBLIC ────────────────────────────────────────────────
     window.khoiTaoTabSubcommittees = async function () {
+        const currentTab = String(window.EVENT_DETAIL_TAB || 'overview');
         if (currentTab !== 'subcommittees') return;
         const el = document.getElementById('subcommitteeList');
         if (!el) return;
@@ -2890,17 +3108,41 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await tbLoadAll();
             tbRenderStats(data);
             tbRenderList();
+            _populateVongFilter();
 
-            const btn = document.getElementById('btnTaoTieuBanMoi');
-            if (btn && canEditTB) btn.addEventListener('click', tbShowCreateModal);
+            // Nút Tạo mới
+            const btnCreate = document.getElementById('btnTaoTieuBanMoi');
+            if (btnCreate && canEditTB) btnCreate.addEventListener('click', tbShowCreateModal);
+
+            // Nút Làm mới
+            const btnR = document.getElementById('btnRefreshTieuBan');
+            if (btnR) btnR.addEventListener('click', async () => {
+                btnR.disabled = true;
+                btnR.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i>Đang tải...';
+                try { await tbReload(); } finally {
+                    btnR.disabled = false;
+                    btnR.innerHTML = '<i class="fas fa-sync-alt mr-1.5"></i>Làm mới';
+                }
+            });
+
+            // Lọc tìm kiếm
+            const inp = document.getElementById('tbSearchInput');
+            if (inp) inp.addEventListener('input', () => { _filterText = inp.value.trim(); tbRenderList(); });
+
+            const sel = document.getElementById('tbFilterVong');
+            if (sel) sel.addEventListener('change', () => { _filterVong = sel.value; tbRenderList(); });
+
         } catch (err) {
             if (el) el.innerHTML =
-                '<div class="p-6 border border-rose-200 rounded-xl bg-rose-50 text-rose-700 text-sm">' +
-                '<i class="fas fa-exclamation-triangle mr-2"></i>' + esc(err.message || 'Không tải được dữ liệu tiểu ban') + '</div>';
+                `<div class="p-6 border border-rose-200 rounded-2xl bg-rose-50 text-rose-700 text-sm flex items-center gap-3">` +
+                `<i class="fas fa-exclamation-triangle text-xl flex-shrink-0"></i>` +
+                `<div><p class="font-bold mb-0">Không tải được dữ liệu tiểu ban</p>` +
+                `<p class="mb-0 text-xs text-rose-500">${esc(err.message || 'Lỗi không xác định')}</p></div></div>`;
         }
     };
 
     window.khoiTaoTabJudges = async function () {
+        const currentTab = String(window.EVENT_DETAIL_TAB || 'overview');
         if (currentTab !== 'judges') return;
         const w = document.getElementById('judgesTableWrapper');
         if (!w) return;
@@ -2911,13 +3153,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const btnR = document.getElementById('btnRefreshJudges');
             if (btnR) btnR.addEventListener('click', async () => {
-                await tbLoadAll();
-                tbRenderJudgesTable();
+                btnR.disabled = true;
+                btnR.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i>Đang tải...';
+                try { await tbLoadAll(); tbRenderJudgesTable(); } finally {
+                    btnR.disabled = false;
+                    btnR.innerHTML = '<i class="fas fa-sync-alt mr-1.5"></i>Làm mới';
+                }
             });
         } catch (err) {
             w.innerHTML =
-                '<div class="p-6 border border-rose-200 rounded-xl bg-rose-50 text-rose-700 text-sm">' +
-                '<i class="fas fa-exclamation-triangle mr-2"></i>' + esc(err.message || 'Không tải được dữ liệu phân công') + '</div>';
+                `<div class="p-6 border border-rose-200 rounded-2xl bg-rose-50 text-rose-700 text-sm flex items-center gap-3">` +
+                `<i class="fas fa-exclamation-triangle text-xl flex-shrink-0"></i>` +
+                `<div><p class="font-bold mb-0">Không tải được dữ liệu phân công</p>` +
+                `<p class="mb-0 text-xs text-rose-500">${esc(err.message || 'Lỗi không xác định')}</p></div></div>`;
         }
     };
 
