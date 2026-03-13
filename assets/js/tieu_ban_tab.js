@@ -129,7 +129,7 @@
                 const [jList, jGV, jBTC, jSP] = await Promise.all([
                     _get(`${API_TB}?action=danh_sach&id_sk=${idSk}`),
                     _get(`${API_TB}?action=ds_giang_vien&id_sk=${idSk}`),
-                    _get(`${API_TB}?action=ds_bo_tieu_chi`),
+                    _get(`${API_TB}?action=ds_bo_tieu_chi&id_sk=${idSk}`),
                     _get(`${API_TB}?action=sp_chua_xep&id_sk=${idSk}`),
                 ]);
 

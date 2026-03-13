@@ -213,9 +213,6 @@ ob_start();
 <?php elseif ($tab === 'subcommittees' || $tab === 'judges'): ?>
     <script src="<?php echo $basePath; ?>/assets/js/tieu_ban_tab.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/tieu_ban_tab.js'); ?>"></script>
 <?php endif; ?>
-<?php if ($tab === 'review-assign' || $tab === 'scoring-gv'): ?>
-    <script src="<?php echo $basePath; ?>/assets/js/phan_cong_phan_bien.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/phan_cong_phan_bien.js'); ?>"></script>
-<?php endif; ?>
 <?php if (in_array($tab, ['nhom-my', 'nhom-all', 'nhom-request'])): ?>
     <script src="<?php echo $basePath; ?>/assets/js/nhom_thi.js"></script>
 <?php endif; ?>
