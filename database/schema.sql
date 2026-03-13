@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.0
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Mar 10, 2026 at 05:19 PM
--- Server version: 8.4.3
--- PHP Version: 8.3.30
+-- Generation Time: Mar 13, 2026 at 07:15 AM
+-- Server version: 8.0.30
+-- PHP Version: 8.2.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -81,32 +81,32 @@ CREATE TABLE `botieuchi_tieuchi` (
 --
 
 INSERT INTO `botieuchi_tieuchi` (`idBoTieuChi`, `idTieuChi`, `tyTrong`, `diemToiDa`) VALUES
-(1, 1, 1.00, 10.00),
-(1, 2, 1.00, 10.00),
-(1, 3, 1.00, 10.00),
-(1, 4, 1.00, 10.00),
-(1, 5, 1.00, 10.00),
-(2, 1, 1.00, 9.00),
-(2, 2, 1.00, 10.00),
-(2, 3, 1.00, 8.00),
-(2, 4, 1.00, 10.00),
-(2, 5, 1.00, 10.00),
-(3, 1, 1.00, 9.00),
-(3, 2, 1.00, 10.00),
-(3, 3, 1.00, 8.00),
-(3, 4, 1.00, 10.00),
-(3, 5, 1.00, 10.00),
-(801, 801, 1.00, 2.50),
-(801, 802, 1.00, 2.50),
-(801, 803, 1.00, 3.00),
-(801, 804, 1.00, 2.00),
-(802, 801, 1.00, 2.00),
-(802, 803, 1.00, 3.00),
-(802, 804, 1.00, 2.00),
-(802, 805, 1.00, 3.00),
-(999, 991, 1.00, 10.00),
-(999, 992, 1.00, 10.00),
-(999, 993, 1.00, 10.00);
+(1, 1, '1.00', '10.00'),
+(1, 2, '1.00', '10.00'),
+(1, 3, '1.00', '10.00'),
+(1, 4, '1.00', '10.00'),
+(1, 5, '1.00', '10.00'),
+(2, 1, '1.00', '9.00'),
+(2, 2, '1.00', '10.00'),
+(2, 3, '1.00', '8.00'),
+(2, 4, '1.00', '10.00'),
+(2, 5, '1.00', '10.00'),
+(3, 1, '1.00', '9.00'),
+(3, 2, '1.00', '10.00'),
+(3, 3, '1.00', '8.00'),
+(3, 4, '1.00', '10.00'),
+(3, 5, '1.00', '10.00'),
+(801, 801, '1.00', '2.50'),
+(801, 802, '1.00', '2.50'),
+(801, 803, '1.00', '3.00'),
+(801, 804, '1.00', '2.00'),
+(802, 801, '1.00', '2.00'),
+(802, 803, '1.00', '3.00'),
+(802, 804, '1.00', '2.00'),
+(802, 805, '1.00', '3.00'),
+(999, 991, '1.00', '10.00'),
+(999, 992, '1.00', '10.00'),
+(999, 993, '1.00', '10.00');
 
 -- --------------------------------------------------------
 
@@ -188,62 +188,62 @@ CREATE TABLE `chamtieuchi` (
 --
 
 INSERT INTO `chamtieuchi` (`idChamDiem`, `idPhanCongCham`, `idSanPham`, `idTieuChi`, `diem`, `nhanXet`, `thoiGianCham`) VALUES
-(1, 1, 1, 1, 9.50, 'Tốt', '2026-02-21 14:41:11'),
-(2, 1, 1, 2, 9.00, 'Được', '2026-02-21 14:41:11'),
-(3, 1, 1, 3, 9.50, 'Rất tốt', '2026-02-21 14:41:11'),
-(4, 1, 1, 4, 9.00, 'Tốt', '2026-02-21 14:41:11'),
-(5, 1, 1, 5, 10.00, 'Xuất sắc', '2026-02-21 14:41:11'),
-(6, 2, 1, 1, 8.00, 'Khá', '2026-02-21 14:41:11'),
-(7, 2, 1, 2, 8.50, 'Khá', '2026-02-21 14:41:11'),
-(8, 2, 1, 3, 8.00, 'Ổn', '2026-02-21 14:41:11'),
-(9, 2, 1, 4, 8.50, 'Khá', '2026-02-21 14:41:11'),
-(10, 2, 1, 5, 8.00, 'Được', '2026-02-21 14:41:11'),
-(11, 3, 1, 1, 8.50, 'Khá', '2026-02-21 14:41:11'),
-(12, 3, 1, 2, 8.00, 'Khá', '2026-02-21 14:41:11'),
-(13, 3, 1, 3, 2.00, 'Phương pháp sai lệch', '2026-02-21 14:41:11'),
-(14, 3, 1, 4, 3.00, 'Cẩu thả', '2026-02-21 14:41:11'),
-(15, 3, 1, 5, 8.50, 'Khá', '2026-02-21 14:41:11'),
-(16, 1, 2, 1, 8.50, 'Tốt', '2026-02-21 14:41:11'),
-(17, 1, 2, 2, 8.50, 'Được', '2026-02-21 14:41:11'),
-(18, 1, 2, 3, 8.00, 'Ổn', '2026-02-21 14:41:11'),
-(19, 1, 2, 4, 9.00, 'Tốt', '2026-02-21 14:41:11'),
-(20, 1, 2, 5, 8.50, 'Tốt', '2026-02-21 14:41:11'),
-(21, 2, 2, 1, 8.00, 'Khá', '2026-02-21 14:41:11'),
-(22, 2, 2, 2, 8.00, 'Khá', '2026-02-21 14:41:11'),
-(23, 2, 2, 3, 8.50, 'Tốt', '2026-02-21 14:41:11'),
-(24, 2, 2, 4, 8.50, 'Khá', '2026-02-21 14:41:11'),
-(25, 2, 2, 5, 8.00, 'Được', '2026-02-21 14:41:11'),
-(31, 500, 500, 1, 9.00, 'Ý tưởng rất thực tế, có tính ứng dụng cao', '2026-02-23 15:34:08'),
-(32, 500, 500, 2, 8.50, 'Cần làm rõ thuật toán nhận diện', '2026-02-23 15:34:08'),
-(33, 500, 500, 3, 9.00, 'Demo chạy tốt, ít độ trễ', '2026-02-23 15:34:08'),
-(34, 500, 500, 4, 8.00, 'Báo cáo cần chỉn chu hơn', '2026-02-23 15:34:08'),
-(35, 500, 500, 5, 9.00, 'Sinh viên nhiệt tình', '2026-02-23 15:34:08'),
-(36, 501, 500, 1, 8.50, 'Khá tốt', '2026-02-23 15:34:08'),
-(37, 501, 500, 2, 8.00, 'Phương pháp ổn định', '2026-02-23 15:34:08'),
-(38, 501, 500, 3, 8.50, 'Tốt', '2026-02-23 15:34:08'),
-(39, 501, 500, 4, 8.00, 'Đạt yêu cầu', '2026-02-23 15:34:08'),
-(40, 501, 500, 5, 8.50, 'Tốt', '2026-02-23 15:34:08'),
-(41, 801, 801, 801, 2.00, 'Tính cấp thiết khá tốt, phù hợp nông nghiệp VN', '2026-02-27 13:33:56'),
-(42, 801, 801, 802, 2.50, 'Mô hình YOLOv8 áp dụng chuẩn', '2026-02-27 13:33:56'),
-(43, 801, 801, 803, 1.50, 'Cần thêm hình ảnh thực tế', '2026-02-27 13:33:56'),
-(44, 991, 991, 991, 9.50, 'Thuật toán tối ưu rất xuất sắc', '2026-03-09 14:59:06'),
-(45, 992, 991, 991, 9.00, 'Phương pháp chuẩn chỉ', '2026-03-09 14:59:06'),
-(46, 993, 991, 991, 3.00, 'Thuật toán sai hoàn toàn, copy code trên mạng', '2026-03-09 14:59:06'),
-(47, 991, 991, 992, 8.00, 'UI ổn', '2026-03-09 14:59:06'),
-(48, 992, 991, 992, 8.50, 'Khá đẹp', '2026-03-09 14:59:06'),
-(49, 993, 991, 992, 8.00, 'Tạm được', '2026-03-09 14:59:06'),
-(50, 991, 991, 993, 9.00, 'Thuyết trình tốt', '2026-03-09 14:59:06'),
-(51, 992, 991, 993, 9.00, 'Lưu loát', '2026-03-09 14:59:06'),
-(52, 993, 991, 993, 8.50, 'Trả lời phản biện khá', '2026-03-09 14:59:06'),
-(53, 991, 992, 991, 8.50, 'Tốt', '2026-03-09 14:59:06'),
-(54, 992, 992, 991, 8.00, 'Ổn', '2026-03-09 14:59:06'),
-(55, 993, 992, 991, 8.50, 'Đạt yêu cầu', '2026-03-09 14:59:06'),
-(56, 991, 992, 992, 7.50, '', '2026-03-09 14:59:06'),
-(57, 992, 992, 992, 8.00, '', '2026-03-09 14:59:06'),
-(58, 993, 992, 992, 7.00, '', '2026-03-09 14:59:06'),
-(59, 991, 992, 993, 9.50, 'Demo mượt mà, thuyết trình xuất sắc', '2026-03-09 14:59:06'),
-(60, 992, 992, 993, 2.00, 'Hệ thống lỗi runtime liên tục, không thể demo', '2026-03-09 14:59:06'),
-(61, 993, 992, 993, 9.00, 'Demo ấn tượng', '2026-03-09 14:59:06');
+(1, 1, 1, 1, '9.50', 'Tốt', '2026-02-21 14:41:11'),
+(2, 1, 1, 2, '9.00', 'Được', '2026-02-21 14:41:11'),
+(3, 1, 1, 3, '9.50', 'Rất tốt', '2026-02-21 14:41:11'),
+(4, 1, 1, 4, '9.00', 'Tốt', '2026-02-21 14:41:11'),
+(5, 1, 1, 5, '10.00', 'Xuất sắc', '2026-02-21 14:41:11'),
+(6, 2, 1, 1, '8.00', 'Khá', '2026-02-21 14:41:11'),
+(7, 2, 1, 2, '8.50', 'Khá', '2026-02-21 14:41:11'),
+(8, 2, 1, 3, '8.00', 'Ổn', '2026-02-21 14:41:11'),
+(9, 2, 1, 4, '8.50', 'Khá', '2026-02-21 14:41:11'),
+(10, 2, 1, 5, '8.00', 'Được', '2026-02-21 14:41:11'),
+(11, 3, 1, 1, '8.50', 'Khá', '2026-02-21 14:41:11'),
+(12, 3, 1, 2, '8.00', 'Khá', '2026-02-21 14:41:11'),
+(13, 3, 1, 3, '2.00', 'Phương pháp sai lệch', '2026-02-21 14:41:11'),
+(14, 3, 1, 4, '3.00', 'Cẩu thả', '2026-02-21 14:41:11'),
+(15, 3, 1, 5, '8.50', 'Khá', '2026-02-21 14:41:11'),
+(16, 1, 2, 1, '8.50', 'Tốt', '2026-02-21 14:41:11'),
+(17, 1, 2, 2, '8.50', 'Được', '2026-02-21 14:41:11'),
+(18, 1, 2, 3, '8.00', 'Ổn', '2026-02-21 14:41:11'),
+(19, 1, 2, 4, '9.00', 'Tốt', '2026-02-21 14:41:11'),
+(20, 1, 2, 5, '8.50', 'Tốt', '2026-02-21 14:41:11'),
+(21, 2, 2, 1, '8.00', 'Khá', '2026-02-21 14:41:11'),
+(22, 2, 2, 2, '8.00', 'Khá', '2026-02-21 14:41:11'),
+(23, 2, 2, 3, '8.50', 'Tốt', '2026-02-21 14:41:11'),
+(24, 2, 2, 4, '8.50', 'Khá', '2026-02-21 14:41:11'),
+(25, 2, 2, 5, '8.00', 'Được', '2026-02-21 14:41:11'),
+(31, 500, 500, 1, '9.00', 'Ý tưởng rất thực tế, có tính ứng dụng cao', '2026-02-23 15:34:08'),
+(32, 500, 500, 2, '8.50', 'Cần làm rõ thuật toán nhận diện', '2026-02-23 15:34:08'),
+(33, 500, 500, 3, '9.00', 'Demo chạy tốt, ít độ trễ', '2026-02-23 15:34:08'),
+(34, 500, 500, 4, '8.00', 'Báo cáo cần chỉn chu hơn', '2026-02-23 15:34:08'),
+(35, 500, 500, 5, '9.00', 'Sinh viên nhiệt tình', '2026-02-23 15:34:08'),
+(36, 501, 500, 1, '8.50', 'Khá tốt', '2026-02-23 15:34:08'),
+(37, 501, 500, 2, '8.00', 'Phương pháp ổn định', '2026-02-23 15:34:08'),
+(38, 501, 500, 3, '8.50', 'Tốt', '2026-02-23 15:34:08'),
+(39, 501, 500, 4, '8.00', 'Đạt yêu cầu', '2026-02-23 15:34:08'),
+(40, 501, 500, 5, '8.50', 'Tốt', '2026-02-23 15:34:08'),
+(41, 801, 801, 801, '2.00', 'Tính cấp thiết khá tốt, phù hợp nông nghiệp VN', '2026-02-27 13:33:56'),
+(42, 801, 801, 802, '2.50', 'Mô hình YOLOv8 áp dụng chuẩn', '2026-02-27 13:33:56'),
+(43, 801, 801, 803, '1.50', 'Cần thêm hình ảnh thực tế', '2026-02-27 13:33:56'),
+(44, 991, 991, 991, '9.50', 'Thuật toán tối ưu rất xuất sắc', '2026-03-09 14:59:06'),
+(45, 992, 991, 991, '9.00', 'Phương pháp chuẩn chỉ', '2026-03-09 14:59:06'),
+(46, 993, 991, 991, '3.00', 'Thuật toán sai hoàn toàn, copy code trên mạng', '2026-03-09 14:59:06'),
+(47, 991, 991, 992, '8.00', 'UI ổn', '2026-03-09 14:59:06'),
+(48, 992, 991, 992, '8.50', 'Khá đẹp', '2026-03-09 14:59:06'),
+(49, 993, 991, 992, '8.00', 'Tạm được', '2026-03-09 14:59:06'),
+(50, 991, 991, 993, '9.00', 'Thuyết trình tốt', '2026-03-09 14:59:06'),
+(51, 992, 991, 993, '9.00', 'Lưu loát', '2026-03-09 14:59:06'),
+(52, 993, 991, 993, '8.50', 'Trả lời phản biện khá', '2026-03-09 14:59:06'),
+(53, 991, 992, 991, '8.50', 'Tốt', '2026-03-09 14:59:06'),
+(54, 992, 992, 991, '8.00', 'Ổn', '2026-03-09 14:59:06'),
+(55, 993, 992, 991, '8.50', 'Đạt yêu cầu', '2026-03-09 14:59:06'),
+(56, 991, 992, 992, '7.50', '', '2026-03-09 14:59:06'),
+(57, 992, 992, 992, '8.00', '', '2026-03-09 14:59:06'),
+(58, 993, 992, 992, '7.00', '', '2026-03-09 14:59:06'),
+(59, 991, 992, 993, '9.50', 'Demo mượt mà, thuyết trình xuất sắc', '2026-03-09 14:59:06'),
+(60, 992, 992, 993, '2.00', 'Hệ thống lỗi runtime liên tục, không thể demo', '2026-03-09 14:59:06'),
+(61, 993, 992, 993, '9.00', 'Demo ấn tượng', '2026-03-09 14:59:06');
 
 -- --------------------------------------------------------
 
@@ -323,7 +323,7 @@ CREATE TABLE `diemdanh` (
   `thoiGianDiemDanh` datetime DEFAULT CURRENT_TIMESTAMP,
   `hienDien` tinyint DEFAULT '1',
   `ghiChu` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `idLichTrinh` int DEFAULT NULL COMMENT 'Liên kết buổi điểm danh',
+  `idPhienDD` int DEFAULT NULL COMMENT 'Liên kết phiên điểm danh cụ thể',
   `phuongThuc` enum('QR','GPS','THU_CONG','NFC') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'QR' COMMENT 'Cách điểm danh được thực hiện',
   `viTriLat` decimal(10,7) DEFAULT NULL COMMENT 'Vị trí SV lúc điểm danh',
   `viTriLng` decimal(10,7) DEFAULT NULL,
@@ -403,8 +403,8 @@ CREATE TABLE `form_field` (
   `idField` int NOT NULL,
   `idSK` int NOT NULL COMMENT 'Luôn có — field thuộc về sự kiện nào. Dùng để copy form và cascade delete',
   `idVongThi` int DEFAULT NULL COMMENT 'NULL = field mặc định của sự kiện (dùng khi tạo sản phẩm lần đầu)\n             Có giá trị = field riêng của vòng thi đó\n             Logic resolve khi nhóm nộp ở Vòng X:\n               Vòng X có field? → dùng form Vòng X\n               Không → không cần nộp gì, thông báo vòng này không yêu cầu tài liệu',
-  `tenTruong` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên hiển thị, vd: "Link Github", "File báo cáo PDF"',
-  `kieuTruong` enum('TEXT','TEXTAREA','URL','FILE','SELECT','CHECKBOX') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tenTruong` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên hiển thị, vd: "Link Github", "File báo cáo PDF"',
+  `kieuTruong` enum('TEXT','TEXTAREA','URL','FILE','SELECT','CHECKBOX') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `batBuoc` tinyint NOT NULL DEFAULT '1',
   `thuTu` int NOT NULL DEFAULT '0' COMMENT 'Thứ tự hiển thị trong form',
   `cauHinhJson` json DEFAULT NULL COMMENT 'Cấu hình riêng theo kieuTruong:\n             FILE:     {"accept":"pdf,docx","maxSizeKB":5120}\n             SELECT:   {"options":["Lựa chọn A","Lựa chọn B"]}\n             TEXT:     {"maxLength":200,"placeholder":"Nhập tên đề tài..."}\n             TEXTAREA: {"maxLength":1000,"rows":5}\n             URL:      {"placeholder":"https://github.com/..."}\n             CHECKBOX: {"label":"Tôi xác nhận đã đọc quy định"}',
@@ -588,7 +588,7 @@ CREATE TABLE `nhom` (
   `idSK` int NOT NULL,
   `idChuNhom` int NOT NULL COMMENT 'Chủ nhóm: GV hoặc SV. Có quyền quản lý hành chính nhóm\n             (mời, kick, duyệt yêu cầu, chọn/đổi trưởng nhóm)',
   `idTruongNhom` int DEFAULT NULL COMMENT 'Trưởng nhóm: bắt buộc là SV. NULL khi GV là chủ nhóm\n             và chưa chỉ định. Người duy nhất được nộp sản phẩm.',
-  `maNhom` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Mã nhóm unique trong sự kiện',
+  `maNhom` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Mã nhóm unique trong sự kiện',
   `ngayTao` datetime DEFAULT CURRENT_TIMESTAMP,
   `isActive` tinyint NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Nhóm tham gia sự kiện.\n           Quy tắc:\n           - SV tạo nhóm → idChuNhom = idTruongNhom = SV đó\n           - GV tạo nhóm → idChuNhom = GV, idTruongNhom = NULL\n           - Chỉ Chủ nhóm mới được thay đổi Trưởng nhóm\n           - Chủ nhóm không được rời nếu chưa nhượng quyền\n           - Trưởng nhóm không thể tự bỏ role';
@@ -692,7 +692,7 @@ CREATE TABLE `phancong_doclap` (
   `idGV` int NOT NULL,
   `idVongThi` int NOT NULL,
   `isTrongTai` tinyint NOT NULL DEFAULT '0' COMMENT '0 = Giám khảo chính thức (phan_cong_giam_khao), 1 = Trọng tài phúc khảo (moi_trong_tai)',
-  `trangThaiCham` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Chờ chấm' COMMENT 'Chờ chấm / Đang chấm / Đã xác nhận',
+  `trangThaiCham` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Chờ chấm' COMMENT 'Chờ chấm / Đang chấm / Đã xác nhận',
   `ngayNop` datetime DEFAULT NULL COMMENT 'Thời điểm nộp phiếu chấm cho SP này'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -745,7 +745,7 @@ CREATE TABLE `quyche` (
   `idQuyChe` int NOT NULL,
   `tenQuyChe` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `moTa` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `loaiQuyChe` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'THAMGIA',
+  `loaiQuyChe` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'TUY_CHINH',
   `idSK` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -758,6 +758,38 @@ INSERT INTO `quyche` (`idQuyChe`, `tenQuyChe`, `moTa`, `loaiQuyChe`, `idSK`) VAL
 (4, 'quy che tham gia', 'Ap dung cho sinh vien', 'THAMGIA', 11),
 (5, 'quy chế qua vòng', '', 'VONGTHI', 11),
 (6, 'điều kiện', '', 'THAMGIA', 500);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quyche_danhmuc_ngucanh`
+--
+
+CREATE TABLE `quyche_danhmuc_ngucanh` (
+  `maNguCanh` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tenNguCanh` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `moTa` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `isHeThong` tinyint(1) NOT NULL DEFAULT '1',
+  `ngayTao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `quyche_danhmuc_ngucanh`
+--
+
+INSERT INTO `quyche_danhmuc_ngucanh` (`maNguCanh`, `tenNguCanh`, `moTa`, `isHeThong`, `ngayTao`) VALUES
+('DANG_KY_THAM_GIA_GV', 'Dang ky tham gia (Giang vien)', 'Ap dung khi giang vien dang ky vao su kien', 1, '2026-03-13 12:09:07'),
+('DANG_KY_THAM_GIA_SV', 'Dang ky tham gia (Sinh vien)', 'Ap dung khi sinh vien dang ky vao su kien', 1, '2026-03-13 12:09:07'),
+('DUYET_VONG_THI', 'Duyet ket qua vong thi', 'Ap dung khi BTC duyet diem va chot trang thai san pham trong vong thi', 1, '2026-03-13 12:09:07'),
+('DUYET_VONG_THI_HANG_LOAT', 'Duyet ket qua vong thi hang loat', 'Ap dung khi BTC duyet nhieu san pham cung luc', 1, '2026-03-13 12:09:07'),
+('DUYET_YEU_CAU_NHOM', 'Duyet yeu cau nhom', 'Ap dung khi chu nhom duyet yeu cau tham gia', 1, '2026-03-13 12:33:30'),
+('GUI_YEU_CAU_NHOM', 'Gui yeu cau nhom', 'Ap dung khi gui loi moi hoac yeu cau vao nhom', 1, '2026-03-13 12:33:30'),
+('NOP_SAN_PHAM', 'Nop san pham', 'Ap dung khi nhom tao/cap nhat san pham', 1, '2026-03-13 12:33:30'),
+('NOP_TAI_LIEU_VONG_THI', 'Nop tai lieu vong thi', 'Ap dung khi nhom nop tai lieu theo form vong thi', 1, '2026-03-13 12:33:30'),
+('TAO_NHOM', 'Tao nhom', 'Ap dung khi tao nhom moi trong su kien', 1, '2026-03-13 12:33:30'),
+('THAMGIA', 'Legacy: THAMGIA', 'Ngu canh sinh ra tu loaiQuyChe cu, can review de chuan hoa', 0, '2026-03-13 12:09:08'),
+('VONGTHI', 'Legacy: VONGTHI', 'Ngu canh sinh ra tu loaiQuyChe cu, can review de chuan hoa', 0, '2026-03-13 12:09:08'),
+('XET_GIAI_THUONG', 'Xet giai thuong', 'Ap dung khi tong hop va xet giai', 1, '2026-03-13 12:09:07');
 
 -- --------------------------------------------------------
 
@@ -779,6 +811,28 @@ INSERT INTO `quyche_dieukien` (`idQuyChe`, `idDieuKienCuoi`) VALUES
 (4, 8),
 (5, 13),
 (6, 16);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quyche_ngucanh_apdung`
+--
+
+CREATE TABLE `quyche_ngucanh_apdung` (
+  `idQuyChe` int NOT NULL,
+  `maNguCanh` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ngayGan` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `quyche_ngucanh_apdung`
+--
+
+INSERT INTO `quyche_ngucanh_apdung` (`idQuyChe`, `maNguCanh`, `ngayGan`) VALUES
+(1, 'THAMGIA', '2026-03-13 12:09:08'),
+(4, 'THAMGIA', '2026-03-13 12:09:08'),
+(5, 'VONGTHI', '2026-03-13 12:09:08'),
+(6, 'THAMGIA', '2026-03-13 12:09:08');
 
 -- --------------------------------------------------------
 
@@ -826,8 +880,8 @@ CREATE TABLE `sanpham` (
   `idNhom` int NOT NULL,
   `idSK` int NOT NULL,
   `idChuDeSK` int DEFAULT NULL COMMENT 'Chủ đề đề tài — hardcode vì ảnh hưởng phân công tiểu ban chấm',
-  `tenSanPham` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên đề tài — hardcode vì dùng ở mọi nơi: chấm điểm, kết quả, chứng nhận',
-  `trangThai` enum('CHO_DUYET','DA_DUYET','BI_LOAI') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'CHO_DUYET',
+  `tenSanPham` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên đề tài — hardcode vì dùng ở mọi nơi: chấm điểm, kết quả, chứng nhận',
+  `trangThai` enum('CHO_DUYET','DA_DUYET','BI_LOAI') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'CHO_DUYET',
   `ngayTao` datetime DEFAULT CURRENT_TIMESTAMP,
   `ngayCapNhat` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sản phẩm của nhóm. 1 bản ghi per nhóm per sự kiện.\n           Nội dung chi tiết (file, link...) lưu ở sanpham_field_value.\n           Chỉ Trưởng nhóm được tạo/cập nhật.\n           Chỉ được sửa khi vongthi.thoiGianDongNop chưa qua.';
@@ -859,8 +913,8 @@ CREATE TABLE `sanpham_field_value` (
   `idSanPham` int NOT NULL,
   `idVongThi` int DEFAULT NULL COMMENT 'NULL = nộp theo form SK mặc định (khi tạo sản phẩm lần đầu)\n             Có giá trị = nộp theo form vòng thi cụ thể',
   `idField` int NOT NULL,
-  `giaTriText` text COLLATE utf8mb4_unicode_ci COMMENT 'Dùng cho kieuTruong: TEXT, TEXTAREA, URL, SELECT, CHECKBOX',
-  `duongDanFile` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Dùng cho kieuTruong: FILE. Lưu path tương đối.\n             Pattern: /uploads/sanpham/{idSK}/{idNhom}/{idVongThi}/{tenFile}',
+  `giaTriText` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Dùng cho kieuTruong: TEXT, TEXTAREA, URL, SELECT, CHECKBOX',
+  `duongDanFile` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Dùng cho kieuTruong: FILE. Lưu path tương đối.\n             Pattern: /uploads/sanpham/{idSK}/{idNhom}/{idVongThi}/{tenFile}',
   `ngayNop` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm nộp/cập nhật lần cuối'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Giá trị các field nhóm đã điền khi nộp tài liệu.\n           PRIMARY KEY (idSanPham, idField): mỗi field chỉ có 1 giá trị\n           → nộp lại = UPDATE, không INSERT thêm.\n           Check deadline: vongthi.thoiGianDongNop > NOW() mới cho phép UPDATE.\n           Mỗi vòng có idField riêng trong form_field nên không bị trùng PK.';
 
@@ -875,7 +929,7 @@ CREATE TABLE `sanpham_vongthi` (
   `idVongThi` int NOT NULL,
   `diemTrungBinh` decimal(7,2) DEFAULT NULL COMMENT 'Điểm trung bình chốt của vòng thi (2 chữ số thập phân)',
   `xepLoai` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Đạt/Không đạt/Xuất sắc',
-  `trangThai` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Chờ chấm/Đã chấm/Bị loại',
+  `trangThai` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'State machine: NULL(chờ xét lại) / Đã nộp / Đã phân công / Đang xét / Đã duyệt / Bị loại / Đã phúc khảo',
   `ngayCapNhat` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -884,13 +938,13 @@ CREATE TABLE `sanpham_vongthi` (
 --
 
 INSERT INTO `sanpham_vongthi` (`idSanPham`, `idVongThi`, `diemTrungBinh`, `xepLoai`, `trangThai`, `ngayCapNhat`) VALUES
-(2, 1, 42.00, NULL, 'Đã duyệt', '2026-02-21 14:51:53'),
-(500, 500, 42.50, NULL, NULL, '2026-03-10 16:55:35'),
+(2, 1, '42.00', NULL, 'Đã duyệt', '2026-02-21 14:51:53'),
+(500, 500, '42.50', NULL, NULL, '2026-03-10 16:55:35'),
 (501, 500, NULL, NULL, 'Đã nộp', '2026-02-23 15:34:08'),
 (801, 801, NULL, NULL, 'Đã phân công', '2026-02-27 13:33:56'),
 (802, 801, NULL, NULL, 'Đã phân công', '2026-02-27 13:33:56'),
-(991, 999, 26.50, NULL, NULL, '2026-03-10 16:27:13'),
-(992, 999, 22.67, NULL, NULL, '2026-03-10 16:27:16');
+(991, 999, '26.50', NULL, NULL, '2026-03-10 16:27:13'),
+(992, 999, '22.67', NULL, NULL, '2026-03-10 16:27:16');
 
 -- --------------------------------------------------------
 
@@ -914,13 +968,13 @@ CREATE TABLE `sinhvien` (
 --
 
 INSERT INTO `sinhvien` (`idSV`, `idTK`, `tenSV`, `MSV`, `GPA`, `DRL`, `idLop`, `idKhoa`) VALUES
-(1, 4, 'Nguyễn Thanh Tùng', 'SV001', 3.60, 90, 1, 1),
-(2, 5, 'Lê Thị Mai', 'SV002', 3.20, 85, 1, 1),
-(3, 6, 'Hoàng Văn Nam', 'SV003', 2.80, 70, 2, 1),
-(4, 8, 'Trần Văn Sơn', 'Hello', 4.00, 100, 1, 1),
-(5, 13, 'Họ Tên', 'SV007', 0.00, 0, 3, 2),
-(901, 904, 'Sinh viên Lệch 1', 'SV_LECH01', 0.00, 0, 1, 1),
-(902, 905, 'Sinh viên Lệch 2', 'SV_LECH02', 0.00, 0, 1, 1);
+(1, 4, 'Nguyễn Thanh Tùng', 'SV001', '3.60', 90, 1, 1),
+(2, 5, 'Lê Thị Mai', 'SV002', '3.20', 85, 1, 1),
+(3, 6, 'Hoàng Văn Nam', 'SV003', '2.80', 70, 2, 1),
+(4, 8, 'Trần Văn Sơn', 'Hello', '4.00', 100, 1, 1),
+(5, 13, 'Họ Tên', 'SV007', '0.00', 0, 3, 2),
+(901, 904, 'Sinh viên Lệch 1', 'SV_LECH01', '0.00', 0, 1, 1),
+(902, 905, 'Sinh viên Lệch 2', 'SV_LECH02', '0.00', 0, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -958,7 +1012,8 @@ INSERT INTO `sukien` (`idSK`, `tenSK`, `moTa`, `idCap`, `nguoiTao`, `ngayMoDangK
 (500, 'Hackathon Sinh viên Công nghệ 2026', 'Sự kiện demo full dữ liệu: Nhóm, Bài nộp, Chấm điểm', 1, 2, '2026-02-01 00:00:00', '2026-02-20 00:00:00', '2026-02-25 00:00:00', '2026-03-30 00:00:00', 1, NULL, 1, 5, NULL, 0, 1, 0),
 (501, 'gv Minh tạo', '', 1, 7, '2026-02-23 16:05:00', '2026-03-08 16:05:00', '2026-02-23 16:05:00', '2026-03-08 16:05:00', 0, NULL, 1, 5, NULL, 0, 1, 0),
 (800, 'Hội nghị NCKH Sinh viên Khoa CNTT 2026', 'Sự kiện NCKH trọng điểm nhằm tìm kiếm các giải pháp Công nghệ AI, IoT và Phần mềm ứng dụng xuất sắc nhất.', 1, 1, '2026-01-01 00:00:00', '2026-03-01 00:00:00', '2026-03-10 00:00:00', '2026-05-30 00:00:00', 1, NULL, 1, 5, NULL, 0, 1, 0),
-(999, 'Sự kiện Test Độ Lệch Điểm 2026', 'Môi trường test cảnh báo độ lệch', 1, 1, '2026-03-09 14:58:02', '2026-03-09 14:58:02', NULL, NULL, 1, NULL, 1, 5, NULL, 0, 1, 0);
+(999, 'Sự kiện Test Độ Lệch Điểm 2026', 'Môi trường test cảnh báo độ lệch', 1, 1, '2026-03-09 14:58:02', '2026-03-09 14:58:02', NULL, NULL, 1, NULL, 1, 5, NULL, 0, 1, 0),
+(1000, 'Sự kiện test', '', 1, 2, '2026-03-13 10:31:33', '2026-03-13 10:31:33', '2026-03-13 10:31:00', '2026-03-20 10:31:00', 1, NULL, 1, 5, NULL, 0, 1, 0);
 
 -- --------------------------------------------------------
 
@@ -1040,7 +1095,7 @@ CREATE TABLE `taikhoan_vaitro_sukien` (
   `idTK` int NOT NULL,
   `idSK` int NOT NULL,
   `idVaiTro` int NOT NULL,
-  `nguonTao` enum('BTC_THEM','PHANCONG_CHAM','QUA_NHOM','DANG_KY') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'BTC_THEM: BTC thêm | PHANCONG_CHAM: qua phân công chấm | QUA_NHOM: GV vào nhóm | DANG_KY: SV tự đăng ký',
+  `nguonTao` enum('BTC_THEM','PHANCONG_CHAM','QUA_NHOM','DANG_KY','PHAN_CONG_PHAN_BIEN') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'BTC_THEM: BTC thêm | PHANCONG_CHAM: qua phân công chấm | QUA_NHOM: GV vào nhóm | DANG_KY: SV tự đăng ký',
   `idNguoiCap` int DEFAULT NULL COMMENT 'idTK người thực hiện, NULL nếu tự động',
   `ngayCap` datetime DEFAULT CURRENT_TIMESTAMP,
   `isActive` tinyint DEFAULT '1'
@@ -1075,7 +1130,8 @@ INSERT INTO `taikhoan_vaitro_sukien` (`id`, `idTK`, `idSK`, `idVaiTro`, `nguonTa
 (26, 3, 11, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1),
 (27, 9, 500, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1),
 (28, 7, 800, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1),
-(29, 3, 999, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1);
+(29, 3, 999, 2, 'PHANCONG_CHAM', NULL, '2026-03-11 00:18:50', 1),
+(33, 2, 1000, 1, 'BTC_THEM', 2, '2026-03-13 10:31:33', 1);
 
 -- --------------------------------------------------------
 
@@ -1131,6 +1187,13 @@ CREATE TABLE `thongbao` (
   `nguoiGui` int NOT NULL COMMENT 'Luôn có giá trị — mọi TB đều do người kích hoạt',
   `ngayGui` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng trung tâm thông báo. phamVi quyết định bảng phụ nào được dùng.';
+
+--
+-- Dumping data for table `thongbao`
+--
+
+INSERT INTO `thongbao` (`idThongBao`, `tieuDe`, `noiDung`, `loaiThongBao`, `phamVi`, `idSK`, `idDoiTuong`, `loaiDoiTuong`, `nguoiGui`, `ngayGui`) VALUES
+(1, 'Sự kiện mới: Sự kiện test', 'Sự kiện \"Sự kiện test\" vừa được công bố. Hãy xem chi tiết và đăng ký tham gia!', 'SU_KIEN', 'TAT_CA', 1000, NULL, NULL, 2, '2026-03-13 10:31:33');
 
 -- --------------------------------------------------------
 
@@ -1211,7 +1274,7 @@ CREATE TABLE `thuoctinh_kiemtra` (
   `tenThuocTinh` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `tenTruongDL` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `bangDuLieu` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `loaiApDung` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'THAMGIA'
+  `loaiApDung` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'THAMGIA_SV'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -1219,17 +1282,14 @@ CREATE TABLE `thuoctinh_kiemtra` (
 --
 
 INSERT INTO `thuoctinh_kiemtra` (`idThuocTinhKiemTra`, `tenThuocTinh`, `tenTruongDL`, `bangDuLieu`, `loaiApDung`) VALUES
-(1, 'Điểm trung bình (GPA)', 'GPA', 'sinhvien', 'THAMGIA'),
-(2, 'Điểm rèn luyện', 'DRL', 'sinhvien', 'THAMGIA'),
+(1, 'Điểm trung bình (GPA)', 'GPA', 'sinhvien', 'THAMGIA_SV'),
+(2, 'Điểm rèn luyện', 'DRL', 'sinhvien', 'THAMGIA_SV'),
 (3, 'Điểm trung bình vòng thi', 'diemTrungBinh', 'sanpham_vongthi', 'VONGTHI'),
 (4, 'Xếp loại vòng thi', 'xepLoai', 'sanpham_vongthi', 'VONGTHI'),
 (5, 'Trạng thái vòng thi', 'trangThai', 'sanpham_vongthi', 'VONGTHI'),
-(6, 'Trạng thái sản phẩm', 'TrangThai', 'sanpham', 'SANPHAM'),
+(6, 'Trạng thái sản phẩm', 'trangThaiSanPham', 'sanpham', 'SANPHAM'),
 (7, 'Loại tài liệu', 'idloaitailieu', 'sanpham', 'SANPHAM'),
-(8, 'Kích hoạt sản phẩm', 'isActive', 'sanpham', 'SANPHAM'),
-(9, 'Điểm tổng kết', 'diemTongKet', 'ketqua', 'GIAITHUONG'),
-(10, 'Xếp hạng', 'xepHang', 'ketqua', 'GIAITHUONG'),
-(11, 'Đã có giải', 'idGiaiThuong', 'ketqua', 'GIAITHUONG');
+(9, 'Điểm tổng kết', 'diemTongKet', 'ketqua', 'GIAITHUONG');
 
 -- --------------------------------------------------------
 
@@ -1309,6 +1369,23 @@ INSERT INTO `tieuban_sanpham` (`idTieuBan`, `idSanPham`) VALUES
 (2, 2),
 (801, 801),
 (802, 802);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tieuban_phan_bien`
+--
+
+CREATE TABLE `tieuban_phan_bien` (
+  `idPhanBien` int NOT NULL,
+  `idSanPham` int NOT NULL COMMENT 'Bài báo cáo được phân công phản biện',
+  `idGV` int NOT NULL COMMENT 'Giảng viên phản biện (phải trong tiểu ban chứa bài)',
+  `idSK` int NOT NULL COMMENT 'Sự kiện',
+  `trangThaiCham` enum('Chờ chấm','Đang chấm','Đã nộp') NOT NULL DEFAULT 'Chờ chấm',
+  `ngayPhanCong` datetime DEFAULT CURRENT_TIMESTAMP,
+  `ngayNop` datetime DEFAULT NULL COMMENT 'Thời điểm GV nộp phiếu chấm'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Phân công phản biện offline trong tiểu ban. Tách biệt với phancong_doclap (online).';
 
 -- --------------------------------------------------------
 
@@ -1528,13 +1605,13 @@ INSERT INTO `vongthi` (`idVongThi`, `idSK`, `tenVongThi`, `moTa`, `thuTu`, `ngay
 -- (See below for the actual view)
 --
 CREATE TABLE `v_giam_khao_san_pham` (
-`idSanPham` int
-,`idGV` int
+`idGV` int
+,`idSanPham` int
 ,`idVongThi` int
+,`isTrongTai` int
 ,`nguon` varchar(11)
 ,`tenGV` varchar(100)
 ,`tenTK` varchar(100)
-,`isTrongTai` int
 );
 
 -- --------------------------------------------------------
@@ -1564,7 +1641,7 @@ CREATE TABLE `yeucau_thamgia` (
   `idNhom` int DEFAULT NULL,
   `idTK` int DEFAULT NULL,
   `ChieuMoi` tinyint DEFAULT '0' COMMENT '0: nhóm gửi lời mời, 1: người dùng yêu cầu tham gia nhóm',
-  `loaiYeuCau` enum('SV','GVHD') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'SV' COMMENT 'SV: yêu cầu thành viên sinh viên\n             GVHD: mời giảng viên hướng dẫn',
+  `loaiYeuCau` enum('SV','GVHD') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'SV' COMMENT 'SV: yêu cầu thành viên sinh viên\n             GVHD: mời giảng viên hướng dẫn',
   `loiNhan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `trangThai` int DEFAULT '0' COMMENT 'Chờ phản hồi/Đã chấp nhận/Đã từ chối',
   `ngayGui` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -1583,6 +1660,15 @@ INSERT INTO `yeucau_thamgia` (`idYeuCau`, `idNhom`, `idTK`, `ChieuMoi`, `loaiYeu
 (5, 804, 3, 0, 'SV', '', 0, '2026-02-27 15:09:59', NULL),
 (6, 804, 8, 1, 'SV', '', 1, '2026-02-27 15:10:44', '2026-02-27 15:12:23'),
 (7, 804, 1, 1, 'SV', 'hello', 0, '2026-03-07 16:45:56', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `v_giam_khao_san_pham`
+--
+DROP TABLE IF EXISTS `v_giam_khao_san_pham`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_giam_khao_san_pham`  AS SELECT `allgk`.`idSanPham` AS `idSanPham`, `allgk`.`idGV` AS `idGV`, `allgk`.`idVongThi` AS `idVongThi`, `allgk`.`nguon` AS `nguon`, `gv`.`tenGV` AS `tenGV`, `tk`.`tenTK` AS `tenTK`, coalesce(`pd`.`isTrongTai`,0) AS `isTrongTai` FROM ((((select `pd_inner`.`idSanPham` AS `idSanPham`,`pd_inner`.`idGV` AS `idGV`,`pd_inner`.`idVongThi` AS `idVongThi`,'phancong' AS `nguon` from `phancong_doclap` `pd_inner` union select distinct `ct`.`idSanPham` AS `idSanPham`,`pcc`.`idGV` AS `idGV`,`pcc`.`idVongThi` AS `idVongThi`,'chamtieuchi' AS `nguon` from (`chamtieuchi` `ct` join `phancongcham` `pcc` on((`ct`.`idPhanCongCham` = `pcc`.`idPhanCongCham`)))) `allgk` join `giangvien` `gv` on((`gv`.`idGV` = `allgk`.`idGV`))) join `taikhoan` `tk` on((`tk`.`idTK` = `gv`.`idTK`))) left join `phancong_doclap` `pd` on(((`pd`.`idGV` = `allgk`.`idGV`) and (`pd`.`idSanPham` = `allgk`.`idSanPham`) and (`pd`.`idVongThi` = `allgk`.`idVongThi`))))  ;
 
 --
 -- Indexes for dumped tables
@@ -1673,8 +1759,8 @@ ALTER TABLE `diemdanh`
   ADD PRIMARY KEY (`idDiemDanh`),
   ADD KEY `idNhom` (`idNhom`),
   ADD KEY `idTK` (`idTK`),
-  ADD KEY `idx_dd_lich` (`idLichTrinh`),
-  ADD KEY `idx_dd_tk_lich` (`idTK`,`idLichTrinh`);
+  ADD KEY `idx_dd_phien` (`idPhienDD`),
+  ADD KEY `idx_dd_tk_phien` (`idTK`,`idPhienDD`);
 
 --
 -- Indexes for table `dieukien`
@@ -1816,11 +1902,24 @@ ALTER TABLE `quyche`
   ADD KEY `fk_quyche_sukien` (`idSK`);
 
 --
+-- Indexes for table `quyche_danhmuc_ngucanh`
+--
+ALTER TABLE `quyche_danhmuc_ngucanh`
+  ADD PRIMARY KEY (`maNguCanh`);
+
+--
 -- Indexes for table `quyche_dieukien`
 --
 ALTER TABLE `quyche_dieukien`
   ADD PRIMARY KEY (`idQuyChe`),
   ADD KEY `idDieuKienCuoi` (`idDieuKienCuoi`);
+
+--
+-- Indexes for table `quyche_ngucanh_apdung`
+--
+ALTER TABLE `quyche_ngucanh_apdung`
+  ADD PRIMARY KEY (`idQuyChe`,`maNguCanh`),
+  ADD KEY `idx_quyche_ngucanh_ma` (`maNguCanh`);
 
 --
 -- Indexes for table `quyen`
@@ -1966,6 +2065,16 @@ ALTER TABLE `tieuban_giangvien`
 ALTER TABLE `tieuban_sanpham`
   ADD PRIMARY KEY (`idTieuBan`,`idSanPham`),
   ADD KEY `tieuban_sanpham_ibfk_2` (`idSanPham`);
+
+--
+-- Indexes for table `tieuban_phan_bien`
+--
+ALTER TABLE `tieuban_phan_bien`
+  ADD PRIMARY KEY (`idPhanBien`),
+  ADD UNIQUE KEY `uq_sp_gv_sk` (`idSanPham`,`idGV`,`idSK`),
+  ADD KEY `idx_tpb_idSK` (`idSK`),
+  ADD KEY `idx_tpb_idGV` (`idGV`),
+  ADD KEY `idx_tpb_idSanPham` (`idSanPham`);
 
 --
 -- Indexes for table `tieuchi`
@@ -2204,7 +2313,7 @@ ALTER TABLE `sinhvien`
 -- AUTO_INCREMENT for table `sukien`
 --
 ALTER TABLE `sukien`
-  MODIFY `idSK` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1000;
+  MODIFY `idSK` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1001;
 
 --
 -- AUTO_INCREMENT for table `taikhoan`
@@ -2216,13 +2325,13 @@ ALTER TABLE `taikhoan`
 -- AUTO_INCREMENT for table `taikhoan_vaitro_sukien`
 --
 ALTER TABLE `taikhoan_vaitro_sukien`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT for table `thongbao`
 --
 ALTER TABLE `thongbao`
-  MODIFY `idThongBao` int NOT NULL AUTO_INCREMENT;
+  MODIFY `idThongBao` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `thongtinnhom`
@@ -2241,6 +2350,12 @@ ALTER TABLE `thuoctinh_kiemtra`
 --
 ALTER TABLE `tieuban`
   MODIFY `idTieuBan` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=803;
+
+--
+-- AUTO_INCREMENT for table `tieuban_phan_bien`
+--
+ALTER TABLE `tieuban_phan_bien`
+  MODIFY `idPhanBien` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `tieuchi`
@@ -2277,15 +2392,6 @@ ALTER TABLE `xacnhan_thamgia`
 --
 ALTER TABLE `yeucau_thamgia`
   MODIFY `idYeuCau` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
--- --------------------------------------------------------
-
---
--- Structure for view `v_giam_khao_san_pham`
---
-DROP TABLE IF EXISTS `v_giam_khao_san_pham`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_giam_khao_san_pham`  AS SELECT `allgk`.`idSanPham` AS `idSanPham`, `allgk`.`idGV` AS `idGV`, `allgk`.`idVongThi` AS `idVongThi`, `allgk`.`nguon` AS `nguon`, `gv`.`tenGV` AS `tenGV`, `tk`.`tenTK` AS `tenTK`, coalesce(`pd`.`isTrongTai`,0) AS `isTrongTai` FROM ((((select `pd_inner`.`idSanPham` AS `idSanPham`,`pd_inner`.`idGV` AS `idGV`,`pd_inner`.`idVongThi` AS `idVongThi`,'phancong' AS `nguon` from `phancong_doclap` `pd_inner` union select distinct `ct`.`idSanPham` AS `idSanPham`,`pcc`.`idGV` AS `idGV`,`pcc`.`idVongThi` AS `idVongThi`,'chamtieuchi' AS `nguon` from (`chamtieuchi` `ct` join `phancongcham` `pcc` on((`ct`.`idPhanCongCham` = `pcc`.`idPhanCongCham`)))) `allgk` join `giangvien` `gv` on((`gv`.`idGV` = `allgk`.`idGV`))) join `taikhoan` `tk` on((`tk`.`idTK` = `gv`.`idTK`))) left join `phancong_doclap` `pd` on(((`pd`.`idGV` = `allgk`.`idGV`) and (`pd`.`idSanPham` = `allgk`.`idSanPham`) and (`pd`.`idVongThi` = `allgk`.`idVongThi`)))) ;
 
 --
 -- Constraints for dumped tables
@@ -2354,13 +2460,13 @@ ALTER TABLE `chungnhan`
 ALTER TABLE `diemdanh`
   ADD CONSTRAINT `diemdanh_ibfk_1` FOREIGN KEY (`idNhom`) REFERENCES `nhom` (`idNhom`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   ADD CONSTRAINT `diemdanh_ibfk_2` FOREIGN KEY (`idTK`) REFERENCES `taikhoan` (`idTK`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  ADD CONSTRAINT `diemdanh_ibfk_3` FOREIGN KEY (`idLichTrinh`) REFERENCES `lichtrinh` (`idLichTrinh`) ON DELETE SET NULL;
+  ADD CONSTRAINT `diemdanh_ibfk_3` FOREIGN KEY (`idPhienDD`) REFERENCES `phien_diemdanh` (`idPhienDD`) ON DELETE SET NULL ON UPDATE RESTRICT;
 
 --
 -- Constraints for table `dieukien_don`
 --
 ALTER TABLE `dieukien_don`
-  ADD CONSTRAINT `dieukien_don_ibfk_1` FOREIGN KEY (`idDieuKien`) REFERENCES `dieukien` (`idDieuKien`),
+  ADD CONSTRAINT `dieukien_don_ibfk_1` FOREIGN KEY (`idDieuKien`) REFERENCES `dieukien` (`idDieuKien`) ON DELETE CASCADE ON UPDATE RESTRICT,
   ADD CONSTRAINT `dieukien_don_ibfk_2` FOREIGN KEY (`idThuocTinhKiemTra`) REFERENCES `thuoctinh_kiemtra` (`idThuocTinhKiemTra`),
   ADD CONSTRAINT `dieukien_don_ibfk_3` FOREIGN KEY (`idToanTu`) REFERENCES `toantu` (`idToanTu`);
 
@@ -2446,8 +2552,15 @@ ALTER TABLE `quyche`
 -- Constraints for table `quyche_dieukien`
 --
 ALTER TABLE `quyche_dieukien`
-  ADD CONSTRAINT `quyche_dieukien_ibfk_1` FOREIGN KEY (`idQuyChe`) REFERENCES `quyche` (`idQuyChe`),
-  ADD CONSTRAINT `quyche_dieukien_ibfk_2` FOREIGN KEY (`idDieuKienCuoi`) REFERENCES `dieukien` (`idDieuKien`);
+  ADD CONSTRAINT `quyche_dieukien_ibfk_1` FOREIGN KEY (`idQuyChe`) REFERENCES `quyche` (`idQuyChe`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  ADD CONSTRAINT `quyche_dieukien_ibfk_2` FOREIGN KEY (`idDieuKienCuoi`) REFERENCES `dieukien` (`idDieuKien`) ON DELETE CASCADE ON UPDATE RESTRICT;
+
+--
+-- Constraints for table `quyche_ngucanh_apdung`
+--
+ALTER TABLE `quyche_ngucanh_apdung`
+  ADD CONSTRAINT `fk_quyche_ngucanh_danhmuc` FOREIGN KEY (`maNguCanh`) REFERENCES `quyche_danhmuc_ngucanh` (`maNguCanh`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_quyche_ngucanh_quyche` FOREIGN KEY (`idQuyChe`) REFERENCES `quyche` (`idQuyChe`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `sanpham`
@@ -2560,7 +2673,7 @@ ALTER TABLE `tieuban_sanpham`
 -- Constraints for table `tohop_dieukien`
 --
 ALTER TABLE `tohop_dieukien`
-  ADD CONSTRAINT `tohop_dieukien_ibfk_1` FOREIGN KEY (`idDieuKien`) REFERENCES `dieukien` (`idDieuKien`),
+  ADD CONSTRAINT `tohop_dieukien_ibfk_1` FOREIGN KEY (`idDieuKien`) REFERENCES `dieukien` (`idDieuKien`) ON DELETE CASCADE ON UPDATE RESTRICT,
   ADD CONSTRAINT `tohop_dieukien_ibfk_2` FOREIGN KEY (`idDieuKienTrai`) REFERENCES `dieukien` (`idDieuKien`),
   ADD CONSTRAINT `tohop_dieukien_ibfk_3` FOREIGN KEY (`idDieuKienPhai`) REFERENCES `dieukien` (`idDieuKien`),
   ADD CONSTRAINT `tohop_dieukien_ibfk_4` FOREIGN KEY (`idToanTu`) REFERENCES `toantu` (`idToanTu`);
