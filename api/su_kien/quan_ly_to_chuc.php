@@ -68,7 +68,9 @@ function kiem_tra_tu_dong_phien($conn, array $phien): array
 
     // CHUAN_BI + đến giờ mở → tự mở
     if ($trang_thai === 'CHUAN_BI' && $phien['thoiGianMo'] <= $now) {
-        $ok = _update_info($conn, 'phien_diemdanh',
+        $ok = _update_info(
+            $conn,
+            'phien_diemdanh',
             ['trangThai'],
             ['DANG_MO'],
             ['idPhienDD' => ['=', $id_phien]]
@@ -77,11 +79,14 @@ function kiem_tra_tu_dong_phien($conn, array $phien): array
     }
 
     // DANG_MO + có giờ đóng + đến giờ đóng → tự đóng
-    if ($phien['trangThai'] === 'DANG_MO'
+    if (
+        $phien['trangThai'] === 'DANG_MO'
         && !empty($phien['thoiGianDong'])
         && $phien['thoiGianDong'] <= $now
     ) {
-        $ok = _update_info($conn, 'phien_diemdanh',
+        $ok = _update_info(
+            $conn,
+            'phien_diemdanh',
             ['trangThai'],
             ['DA_DONG'],
             ['idPhienDD' => ['=', $id_phien]]
@@ -238,10 +243,32 @@ function tao_lich_trinh(
     $result = _insert_info(
         $conn,
         'lichtrinh',
-        ['idSK', 'idVongThi', 'idTieuBan', 'tenHoatDong', 'loaiHoatDong', 'thuTu',
-         'thoiGianBatDau', 'thoiGianKetThuc', 'diaDiem', 'viTriLat', 'viTriLng'],
-        [$id_sk, $id_vong_thi, $id_tieu_ban, $ten_hoat_dong, $loai_hoat_dong, $thu_tu,
-         $thoi_gian_bat_dau, $thoi_gian_ket_thuc, $dia_diem, $vi_tri_lat, $vi_tri_lng]
+        [
+            'idSK',
+            'idVongThi',
+            'idTieuBan',
+            'tenHoatDong',
+            'loaiHoatDong',
+            'thuTu',
+            'thoiGianBatDau',
+            'thoiGianKetThuc',
+            'diaDiem',
+            'viTriLat',
+            'viTriLng'
+        ],
+        [
+            $id_sk,
+            $id_vong_thi,
+            $id_tieu_ban,
+            $ten_hoat_dong,
+            $loai_hoat_dong,
+            $thu_tu,
+            $thoi_gian_bat_dau,
+            $thoi_gian_ket_thuc,
+            $dia_diem,
+            $vi_tri_lat,
+            $vi_tri_lng
+        ]
     );
 
     return $result
@@ -304,10 +331,28 @@ function cap_nhat_lich_trinh(
     $result = _update_info(
         $conn,
         'lichtrinh',
-        ['tenHoatDong', 'loaiHoatDong', 'thoiGianBatDau', 'thoiGianKetThuc',
-         'diaDiem', 'viTriLat', 'viTriLng', 'idVongThi', 'idTieuBan'],
-        [$ten_hoat_dong, $loai_hoat_dong, $thoi_gian_bat_dau, $thoi_gian_ket_thuc,
-         $dia_diem, $vi_tri_lat, $vi_tri_lng, $id_vong_thi, $id_tieu_ban],
+        [
+            'tenHoatDong',
+            'loaiHoatDong',
+            'thoiGianBatDau',
+            'thoiGianKetThuc',
+            'diaDiem',
+            'viTriLat',
+            'viTriLng',
+            'idVongThi',
+            'idTieuBan'
+        ],
+        [
+            $ten_hoat_dong,
+            $loai_hoat_dong,
+            $thoi_gian_bat_dau,
+            $thoi_gian_ket_thuc,
+            $dia_diem,
+            $vi_tri_lat,
+            $vi_tri_lng,
+            $id_vong_thi,
+            $id_tieu_ban
+        ],
         ['idLichTrinh' => ['=', $id_lich_trinh]]
     );
 
@@ -371,7 +416,7 @@ function lay_danh_sach_lich_trinh($conn, int $id_sk, int $id_tk_nguoi_dung = 0):
     try {
         $stmt = $conn->prepare("
             SELECT lt.*,
-                   vt.tenVong AS tenVongThi,
+                   vt.tenVongThi,
                    tb.tenTieuBan
             FROM lichtrinh lt
             LEFT JOIN vongthi vt ON vt.idVongThi = lt.idVongThi
@@ -529,7 +574,9 @@ function mo_phien_diem_danh($conn, int $id_nguoi_thuc_hien, int $id_phien_dd): a
     }
 
     $now = date('Y-m-d H:i:s');
-    $result = _update_info($conn, 'phien_diemdanh',
+    $result = _update_info(
+        $conn,
+        'phien_diemdanh',
         ['trangThai', 'thoiGianMo'],
         ['DANG_MO', $now],
         ['idPhienDD' => ['=', $id_phien_dd]]
@@ -564,7 +611,9 @@ function dong_phien_diem_danh($conn, int $id_nguoi_thuc_hien, int $id_phien_dd):
     }
 
     $now    = date('Y-m-d H:i:s');
-    $result = _update_info($conn, 'phien_diemdanh',
+    $result = _update_info(
+        $conn,
+        'phien_diemdanh',
         ['trangThai', 'thoiGianDong'],
         ['DA_DONG', $now],
         ['idPhienDD' => ['=', $id_phien_dd]]
@@ -649,8 +698,10 @@ function ghi_nhan_diem_danh(
         }
         if (!empty($phien['viTriLat']) && !empty($phien['viTriLng'])) {
             $khoang_cach = _tinh_khoang_cach_haversine(
-                (float) $phien['viTriLat'], (float) $phien['viTriLng'],
-                $lat_float, $lng_float
+                (float) $phien['viTriLat'],
+                (float) $phien['viTriLng'],
+                $lat_float,
+                $lng_float
             );
             $ban_kinh = (int) ($phien['banKinh'] ?? 150);
             if ($khoang_cach > $ban_kinh) {
@@ -682,10 +733,30 @@ function ghi_nhan_diem_danh(
     $result = _insert_info(
         $conn,
         'diemdanh',
-        ['idNhom', 'idTK', 'thoiGianDiemDanh', 'hienDien', 'ghiChu',
-         'idPhienDD', 'phuongThuc', 'viTriLat', 'viTriLng', 'ipDiemDanh'],
-        [$id_nhom, $id_tk_sv, date('Y-m-d H:i:s'), $hien_dien ? 1 : 0, $ghi_chu,
-         $id_phien_dd, $phuong_thuc, $lat_float, $lng_float, $ip]
+        [
+            'idNhom',
+            'idTK',
+            'thoiGianDiemDanh',
+            'hienDien',
+            'ghiChu',
+            'idPhienDD',
+            'phuongThuc',
+            'viTriLat',
+            'viTriLng',
+            'ipDiemDanh'
+        ],
+        [
+            $id_nhom,
+            $id_tk_sv,
+            date('Y-m-d H:i:s'),
+            $hien_dien ? 1 : 0,
+            $ghi_chu,
+            $id_phien_dd,
+            $phuong_thuc,
+            $lat_float,
+            $lng_float,
+            $ip
+        ]
     );
 
     return $result
@@ -706,13 +777,13 @@ function lay_danh_sach_diem_danh($conn, int $id_phien_dd, int $id_sk): array
                 tk.tenTK,
                 sv.tenSV,
                 gv.tenGV,
-                n.tenNhom,
+                ttn.tennhom AS tenNhom,
                 CASE WHEN tvs.id IS NOT NULL THEN 1 ELSE 0 END AS la_chinh_thuc
             FROM diemdanh dd
             LEFT JOIN taikhoan tk         ON tk.idTK = dd.idTK
             LEFT JOIN sinhvien sv         ON sv.idTK = dd.idTK
             LEFT JOIN giangvien gv        ON gv.idTK = dd.idTK
-            LEFT JOIN nhom n              ON n.idNhom = dd.idNhom
+            LEFT JOIN thongtinnhom ttn    ON ttn.idnhom = dd.idNhom
             LEFT JOIN taikhoan_vaitro_sukien tvs
                    ON tvs.idTK = dd.idTK
                   AND tvs.idSK = ?
@@ -731,8 +802,10 @@ function lay_danh_sach_diem_danh($conn, int $id_phien_dd, int $id_sk): array
 // ─── HELPER: Haversine distance (meters) ─────────────────────────────────────
 
 function _tinh_khoang_cach_haversine(
-    float $lat1, float $lng1,
-    float $lat2, float $lng2
+    float $lat1,
+    float $lng1,
+    float $lat2,
+    float $lng2
 ): int {
     $R = 6371000; // bán kính Trái Đất (m)
     $phi1 = deg2rad($lat1);
@@ -741,7 +814,7 @@ function _tinh_khoang_cach_haversine(
     $d_lam = deg2rad($lng2 - $lng1);
 
     $a = sin($d_phi / 2) ** 2
-       + cos($phi1) * cos($phi2) * sin($d_lam / 2) ** 2;
+        + cos($phi1) * cos($phi2) * sin($d_lam / 2) ** 2;
 
     return (int) round($R * 2 * atan2(sqrt($a), sqrt(1 - $a)));
 }
