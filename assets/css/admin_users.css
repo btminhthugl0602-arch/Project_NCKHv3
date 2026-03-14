@@ -19,7 +19,7 @@
 
 /* Row focus outline cho keyboard nav */
 #auTableBody tr:focus-visible {
-    outline: 2px solid #9213ec;
+    outline: 2px solid var(--color-primary);
     outline-offset: -2px;
 }
 

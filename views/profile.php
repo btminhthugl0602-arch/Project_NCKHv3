@@ -29,58 +29,57 @@ ob_start();
 
         <!-- ─── CỘT TRÁI: Thông tin cá nhân ─── -->
         <div class="w-full lg:w-5/12 flex-none">
-            <div class="bg-white rounded-2xl shadow-soft-xl p-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                 <div class="flex items-center gap-4 mb-6">
-                    <div class="inline-flex items-center justify-center rounded-xl bg-primary/10"
+                    <div class="inline-flex items-center justify-center rounded-xl bg-primary/10 shrink-0"
                         style="width:56px;height:56px;">
-                        <span class="material-symbols-outlined active-icon text-primary"
-                            style="font-size:1.6rem">person</span>
+                        <span class="material-symbols-outlined text-primary"
+                            style="font-size:1.6rem" aria-hidden="true">person</span>
                     </div>
-                    <div>
-                        <h6 class="mb-0 font-bold text-slate-800" id="displayHoTen">...</h6>
-                        <p class="mb-0 text-xs text-slate-400" id="displayLoaiTK">...</p>
+                    <div class="min-w-0">
+                        <h6 class="mb-0.5 font-bold text-slate-800 truncate" id="displayHoTen">...</h6>
+                        <span id="displayLoaiTK"
+                            class="inline-block text-[10px] font-bold tracking-widest uppercase
+                                   bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">
+                            ...
+                        </span>
                     </div>
                 </div>
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block mb-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">Tên đăng
-                            nhập</label>
+                        <label for="tenTK" class="block mb-1.5 text-xs font-semibold text-slate-700">Tên đăng nhập</label>
                         <input id="tenTK" type="text" disabled
                             class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed">
                     </div>
                     <div>
-                        <label class="block mb-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">Họ và
-                            tên</label>
-                        <input id="hoTen" type="text"
-                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10">
+                        <label for="hoTen" class="block mb-1.5 text-xs font-semibold text-slate-700">Họ và tên</label>
+                        <input id="hoTen" type="text" placeholder="Nguyễn Văn A"
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 text-slate-700 placeholder-slate-400
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors">
                     </div>
 
                     <!-- Chỉ hiện với Sinh viên -->
                     <div id="fieldSinhVien" class="hidden space-y-4">
                         <div>
-                            <label class="block mb-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">Mã
-                                sinh viên</label>
+                            <label for="maSV" class="block mb-1.5 text-xs font-semibold text-slate-700">Mã sinh viên</label>
                             <input id="maSV" type="text" disabled
                                 class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed">
                         </div>
                         <div class="flex gap-3">
                             <div class="flex-1">
-                                <label
-                                    class="block mb-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">GPA</label>
+                                <label for="gpa" class="block mb-1.5 text-xs font-semibold text-slate-700">GPA</label>
                                 <input id="gpa" type="text" disabled
                                     class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed">
                             </div>
                             <div class="flex-1">
-                                <label
-                                    class="block mb-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">DRL</label>
+                                <label for="drl" class="block mb-1.5 text-xs font-semibold text-slate-700">DRL</label>
                                 <input id="drl" type="text" disabled
                                     class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed">
                             </div>
                         </div>
                         <div>
-                            <label
-                                class="block mb-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">Lớp</label>
+                            <label for="tenLop" class="block mb-1.5 text-xs font-semibold text-slate-700">Lớp</label>
                             <input id="tenLop" type="text" disabled
                                 class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed">
                         </div>
@@ -88,10 +87,10 @@ ob_start();
 
                     <!-- Chỉ hiện với Giảng viên -->
                     <div id="fieldGiangVien" class="hidden">
-                        <label class="block mb-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">Học hàm /
-                            Học vị</label>
+                        <label for="hocHam" class="block mb-1.5 text-xs font-semibold text-slate-700">Học hàm / Học vị</label>
                         <select id="hocHam"
-                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10">
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white text-slate-700
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors">
                             <option value="">-- Chưa cập nhật --</option>
                             <option value="Cu_nhan">Cử nhân</option>
                             <option value="Tha_si">Thạc sĩ</option>
@@ -102,14 +101,16 @@ ob_start();
                     </div>
 
                     <div>
-                        <label
-                            class="block mb-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">Khoa</label>
+                        <label for="tenKhoa" class="block mb-1.5 text-xs font-semibold text-slate-700">Khoa</label>
                         <input id="tenKhoa" type="text" disabled
                             class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed">
                     </div>
 
-                    <button onclick="luuThongTin()"
-                        class="w-full py-2.5 rounded-lg text-sm font-semibold text-white bg-primary hover:opacity-90 transition-opacity">
+                    <button type="button" onclick="luuThongTin()"
+                        class="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-semibold text-white
+                               bg-primary hover:bg-primary-dark transition-colors
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+                        <span class="material-symbols-outlined text-[16px]" aria-hidden="true">save</span>
                         Lưu thay đổi
                     </button>
                 </div>
@@ -120,40 +121,49 @@ ob_start();
         <div class="flex-1 min-w-0 space-y-6">
 
             <!-- Đổi mật khẩu -->
-            <div class="bg-white rounded-2xl shadow-soft-xl p-6">
-                <h6 class="mb-4 font-bold text-slate-800">Đổi mật khẩu</h6>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <h6 class="mb-4 font-bold text-slate-800 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">lock_reset</span>
+                    Đổi mật khẩu
+                </h6>
                 <div class="space-y-4">
                     <div>
-                        <label class="block mb-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">Mật khẩu
-                            hiện tại</label>
+                        <label for="matKhauCu" class="block mb-1.5 text-xs font-semibold text-slate-700">Mật khẩu hiện tại</label>
                         <input id="matKhauCu" type="password"
-                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 text-slate-700 placeholder-slate-400
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors"
                             placeholder="Nhập mật khẩu hiện tại">
                     </div>
                     <div>
-                        <label class="block mb-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">Mật khẩu
-                            mới</label>
+                        <label for="matKhauMoi" class="block mb-1.5 text-xs font-semibold text-slate-700">Mật khẩu mới</label>
                         <input id="matKhauMoi" type="password"
-                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 text-slate-700 placeholder-slate-400
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors"
                             placeholder="Ít nhất 6 ký tự">
                     </div>
                     <div>
-                        <label class="block mb-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">Xác nhận
-                            mật khẩu mới</label>
+                        <label for="xacNhanMatKhau" class="block mb-1.5 text-xs font-semibold text-slate-700">Xác nhận mật khẩu mới</label>
                         <input id="xacNhanMatKhau" type="password"
-                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 text-slate-700 placeholder-slate-400
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors"
                             placeholder="Nhập lại mật khẩu mới">
                     </div>
-                    <button onclick="doiMatKhau()"
-                        class="w-full py-2.5 rounded-lg text-sm font-semibold text-white bg-primary hover:opacity-90 transition-opacity">
-                        Đổi mật khẩu
+                    <button type="button" onclick="doiMatKhau()"
+                        class="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-semibold text-white
+                               bg-primary hover:bg-primary-dark transition-colors
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+                        <span class="material-symbols-outlined text-[16px]" aria-hidden="true">lock</span>
+                        Cập nhật mật khẩu
                     </button>
                 </div>
             </div>
 
             <!-- Danh sách sự kiện -->
-            <div class="bg-white rounded-2xl shadow-soft-xl p-6">
-                <h6 class="mb-4 font-bold text-slate-800">Sự kiện đang tham gia</h6>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <h6 class="mb-4 font-bold text-slate-800 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">event</span>
+                    Sự kiện đang tham gia
+                </h6>
                 <div id="dsSuKien">
                     <p class="text-sm text-slate-400">Đang tải...</p>
                 </div>
@@ -178,8 +188,6 @@ ob_start();
                 timer: 3000,
                 timerProgressBar: true
             });
-        } else {
-            alert(message);
         }
     }
 
@@ -281,7 +289,7 @@ ob_start();
 
             el.innerHTML = json.data.map(sk => `
             <a href="/views/event-detail.php?id_sk=${sk.idSK}"
-               class="flex items-center justify-between p-3 mb-2 rounded-xl border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-all group">
+               class="flex items-center justify-between p-3 mb-2 rounded-xl border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-colors group">
                 <div>
                     <p class="mb-0 text-sm font-semibold text-slate-700 group-hover:text-primary">${escHtml(sk.tenSK)}</p>
                     <p class="mb-0 text-xs text-slate-400">${escHtml(sk.tenVaiTro)} · ${formatNgay(sk.ngayBatDau)}</p>

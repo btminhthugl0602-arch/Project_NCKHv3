@@ -51,10 +51,9 @@ ob_start();
     <!-- ── STATS ROW ── -->
     <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
 
-        <div class="bg-white rounded-2xl shadow-soft-xl p-4 flex items-center gap-4">
-            <div
-                class="size-12 rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-500 flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-white active-icon text-xl">group</span>
+        <div class="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4">
+            <div class="size-12 rounded-xl bg-primary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-white text-xl" aria-hidden="true">group</span>
             </div>
             <div>
                 <p class="text-xs text-slate-500 font-medium">Tổng tài khoản</p>
@@ -62,10 +61,9 @@ ob_start();
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-soft-xl p-4 flex items-center gap-4">
-            <div
-                class="size-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-white active-icon text-xl">admin_panel_settings</span>
+        <div class="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4">
+            <div class="size-12 rounded-xl bg-primary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-white text-xl" aria-hidden="true">admin_panel_settings</span>
             </div>
             <div>
                 <p class="text-xs text-slate-500 font-medium">Quản trị viên</p>
@@ -73,10 +71,9 @@ ob_start();
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-soft-xl p-4 flex items-center gap-4">
-            <div
-                class="size-12 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-white active-icon text-xl">school</span>
+        <div class="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4">
+            <div class="size-12 rounded-xl bg-primary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-white text-xl" aria-hidden="true">school</span>
             </div>
             <div>
                 <p class="text-xs text-slate-500 font-medium">Giảng viên</p>
@@ -84,10 +81,9 @@ ob_start();
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-soft-xl p-4 flex items-center gap-4">
-            <div
-                class="size-12 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-white active-icon text-xl">person</span>
+        <div class="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4">
+            <div class="size-12 rounded-xl bg-primary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-white text-xl" aria-hidden="true">person</span>
             </div>
             <div>
                 <p class="text-xs text-slate-500 font-medium">Sinh viên</p>
@@ -98,7 +94,7 @@ ob_start();
     </div>
 
     <!-- ── MAIN CARD ── -->
-    <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
+    <div class="relative flex flex-col min-w-0 break-words bg-white shadow-sm rounded-2xl bg-clip-border border border-slate-100">
 
         <!-- Card header -->
         <div class="flex flex-wrap items-center justify-between gap-4 px-6 pt-5 pb-4 border-b border-slate-100">
@@ -107,10 +103,11 @@ ob_start();
                 <p class="mb-0 text-xs leading-normal text-slate-500">Quản lý tài khoản sinh viên, giảng viên và quản
                     trị viên</p>
             </div>
-            <button id="btnOpenCreate" type="button" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white uppercase rounded-xl
-                       bg-gradient-to-tl from-purple-700 via-fuchsia-600 to-pink-500
-                       shadow-soft-md hover:scale-102 active:opacity-85 transition-all cursor-pointer">
-                <span class="material-symbols-outlined text-[16px] active-icon">person_add</span>
+            <button id="btnOpenCreate" type="button"
+                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white
+                       bg-primary hover:bg-primary-dark rounded-lg transition-colors
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true">person_add</span>
                 Tạo tài khoản
             </button>
         </div>
@@ -148,8 +145,8 @@ ob_start();
                     aria-hidden="true">search</span>
                 <input id="auSearch" type="search" placeholder="Tìm tên đăng nhập, họ tên…"
                     aria-label="Tìm kiếm tài khoản" class="pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-xl w-64
-                              focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10
-                              transition-all" />
+                              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary
+                              transition-colors" />
             </div>
 
         </div>
@@ -255,14 +252,13 @@ ob_start();
 
     <!-- Box -->
     <div id="auCreateBox" class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden
-                scale-95 opacity-0 transition-all duration-200">
+                scale-95 opacity-0 transition-[transform,opacity] duration-200">
 
         <!-- Header -->
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <div class="flex items-center gap-3">
-                <div
-                    class="size-9 bg-gradient-to-br from-purple-600 to-fuchsia-500 rounded-xl flex items-center justify-center shrink-0">
-                    <span class="material-symbols-outlined text-white active-icon text-lg"
+                <div class="size-9 bg-primary rounded-xl flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-white text-lg"
                         aria-hidden="true">person_add</span>
                 </div>
                 <div>
@@ -288,20 +284,21 @@ ob_start();
                     aria-label="Chọn loại tài khoản">
                     <button type="button" data-type="1" role="radio" aria-checked="false"
                         class="au-type-btn flex flex-col items-center gap-2 px-3 py-3 rounded-xl border-2 border-slate-200
-                                   bg-slate-50 hover:border-violet-300 hover:bg-violet-50 transition-all cursor-pointer">
+                                   bg-slate-50 hover:border-primary/40 hover:bg-primary-light transition-colors cursor-pointer">
                         <span class="material-symbols-outlined text-[26px] text-slate-400"
                             aria-hidden="true">admin_panel_settings</span>
                         <span class="text-xs font-semibold text-slate-600">Quản trị viên</span>
                     </button>
-                    <button type="button" data-type="2" role="radio" aria-checked="false" class="au-type-btn flex flex-col items-center gap-2 px-3 py-3 rounded-xl border-2 border-slate-200
-                                   bg-slate-50 hover:border-sky-300 hover:bg-sky-50 transition-all cursor-pointer">
+                    <button type="button" data-type="2" role="radio" aria-checked="false"
+                        class="au-type-btn flex flex-col items-center gap-2 px-3 py-3 rounded-xl border-2 border-slate-200
+                                   bg-slate-50 hover:border-sky-300 hover:bg-sky-50 transition-colors cursor-pointer">
                         <span class="material-symbols-outlined text-[26px] text-slate-400"
                             aria-hidden="true">school</span>
                         <span class="text-xs font-semibold text-slate-600">Giảng viên</span>
                     </button>
                     <button type="button" data-type="3" role="radio" aria-checked="false"
                         class="au-type-btn flex flex-col items-center gap-2 px-3 py-3 rounded-xl border-2 border-slate-200
-                                   bg-slate-50 hover:border-emerald-300 hover:bg-emerald-50 transition-all cursor-pointer">
+                                   bg-slate-50 hover:border-emerald-300 hover:bg-emerald-50 transition-colors cursor-pointer">
                         <span class="material-symbols-outlined text-[26px] text-slate-400"
                             aria-hidden="true">person</span>
                         <span class="text-xs font-semibold text-slate-600">Sinh viên</span>
@@ -320,9 +317,10 @@ ob_start();
                     <label for="auTenTK" class="block text-xs font-semibold text-slate-700 mb-1">
                         Tên đăng nhập <span class="text-rose-500" aria-hidden="true">*</span>
                     </label>
-                    <input id="auTenTK" type="text" autocomplete="off" placeholder="vd: gv_nguyen, sv_tung" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg
-                                  focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
-                                  transition-all" />
+                    <input id="auTenTK" type="text" autocomplete="off" placeholder="vd: gv_nguyen, sv_tung"
+                        class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400
+                                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary
+                                  transition-colors" />
                     <p class="text-[11px] text-slate-400 mt-1">Chỉ dùng chữ thường, số và dấu gạch dưới (_)</p>
                     <p id="auTenTKError" class="hidden mt-1 text-xs text-rose-600" role="alert"></p>
                 </div>
@@ -333,9 +331,10 @@ ob_start();
                             Mật khẩu <span class="text-rose-500" aria-hidden="true">*</span>
                         </label>
                         <input id="auMatKhau" type="password" autocomplete="new-password"
-                            placeholder="Tối thiểu 6 ký tự" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg
-                                      focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
-                                      transition-all" />
+                            placeholder="Tối thiểu 6 ký tự"
+                            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400
+                                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary
+                                      transition-colors" />
                         <p id="auMatKhauError" class="hidden mt-1 text-xs text-rose-600" role="alert"></p>
                     </div>
                     <div>
@@ -343,9 +342,10 @@ ob_start();
                             Xác nhận MK <span class="text-rose-500" aria-hidden="true">*</span>
                         </label>
                         <input id="auXacNhan" type="password" autocomplete="new-password"
-                            placeholder="Nhập lại mật khẩu" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg
-                                      focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
-                                      transition-all" />
+                            placeholder="Nhập lại mật khẩu"
+                            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400
+                                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary
+                                      transition-colors" />
                         <p id="auXacNhanError" class="hidden mt-1 text-xs text-rose-600" role="alert"></p>
                     </div>
                 </div>
@@ -361,9 +361,10 @@ ob_start();
                     <label for="auHoTen" class="block text-xs font-semibold text-slate-700 mb-1">
                         Họ và tên <span class="text-rose-500" aria-hidden="true">*</span>
                     </label>
-                    <input id="auHoTen" type="text" placeholder="Nguyễn Văn A" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg
-                                  focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
-                                  transition-all" />
+                    <input id="auHoTen" type="text" placeholder="Nguyễn Văn A"
+                        class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400
+                                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary
+                                  transition-colors" />
                     <p id="auHoTenError" class="hidden mt-1 text-xs text-rose-600" role="alert"></p>
                 </div>
 
@@ -373,18 +374,19 @@ ob_start();
                         <label for="auMSV" class="block text-xs font-semibold text-slate-700 mb-1">
                             Mã sinh viên <span class="text-rose-500" aria-hidden="true">*</span>
                         </label>
-                        <input id="auMSV" type="text" placeholder="vd: SV2024001" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg
-                                      focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
-                                      transition-all" />
+                        <input id="auMSV" type="text" placeholder="vd: SV2024001"
+                            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400
+                                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary
+                                      transition-colors" />
                         <p id="auMSVError" class="hidden mt-1 text-xs text-rose-600" role="alert"></p>
                     </div>
                     <div>
                         <label for="auLop" class="block text-xs font-semibold text-slate-700 mb-1">
                             Lớp <span class="text-rose-500" aria-hidden="true">*</span>
                         </label>
-                        <select id="auLop" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white
-                                       focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
-                                       transition-all">
+                        <select id="auLop" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-700
+                                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary
+                                       transition-colors">
                             <option value="">-- Chọn lớp --</option>
                         </select>
                         <p id="auLopError" class="hidden mt-1 text-xs text-rose-600" role="alert"></p>
@@ -398,9 +400,9 @@ ob_start();
                             Khoa
                             <span class="text-slate-400 font-normal">(tuỳ chọn)</span>
                         </label>
-                        <select id="auKhoa" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white
-                                       focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
-                                       transition-all">
+                        <select id="auKhoa" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-700
+                                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary
+                                       transition-colors">
                             <option value="">-- Không chọn --</option>
                         </select>
                     </div>
@@ -409,9 +411,9 @@ ob_start();
                             Học hàm / Học vị
                             <span class="text-slate-400 font-normal">(tuỳ chọn)</span>
                         </label>
-                        <select id="auHocHam" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white
-                                       focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10
-                                       transition-all">
+                        <select id="auHocHam" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-700
+                                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary
+                                       transition-colors">
                             <option value="">-- Không chọn --</option>
                             <option value="Cu_nhan">Cử nhân</option>
                             <option value="Tha_si">Thạc sĩ</option>
@@ -431,11 +433,12 @@ ob_start();
                            rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
                 Huỷ
             </button>
-            <button id="auCreateSubmit" type="button" class="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-white uppercase rounded-lg
-                           bg-gradient-to-tl from-purple-700 to-pink-500 shadow-soft-md
-                           hover:scale-105 active:opacity-85 transition-all cursor-pointer
-                           disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100">
-                <span class="material-symbols-outlined text-[15px] active-icon" aria-hidden="true">person_add</span>
+            <button id="auCreateSubmit" type="button"
+                class="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-lg
+                           bg-primary hover:bg-primary-dark transition-colors cursor-pointer
+                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40
+                           disabled:opacity-60 disabled:cursor-not-allowed">
+                <span class="material-symbols-outlined text-[15px]" aria-hidden="true">person_add</span>
                 <span id="auCreateSubmitLabel">Tạo tài khoản</span>
             </button>
         </div>
@@ -587,21 +590,23 @@ ob_start();
                         <div id="auSOResetForm" class="hidden mt-3 space-y-2">
                             <div>
                                 <input id="auSOResetPw" type="password" placeholder="Mật khẩu mới (ít nhất 6 ký tự)"
-                                    class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg
-                                              focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all" />
+                                    class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400
+                                              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors" />
                             </div>
                             <div>
                                 <input id="auSOResetPwConfirm" type="password" placeholder="Xác nhận mật khẩu mới"
-                                    class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg
-                                              focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all" />
+                                    class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400
+                                              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors" />
                             </div>
                             <div class="flex items-center gap-2 pt-1">
                                 <button id="auSOResetSubmit" type="button"
                                     class="flex-1 py-2 text-xs font-semibold text-white rounded-lg
-                                               bg-gradient-to-r from-blue-600 to-blue-500 hover:opacity-90 transition-opacity cursor-pointer">
+                                               bg-primary hover:bg-primary-dark transition-colors cursor-pointer
+                                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
                                     <span id="auSOResetLabel">Xác nhận đặt lại</span>
                                 </button>
-                                <button id="auSOResetCancel" type="button" class="px-3 py-2 text-xs font-semibold text-slate-500 border border-slate-200 rounded-lg
+                                <button id="auSOResetCancel" type="button"
+                                    class="px-3 py-2 text-xs font-semibold text-slate-500 border border-slate-200 rounded-lg
                                                hover:bg-slate-50 transition-colors cursor-pointer">
                                     Hủy
                                 </button>
@@ -618,10 +623,10 @@ ob_start();
 
             <!-- Note cho Admin -->
             <div id="auSOAdminNote"
-                class="hidden flex items-start gap-2 p-3 bg-violet-50 border border-violet-200 rounded-xl">
-                <span class="material-symbols-outlined text-[16px] text-violet-500 shrink-0 mt-0.5"
+                class="hidden items-start gap-2 p-3 bg-primary-light border border-primary/20 rounded-xl">
+                <span class="material-symbols-outlined text-[16px] text-primary shrink-0 mt-0.5"
                     aria-hidden="true">shield</span>
-                <p class="text-[11px] text-violet-700">
+                <p class="text-[11px] text-primary">
                     Quản trị viên <strong>tự động có toàn bộ quyền hệ thống</strong>. Không cần cấu hình thêm.
                 </p>
             </div>
@@ -631,10 +636,10 @@ ob_start();
                 <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quyền hệ thống</p>
 
                 <label class="flex items-start gap-3 p-3 border rounded-xl border-slate-200 cursor-pointer
-                              hover:border-violet-300 hover:bg-violet-50/50 transition-all
-                              has-[:checked]:border-violet-400 has-[:checked]:bg-violet-50">
+                              hover:border-primary/30 hover:bg-primary-light transition-colors
+                              has-[:checked]:border-primary/50 has-[:checked]:bg-primary-light">
                     <input type="checkbox" id="auPermQlTK" data-perm="quan_ly_tai_khoan"
-                        class="mt-0.5 accent-violet-600 cursor-pointer" />
+                        class="mt-0.5 accent-primary cursor-pointer" />
                     <div>
                         <p class="text-xs font-semibold text-slate-700">Quản lý tài khoản</p>
                         <p class="text-[11px] text-slate-400">Truy cập trang quản lý, tạo và sửa tài khoản</p>
@@ -642,10 +647,10 @@ ob_start();
                 </label>
 
                 <label class="flex items-start gap-3 p-3 border rounded-xl border-slate-200 cursor-pointer
-                              hover:border-violet-300 hover:bg-violet-50/50 transition-all
-                              has-[:checked]:border-violet-400 has-[:checked]:bg-violet-50">
+                              hover:border-primary/30 hover:bg-primary-light transition-colors
+                              has-[:checked]:border-primary/50 has-[:checked]:bg-primary-light">
                     <input type="checkbox" id="auPermTaoSK" data-perm="tao_su_kien"
-                        class="mt-0.5 accent-violet-600 cursor-pointer" />
+                        class="mt-0.5 accent-primary cursor-pointer" />
                     <div>
                         <p class="text-xs font-semibold text-slate-700">Tạo sự kiện</p>
                         <p class="text-[11px] text-slate-400">Cho phép tạo sự kiện NCKH mới</p>
@@ -653,22 +658,23 @@ ob_start();
                 </label>
 
                 <label class="flex items-start gap-3 p-3 border rounded-xl border-slate-200 cursor-pointer
-                              hover:border-violet-300 hover:bg-violet-50/50 transition-all
-                              has-[:checked]:border-violet-400 has-[:checked]:bg-violet-50">
+                              hover:border-primary/30 hover:bg-primary-light transition-colors
+                              has-[:checked]:border-primary/50 has-[:checked]:bg-primary-light">
                     <input type="checkbox" id="auPermThongKe" data-perm="xem_thong_ke"
-                        class="mt-0.5 accent-violet-600 cursor-pointer" />
+                        class="mt-0.5 accent-primary cursor-pointer" />
                     <div>
                         <p class="text-xs font-semibold text-slate-700">Xem thống kê hệ thống</p>
                         <p class="text-[11px] text-slate-400">Xem thống kê và báo cáo toàn hệ thống</p>
                     </div>
                 </label>
 
-                <button id="auSOSavePerms" type="button" class="w-full inline-flex items-center justify-center gap-2 py-2.5 mt-1
-                               text-xs font-bold text-white uppercase rounded-xl
-                               bg-gradient-to-tl from-purple-700 to-pink-500 shadow-soft-md
-                               hover:scale-102 active:opacity-85 transition-all cursor-pointer
-                               disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100">
-                    <span class="material-symbols-outlined text-[15px] active-icon" aria-hidden="true">save</span>
+                <button id="auSOSavePerms" type="button"
+                    class="w-full inline-flex items-center justify-center gap-2 py-2.5 mt-1
+                               text-sm font-semibold text-white rounded-xl
+                               bg-primary hover:bg-primary-dark transition-colors cursor-pointer
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40
+                               disabled:opacity-60 disabled:cursor-not-allowed">
+                    <span class="material-symbols-outlined text-[15px]" aria-hidden="true">save</span>
                     <span id="auSavePermsLabel">Lưu phân quyền</span>
                 </button>
             </div>

@@ -19,7 +19,7 @@ if (!$_isGuest && isset($_SESSION['idTK']) && (int)$_SESSION['idTK'] > 0) {
     $_idTKCheck = (int)$_SESSION['idTK'];
     try {
         if (!defined('_AUTHEN')) define('_AUTHEN', true);
-        require_once __DIR__ . '/../api/core/db_connect.php';
+        require_once __DIR__ . '/../api/core/base.php';
         // Admin (idLoaiTK=1) luôn có quyền
         if ((int)($_SESSION['idLoaiTK'] ?? 0) === 1) {
             $_coQuyenTao = true;
@@ -76,6 +76,7 @@ ob_start();
         <?php endif; ?>
     </div>
 
+    <?php if ($_coQuyenTao): ?>
     <!-- Step banner -->
     <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 mb-6">
         <div class="flex items-center gap-2 mb-3">
@@ -92,6 +93,7 @@ ob_start();
             <?php endforeach; ?>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- Loading skeleton -->
     <div id="eventListLoading" aria-live="polite" aria-label="Đang tải danh sách sự kiện">

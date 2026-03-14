@@ -85,8 +85,8 @@ if (!isset($basePath)) {
     <!-- Global Layout CSS + Design Tokens -->
     <link href="<?php echo $basePath; ?>/assets/css/layout.css" rel="stylesheet" />
 
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <!-- SweetAlert2 — load đồng bộ (không defer) để Swal sẵn sàng trước pageJs -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Page-specific CSS -->
     <?php if (isset($pageCss)): ?>
