@@ -59,7 +59,7 @@ if (session_status() === PHP_SESSION_NONE) {
 include __DIR__ . '/header.php';
 ?>
 
-<div class="flex min-h-screen overflow-hidden">
+<div class="flex h-screen overflow-hidden">
 
     <!-- Mobile backdrop -->
     <button type="button" id="sidebarBackdrop"
@@ -71,7 +71,7 @@ include __DIR__ . '/header.php';
     <?php include __DIR__ . '/sidebar.php'; ?>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col min-h-screen overflow-y-auto bg-background-light lg:ml-0" style="min-width:0">
+    <main class="flex-1 flex flex-col overflow-y-auto bg-background-light lg:ml-0" style="min-width:0">
         <!-- Navbar / Top Header Bar -->
         <?php include __DIR__ . '/navbar.php'; ?>
 

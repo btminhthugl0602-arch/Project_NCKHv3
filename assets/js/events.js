@@ -1,25 +1,35 @@
 document.addEventListener('DOMContentLoaded', function () {
     const openCreateEventBtn = document.getElementById('openCreateEventBtn');
     const eventList = document.getElementById('eventList');
-    const eventListBody = document.getElementById('eventListBody');
+    const eventListGrid = document.getElementById('eventListGrid');
     const eventListEmpty = document.getElementById('eventListEmpty');
+    const eventListLoading = document.getElementById('eventListLoading');
+    const eventPagination = document.getElementById('eventPagination');
+    const eventPaginationInfo = document.getElementById('eventPaginationInfo');
+    const eventPrevBtn = document.getElementById('eventPrevBtn');
+    const eventNextBtn = document.getElementById('eventNextBtn');
+    const eventPageBtns = document.getElementById('eventPageBtns');
 
     // openCreateEventBtn chỉ hiện với người có quyền tao_su_kien
     // nhưng list sự kiện vẫn cần load cho tất cả user
 
+    const PAGE_SIZE = 9;
+    let allEvents = [];
+    let currentPage = 1;
+
     const normalizeDateTime = (value) => (value ? value.replace('T', ' ') + ':00' : null);
+
+    // ── API helpers ──────────────────────────────────────────────
 
     async function layDanhSachCapToChuc() {
         const response = await fetch('/api/su_kien/danh_sach_cap_to_chuc.php', {
             method: 'GET',
             credentials: 'same-origin',
         });
-
         const payload = await response.json();
         if (payload.status !== 'success' || !Array.isArray(payload.data)) {
             throw new Error(payload.message || 'Không lấy được danh sách cấp tổ chức');
         }
-
         return payload.data;
     }
 
@@ -28,43 +38,30 @@ document.addEventListener('DOMContentLoaded', function () {
             method: 'GET',
             credentials: 'same-origin',
         });
-
         const payload = await response.json();
         if (payload.status !== 'success' || !Array.isArray(payload.data)) {
             throw new Error(payload.message || 'Không lấy được danh sách sự kiện');
         }
-
         return payload.data;
     }
 
+    // ── Formatters ───────────────────────────────────────────────
+
     function formatDateTime(value) {
-        if (!value) {
-            return '--';
-        }
-
+        if (!value) return '--';
         const date = new Date(String(value).replace(' ', 'T'));
-        if (Number.isNaN(date.getTime())) {
-            return String(value);
-        }
-
+        if (Number.isNaN(date.getTime())) return String(value);
         return date.toLocaleString('vi-VN', {
             hour12: false,
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit',
         });
     }
 
     function capText(item) {
         const tenCap = String(item.tenCap || '').trim();
         const tenLoaiCap = String(item.tenLoaiCap || '').trim();
-
-        if (!tenCap && !tenLoaiCap) {
-            return '--';
-        }
-
+        if (!tenCap && !tenLoaiCap) return '--';
         return tenLoaiCap ? `${tenCap} (${tenLoaiCap})` : tenCap;
     }
 
@@ -77,71 +74,154 @@ document.addEventListener('DOMContentLoaded', function () {
             .replace(/'/g, '&#39;');
     }
 
-    function taoDongSuKien(item, prepend = false) {
-        if (!eventListBody || !eventList || !eventListEmpty) {
-            return;
-        }
+    // ── Card renderer ────────────────────────────────────────────
 
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-slate-100';
-
-        const trangThai = Number(item.isActive || 0) === 1
-            ? '<span class="px-2 py-1 text-xs font-semibold rounded-lg bg-emerald-100 text-emerald-600">Đang mở</span>'
-            : '<span class="px-2 py-1 text-xs font-semibold rounded-lg bg-slate-200 text-slate-600">Tạm ẩn</span>';
-
+    function taoCard(item) {
+        const isActive = Number(item.isActive || 0) === 1;
         const idSk = Number(item.idSK || 0);
-        const tenSuKienHtml = idSk > 0
-            ? `<a href="/event-detail?id_sk=${idSk}" class="event-title-link text-sm font-semibold">${escapeHtml(item.tenSK)}</a>`
-            : `<p class="mb-0 text-sm font-semibold text-slate-700">${escapeHtml(item.tenSK)}</p>`;
 
-        tr.innerHTML =
-            `<td class="p-3 align-middle">${tenSuKienHtml}</td>` +
-            `<td class="p-3 align-middle"><p class="mb-0 text-sm">${escapeHtml(capText(item))}</p></td>` +
-            `<td class="p-3 align-middle"><p class="mb-0 text-sm">${formatDateTime(item.ngayBatDau)} → ${formatDateTime(item.ngayKetThuc)}</p></td>` +
-            `<td class="p-3 align-middle">${trangThai}</td>`;
+        const badge = isActive
+            ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">Đang mở</span>'
+            : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">Tạm ẩn</span>';
 
-        if (prepend && eventListBody.firstChild) {
-            eventListBody.insertBefore(tr, eventListBody.firstChild);
-        } else {
-            eventListBody.appendChild(tr);
-        }
+        const detailUrl = idSk > 0 ? `/event-detail?id_sk=${idSk}` : '#';
 
-        eventList.classList.remove('hidden');
-        eventListEmpty.classList.add('hidden');
+        const card = document.createElement('article');
+        card.className = 'rounded-xl overflow-hidden border border-slate-100 flex flex-col bg-white';
+        card.innerHTML =
+            `<div class="relative p-4 min-h-[100px] flex flex-col justify-end"
+                  style="background:linear-gradient(135deg,#7d1f2e 0%,#a8293d 100%)">
+                <div class="absolute top-3 right-3">${badge}</div>
+                <h2 class="text-sm font-bold text-white leading-snug line-clamp-2 min-w-0 pr-16">
+                    ${escapeHtml(item.tenSK)}
+                </h2>
+            </div>` +
+            `<div class="flex-1 flex flex-col p-4 gap-2">
+                <div class="flex items-center gap-2 text-xs text-slate-500 min-w-0">
+                    <span class="material-symbols-outlined text-[14px] text-slate-400 shrink-0" aria-hidden="true">calendar_month</span>
+                    <span class="truncate">Bắt đầu: <span class="font-medium text-slate-700">${escapeHtml(formatDateTime(item.ngayBatDau))}</span></span>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-slate-500 min-w-0">
+                    <span class="material-symbols-outlined text-[14px] text-slate-400 shrink-0" aria-hidden="true">event_busy</span>
+                    <span class="truncate">Kết thúc: <span class="font-medium text-slate-700">${escapeHtml(formatDateTime(item.ngayKetThuc))}</span></span>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-slate-500 min-w-0">
+                    <span class="material-symbols-outlined text-[14px] text-slate-400 shrink-0" aria-hidden="true">corporate_fare</span>
+                    <span class="truncate">Cấp tổ chức: <span class="font-medium text-slate-700">${escapeHtml(capText(item))}</span></span>
+                </div>
+                <div class="mt-auto pt-3 border-t border-slate-100 flex justify-end">
+                    <a href="${detailUrl}"
+                       class="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:opacity-75 transition-opacity
+                              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded">
+                        Xem chi tiết
+                        <span class="material-symbols-outlined text-[14px]" aria-hidden="true">arrow_forward</span>
+                    </a>
+                </div>
+            </div>`;
+
+        return card;
     }
 
-    async function napDanhSachSuKien() {
-        if (!eventListBody || !eventList || !eventListEmpty) {
-            return;
+    // ── Pagination ───────────────────────────────────────────────
+
+    function totalPages() {
+        return Math.ceil(allEvents.length / PAGE_SIZE);
+    }
+
+    function renderPage(page) {
+        currentPage = Math.max(1, Math.min(page, totalPages()));
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const slice = allEvents.slice(start, start + PAGE_SIZE);
+
+        eventListGrid.innerHTML = '';
+        slice.forEach((item) => eventListGrid.appendChild(taoCard(item)));
+
+        const total = allEvents.length;
+        const from = start + 1;
+        const to = Math.min(start + PAGE_SIZE, total);
+        if (eventPaginationInfo) {
+            eventPaginationInfo.textContent = `Hiển thị ${from}–${to} trong số ${total} sự kiện`;
         }
 
-        const loadingEl = document.getElementById('eventListLoading');
+        if (eventPrevBtn) eventPrevBtn.disabled = currentPage === 1;
+        if (eventNextBtn) eventNextBtn.disabled = currentPage === totalPages();
 
-        // Hiện spinner, ẩn list và empty state
-        if (loadingEl) loadingEl.classList.remove('hidden');
-        eventList.classList.add('hidden');
-        eventListEmpty.classList.add('hidden');
+        renderPageBtns();
+    }
+
+    function renderPageBtns() {
+        if (!eventPageBtns) return;
+        const total = totalPages();
+        eventPageBtns.innerHTML = '';
+
+        const pages = [];
+        if (total <= 5) {
+            for (let i = 1; i <= total; i++) pages.push(i);
+        } else {
+            pages.push(1);
+            if (currentPage > 3) pages.push('…');
+            for (let i = Math.max(2, currentPage - 1); i <= Math.min(total - 1, currentPage + 1); i++) {
+                pages.push(i);
+            }
+            if (currentPage < total - 2) pages.push('…');
+            pages.push(total);
+        }
+
+        pages.forEach((p) => {
+            if (p === '…') {
+                const span = document.createElement('span');
+                span.className = 'text-xs text-slate-400 px-1';
+                span.textContent = '…';
+                eventPageBtns.appendChild(span);
+                return;
+            }
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = String(p);
+            btn.setAttribute('aria-label', `Trang ${p}`);
+            btn.setAttribute('aria-current', p === currentPage ? 'page' : 'false');
+            btn.className = p === currentPage
+                ? 'inline-flex items-center justify-center size-8 rounded-lg text-xs font-semibold bg-primary text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
+                : 'inline-flex items-center justify-center size-8 rounded-lg text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40';
+            btn.addEventListener('click', () => renderPage(p));
+            eventPageBtns.appendChild(btn);
+        });
+    }
+
+    // ── Load list ────────────────────────────────────────────────
+
+    async function napDanhSachSuKien() {
+        if (eventListLoading) eventListLoading.classList.remove('hidden');
+        if (eventList) eventList.classList.add('hidden');
+        if (eventListEmpty) eventListEmpty.classList.add('hidden');
+        if (eventPagination) eventPagination.classList.add('hidden');
 
         try {
-            const events = await layDanhSachSuKien();
-            eventListBody.innerHTML = '';
+            allEvents = await layDanhSachSuKien();
 
-            if (loadingEl) loadingEl.classList.add('hidden');
+            if (eventListLoading) eventListLoading.classList.add('hidden');
 
-            if (events.length === 0) {
-                eventListEmpty.classList.remove('hidden');
+            if (allEvents.length === 0) {
+                if (eventListEmpty) eventListEmpty.classList.remove('hidden');
                 return;
             }
 
-            events.forEach((item) => taoDongSuKien(item));
-        } catch (error) {
-            if (loadingEl) loadingEl.classList.add('hidden');
-            eventListEmpty.classList.remove('hidden');
-            eventListEmpty.textContent = 'Không thể tải danh sách sự kiện. Vui lòng thử lại.';
+            eventList.classList.remove('hidden');
+            renderPage(1);
+
+            if (eventPagination && totalPages() > 1) {
+                eventPagination.classList.remove('hidden');
+            }
+        } catch {
+            if (eventListLoading) eventListLoading.classList.add('hidden');
+            if (eventListEmpty) eventListEmpty.classList.remove('hidden');
         }
     }
 
     napDanhSachSuKien();
+
+    if (eventPrevBtn) eventPrevBtn.addEventListener('click', () => renderPage(currentPage - 1));
+    if (eventNextBtn) eventNextBtn.addEventListener('click', () => renderPage(currentPage + 1));
 
     function taoOptionsCap(capList) {
         const firstOption = '<option value="">-- Chọn cấp tổ chức --</option>';
@@ -206,7 +286,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 '<div class="rounded-xl border border-slate-200 bg-slate-50 p-3">' +
                 '<label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">' +
-                '<input id="swal-coGVHDTheoSuKien" type="checkbox" class="h-4 w-4 accent-fuchsia-600" checked />' +
+                '<input id="swal-coGVHDTheoSuKien" type="checkbox" class="h-4 w-4 accent-[#7d1f2e]" checked />' +
                 'Sự kiện có giảng viên hướng dẫn (GVHD)' +
                 '</label>' +
                 '<p class="mt-1 text-xs text-slate-500">Nếu tắt, toàn bộ luồng mời/xin/duyệt GVHD sẽ bị loại trừ cho sự kiện này.</p>' +
@@ -218,8 +298,8 @@ document.addEventListener('DOMContentLoaded', function () {
             customClass: {
                 popup: '!rounded-2xl',
                 actions: '!w-full !mt-5 !gap-3 !justify-end',
-                confirmButton: 'inline-flex items-center justify-center px-6 py-3 text-sm font-bold text-white uppercase align-middle transition-all bg-gradient-to-tl from-purple-700 to-pink-500 border-0 !rounded-lg cursor-pointer shadow-soft-md leading-pro ease-soft-in tracking-tight-soft min-w-[140px]',
-                cancelButton: 'inline-flex items-center justify-center px-6 py-3 text-sm font-bold text-slate-700 uppercase align-middle transition-all bg-slate-100 border border-slate-300 !rounded-lg cursor-pointer leading-pro ease-soft-in tracking-tight-soft min-w-[120px]',
+                confirmButton: 'inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors min-w-[140px]',
+                cancelButton: 'inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors min-w-[120px]',
             },
             confirmButtonText: 'Tạo sự kiện',
             cancelButtonText: 'Huỷ',

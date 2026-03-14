@@ -58,87 +58,93 @@ $pageJs = "events.js";
 ob_start();
 ?>
 
-<div class="w-full px-6 py-6 mx-auto">
-    <div class="flex flex-wrap -mx-3">
-        <div class="w-full max-w-full px-3">
-            <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-                <div class="flex flex-wrap items-center justify-between gap-4 p-6 pb-0 mb-0 border-b-0 rounded-t-2xl">
-                    <div class="pr-2">
-                        <h6 class="mb-1">Cấu hình sự kiện</h6>
-                        <p class="mb-0 text-sm leading-normal text-slate-500">Bắt đầu bằng việc tạo sự kiện mới để cấu
-                            hình các bước tiếp theo.</p>
-                    </div>
-                    <?php if ($_coQuyenTao): ?>
-                        <div
-                            class="p-1 rounded-2xl bg-gradient-to-tl from-purple-700 via-fuchsia-600 to-pink-500 shadow-soft-xl">
-                            <button id="openCreateEventBtn" type="button"
-                                class="inline-flex items-center px-6 py-3 text-xs font-bold text-center text-white uppercase align-middle transition-all border-0 rounded-xl cursor-pointer bg-gradient-to-tl from-purple-700 via-fuchsia-600 to-pink-500 leading-pro ease-soft-in tracking-tight-soft hover:scale-102 active:opacity-85 shadow-soft-md">
-                                <i class="mr-2 fas fa-plus"></i>
-                                Tạo sự kiện
-                            </button>
-                        </div>
-                    <?php endif; ?>
+<div class="w-full px-4 sm:px-6 py-4 sm:py-6 mx-auto max-w-screen-xl">
+
+    <!-- Page header -->
+    <div class="flex items-start justify-between gap-4 mb-5">
+        <div>
+            <h1 class="text-xl font-bold text-slate-800 leading-tight">Quản lý sự kiện</h1>
+            <p class="text-sm text-slate-500 mt-0.5">Danh sách và quản lý các sự kiện học thuật trong hệ thống.</p>
+        </div>
+        <?php if ($_coQuyenTao): ?>
+            <button id="openCreateEventBtn" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white
+                       bg-primary hover:bg-primary-dark rounded-lg transition-colors shrink-0
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>
+                Tạo sự kiện
+            </button>
+        <?php endif; ?>
+    </div>
+
+    <!-- Step banner -->
+    <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 mb-6">
+        <div class="flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined text-[16px] text-primary" aria-hidden="true">info</span>
+            <p class="text-sm font-semibold text-slate-700">Luồng triển khai đề xuất</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <?php foreach ([['1', 'Tạo sự kiện cơ bản'], ['2', 'Cấu hình vòng thi'], ['3', 'Cấu hình quy chế']] as [$n, $l]): ?>
+                <div class="flex items-center gap-3 bg-white rounded-lg border border-slate-200 px-4 py-3">
+                    <span
+                        class="inline-flex items-center justify-center size-7 rounded-full bg-primary-light text-primary text-xs font-bold shrink-0"><?php echo $n; ?></span>
+                    <span class="text-sm font-medium text-slate-700"><?php echo $l; ?></span>
                 </div>
-
-                <div class="flex-auto p-6">
-                    <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
-                        <p class="mb-1 text-sm font-semibold text-slate-700">Luồng triển khai đề xuất</p>
-                        <ul class="pl-5 text-sm list-disc text-slate-500 space-y-1">
-                            <li>Tạo sự kiện cơ bản (tên, mô tả, thời gian).</li>
-                            <li>Cấu hình vòng thi cho từng giai đoạn.</li>
-                            <li>Cấu hình quy chế và điều kiện tham gia.</li>
-                        </ul>
-                    </div>
-
-                    <div class="mt-4 text-sm text-slate-500">
-                        Sau khi tạo thành công, bạn có thể tiếp tục cấu hình vòng thi và quy chế trong các bước tiếp
-                        theo.
-                    </div>
-
-                    <div class="mt-6">
-                        <div class="flex items-center justify-between mb-3">
-                            <h6 class="mb-0 text-sm">Danh sách sự kiện</h6>
-                            <span class="text-xs text-slate-500">Cập nhật tự động sau khi tạo</span>
-                        </div>
-                        <div id="eventListLoading" class="px-4 py-5 text-sm text-center text-slate-400">
-                            <svg class="animate-spin inline-block w-5 h-5 mr-2 text-purple-500"
-                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                            </svg>
-                            Đang tải danh sách sự kiện...
-                        </div>
-                        <div id="eventListEmpty"
-                            class="hidden px-4 py-5 text-sm border border-dashed rounded-xl text-slate-500 border-slate-300 bg-slate-50">
-                            Chưa có sự kiện nào để hiển thị.
-                        </div>
-                        <div id="eventList" class="hidden overflow-x-auto">
-                            <table class="items-center w-full mb-0 align-top border-collapse text-slate-500">
-                                <thead class="align-bottom">
-                                    <tr>
-                                        <th
-                                            class="px-3 py-3 text-xxs font-bold tracking-wider text-left uppercase border-b border-slate-200 text-slate-400">
-                                            Sự kiện</th>
-                                        <th
-                                            class="px-3 py-3 text-xxs font-bold tracking-wider text-left uppercase border-b border-slate-200 text-slate-400">
-                                            Cấp tổ chức</th>
-                                        <th
-                                            class="px-3 py-3 text-xxs font-bold tracking-wider text-left uppercase border-b border-slate-200 text-slate-400">
-                                            Thời gian</th>
-                                        <th
-                                            class="px-3 py-3 text-xxs font-bold tracking-wider text-left uppercase border-b border-slate-200 text-slate-400">
-                                            Trạng thái</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="eventListBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <?php endforeach; ?>
         </div>
     </div>
+
+    <!-- Loading skeleton -->
+    <div id="eventListLoading" aria-live="polite" aria-label="Đang tải danh sách sự kiện">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <?php for ($i = 0; $i < 6; $i++): ?>
+                <div class="rounded-xl overflow-hidden border border-slate-100">
+                    <div class="h-28 nss-shimmer"></div>
+                    <div class="bg-white p-4 space-y-2.5">
+                        <div class="h-3 bg-slate-100 rounded w-3/4 nss-shimmer"></div>
+                        <div class="h-3 bg-slate-100 rounded w-2/3 nss-shimmer"></div>
+                        <div class="h-3 bg-slate-100 rounded w-1/2 nss-shimmer"></div>
+                        <div class="h-3 bg-slate-100 rounded w-1/3 ml-auto nss-shimmer mt-2"></div>
+                    </div>
+                </div>
+            <?php endfor; ?>
+        </div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="eventListEmpty" class="hidden">
+        <div class="flex flex-col items-center justify-center py-16 text-center">
+            <span class="material-symbols-outlined text-[48px] text-slate-300 mb-3" aria-hidden="true">event_busy</span>
+            <p class="text-sm font-semibold text-slate-500">Chưa có sự kiện nào</p>
+            <p class="text-xs text-slate-400 mt-1">Hãy tạo sự kiện đầu tiên để bắt đầu.</p>
+        </div>
+    </div>
+
+    <!-- Card grid + pagination -->
+    <div id="eventList" class="hidden">
+        <div id="eventListGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-live="polite"
+            aria-label="Danh sách sự kiện"></div>
+
+        <!-- Pagination -->
+        <div id="eventPagination" class="hidden mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p id="eventPaginationInfo" class="text-xs text-slate-500"></p>
+            <nav class="flex items-center gap-1" aria-label="Phân trang danh sách sự kiện">
+                <button id="eventPrevBtn" type="button"
+                    class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-200
+                           text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed
+                           transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" aria-label="Trang trước">
+                    <span class="material-symbols-outlined text-[16px]" aria-hidden="true">chevron_left</span>
+                </button>
+                <div id="eventPageBtns" class="flex items-center gap-1"></div>
+                <button id="eventNextBtn" type="button"
+                    class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-200
+                           text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed
+                           transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" aria-label="Trang sau">
+                    <span class="material-symbols-outlined text-[16px]" aria-hidden="true">chevron_right</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+
 </div>
 
 <?php

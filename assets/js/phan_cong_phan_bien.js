@@ -16,8 +16,8 @@
 
 	const BASE = window.APP_BASE_PATH || '';
 	const idSk = window.EVENT_DETAIL_ID || 0;
-	const TAB  = window.EVENT_DETAIL_TAB || '';
-	const API  = BASE + '/api/su_kien/phan_cong_phan_bien.php';
+	const TAB = window.EVENT_DETAIL_TAB || '';
+	const API = BASE + '/api/su_kien/phan_cong_phan_bien.php';
 
 	// ══════════════════════════════════════════════════════════
 	// [1] ADMIN MODULE — tab "review-assign"
@@ -94,7 +94,7 @@
 						<div class="flex items-center gap-3 ml-auto text-xs text-slate-500">
 							${tb.tenVongThi ? `<span><i class="fas fa-flag mr-1"></i>${_e(tb.tenVongThi)}</span>` : ''}
 							${tb.ngayBaoCao ? `<span><i class="fas fa-calendar mr-1"></i>${tb.ngayBaoCao}</span>` : ''}
-							${tb.diaDiem    ? `<span><i class="fas fa-map-marker-alt mr-1"></i>${_e(tb.diaDiem)}</span>` : ''}
+							${tb.diaDiem ? `<span><i class="fas fa-map-marker-alt mr-1"></i>${_e(tb.diaDiem)}</span>` : ''}
 						</div>
 					</div>
 					<div class="divide-y divide-slate-100">
@@ -147,8 +147,8 @@
 		async openModal(idSanPham, tenSanPham) {
 			this._currentSP = idSanPham;
 			const modal = document.getElementById('raModalPhanCong');
-			const body  = document.getElementById('raModalBody');
-			document.getElementById('raModalTitle').textContent    = 'Phân công phản biện';
+			const body = document.getElementById('raModalBody');
+			document.getElementById('raModalTitle').textContent = 'Phân công phản biện';
 			document.getElementById('raModalSubtitle').textContent = tenSanPham;
 			body.innerHTML = _loading('Đang tải danh sách GV...');
 			modal.classList.remove('hidden');
@@ -194,7 +194,20 @@
 		},
 
 		async goPhanCong(idSanPham, idGV, tenGV) {
-			if (!confirm(`Gỡ phân công phản biện của "${tenGV}" khỏi bài này?`)) return;
+			const { isConfirmed } = await Swal.fire({
+				icon: 'warning',
+				title: 'Xác nhận gỡ phân công',
+				text: `Gỡ phân công phản biện của "${tenGV}" khỏi bài này?`,
+				showCancelButton: true,
+				confirmButtonText: 'Gỡ',
+				cancelButtonText: 'Huỷ',
+				buttonsStyling: false,
+				customClass: {
+					confirmButton: 'inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors',
+					cancelButton: 'inline-flex items-center px-5 py-2.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors ml-2',
+				},
+			});
+			if (!isConfirmed) return;
 			try {
 				const j = await _post(API, { action: 'go_phan_cong', id_sk: idSk, id_san_pham: idSanPham, id_gv: idGV });
 				_toast(j.message, j.status === 'success' ? 'success' : 'error');
@@ -222,7 +235,7 @@
 		init() {
 			if (TAB !== 'scoring-gv') return;
 			this.load();
-			document.getElementById('pbBtnLuuNhap')?.addEventListener('click',  () => this.luuNhap());
+			document.getElementById('pbBtnLuuNhap')?.addEventListener('click', () => this.luuNhap());
 			document.getElementById('pbBtnNopPhieu')?.addEventListener('click', () => this.nopPhieu());
 		},
 
@@ -242,9 +255,9 @@
 
 		renderStats() {
 			const daNop = this.data.filter(b => b.trangThaiCham === 'Đã nộp').length;
-			_set('pbStatTong',  this.data.length);
+			_set('pbStatTong', this.data.length);
 			_set('pbStatDaNop', daNop);
-			_set('pbStatChua',  this.data.length - daNop);
+			_set('pbStatChua', this.data.length - daNop);
 		},
 
 		renderList() {
@@ -257,19 +270,19 @@
 				const pct = b.soTieuChiTong > 0
 					? Math.round(b.soTieuChiDaNhap / b.soTieuChiTong * 100) : 0;
 				const statusCls = {
-					'Chờ chấm':  'bg-slate-200 text-slate-600',
+					'Chờ chấm': 'bg-slate-200 text-slate-600',
 					'Đang chấm': 'bg-amber-200 text-amber-700',
-					'Đã nộp':    'bg-emerald-200 text-emerald-700',
+					'Đã nộp': 'bg-emerald-200 text-emerald-700',
 				}[b.trangThaiCham] || 'bg-slate-200 text-slate-600';
 
 				const clone = tmpl.content.cloneNode(true);
-				const el    = clone.querySelector('.pb-sp-item');
+				const el = clone.querySelector('.pb-sp-item');
 				el.dataset.id = b.idSanPham;
-				el.querySelector('.pb-sp-ten').textContent         = b.tenSanPham || '';
+				el.querySelector('.pb-sp-ten').textContent = b.tenSanPham || '';
 				const tieubanEl = el.querySelector('.pb-sp-tieuban') || el.querySelector('.pb-sp-tieubán');
 				if (tieubanEl) tieubanEl.textContent = b.tenTieuBan || '';
 				el.querySelector('.pb-sp-tiendo-text').textContent = `${b.soTieuChiDaNhap}/${b.soTieuChiTong} tiêu chí`;
-				el.querySelector('.pb-sp-tiendo-bar').style.width  = pct + '%';
+				el.querySelector('.pb-sp-tiendo-bar').style.width = pct + '%';
 				el.querySelector('.pb-sp-badge').innerHTML =
 					`<span class="px-2 py-0.5 text-[10px] font-bold rounded-full ${statusCls}">${_e(b.trangThaiCham)}</span>`;
 
@@ -301,7 +314,7 @@
 			document.getElementById('pbPhieuCham')?.classList.remove('hidden');
 
 			_set('pbTenSanPham', phieu.san_pham?.tenSanPham || '--');
-			_set('pbMaNhom',     phieu.san_pham?.manhom || '--');
+			_set('pbMaNhom', phieu.san_pham?.manhom || '--');
 			_set('pbTenTieuBan', phieu.bo_tieu_chi?.tenVongThi ? `${phieu.bo_tieu_chi.tenVongThi}` : '--');
 
 			const badge = document.getElementById('pbBoTieuChiBadge');
@@ -315,7 +328,7 @@
 			}
 
 			// Ẩn/hiện nút
-			document.getElementById('pbBtnLuuNhap').style.display  = isDaNop ? 'none' : '';
+			document.getElementById('pbBtnLuuNhap').style.display = isDaNop ? 'none' : '';
 			document.getElementById('pbBtnNopPhieu').style.display = isDaNop ? 'none' : '';
 
 			if (phieu.loi) {
@@ -385,7 +398,20 @@
 			if (!this.selectedSP) return;
 			const diem = this._collectDiem();
 			if (diem.some(d => d.diem === null)) { _toast('Vui lòng nhập điểm cho tất cả tiêu chí trước khi nộp phiếu', 'error'); return; }
-			if (!confirm('Sau khi nộp phiếu, bạn không thể chỉnh sửa lại điểm. Bạn chắc chắn muốn nộp?')) return;
+			const { isConfirmed } = await Swal.fire({
+				icon: 'question',
+				title: 'Xác nhận nộp phiếu',
+				text: 'Sau khi nộp, bạn không thể chỉnh sửa lại điểm.',
+				showCancelButton: true,
+				confirmButtonText: 'Nộp phiếu',
+				cancelButtonText: 'Huỷ',
+				buttonsStyling: false,
+				customClass: {
+					confirmButton: 'inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors',
+					cancelButton: 'inline-flex items-center px-5 py-2.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors ml-2',
+				},
+			});
+			if (!isConfirmed) return;
 			try {
 				// Lưu trước
 				const jSave = await _post(API, { action: 'luu_diem', id_sk: idSk, id_san_pham: this.selectedSP, diem });
@@ -410,7 +436,7 @@
 	// ══════════════════════════════════════════════════════════
 	function _set(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
 	function _e(s) {
-		return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+		return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 	}
 	function _loading(msg) {
 		return `<div class="flex items-center justify-center py-10 text-slate-400">
@@ -427,8 +453,10 @@
 		return j;
 	}
 	async function _post(url, data) {
-		const r = await fetch(url, { method: 'POST', credentials: 'same-origin',
-			headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+		const r = await fetch(url, {
+			method: 'POST', credentials: 'same-origin',
+			headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+		});
 		return r.json();
 	}
 	function _toast(msg, type = 'info') {
@@ -436,9 +464,9 @@
 		const t = document.createElement('div');
 		t.className = `fixed bottom-6 right-6 z-[9999] px-4 py-3 rounded-xl text-white text-sm font-semibold shadow-lg
 			flex items-center gap-2 ${colors[type] || colors.info}`;
-		t.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle':type==='error'?'fa-exclamation-circle':'fa-info-circle'}"></i> ${_e(msg)}`;
+		t.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${_e(msg)}`;
 		document.body.appendChild(t);
-		setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.35s'; setTimeout(()=>t.remove(),400); }, 3000);
+		setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.35s'; setTimeout(() => t.remove(), 400); }, 3000);
 	}
 
 	// ── Khởi động ──────────────────────────────────────────

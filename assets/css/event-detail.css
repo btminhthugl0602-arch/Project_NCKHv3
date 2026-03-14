@@ -69,11 +69,11 @@
     vertical-align: middle;
 }
 
-.criteria-workspace #criteriaSetList > div {
-    transition: all 0.16s ease;
+.criteria-workspace #criteriaSetList>div {
+    transition: border-color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
 }
 
-.criteria-workspace #criteriaSetList > div:hover {
+.criteria-workspace #criteriaSetList>div:hover {
     border-color: #d8b4fe;
     box-shadow: 0 4px 14px rgba(148, 85, 255, 0.12);
 }

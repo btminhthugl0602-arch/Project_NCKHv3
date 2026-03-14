@@ -810,7 +810,7 @@
     function loadCanhBaoIRR() { loadTienDoCham(); }
 
     // renderCanhBaoIRR is no longer used (replaced by inline table + modal)
-    function renderCanhBaoIRR() {}
+    function renderCanhBaoIRR() { }
 
     /**
      * Show IRR detail modal for a sản phẩm
@@ -889,16 +889,16 @@
         const body = document.getElementById('modalPhanTichBody');
         if (!body) return;
 
-        const irr               = data.irr;
-        const chiTietDiem       = data.chiTietDiem || [];
+        const irr = data.irr;
+        const chiTietDiem = data.chiTietDiem || [];
         // phanCongTrongTai: danh sách trọng tài đã phân công từ DB (kể cả chưa chấm)
-        const phanCongTrongTai  = data.phanCongTrongTai || [];
-        const tenSanPham        = itemMeta?.tensanpham || 'N/A';
-        const tenNhom           = itemMeta?.tennhom || itemMeta?.manhom || 'N/A';
+        const phanCongTrongTai = data.phanCongTrongTai || [];
+        const tenSanPham = itemMeta?.tensanpham || 'N/A';
+        const tenNhom = itemMeta?.tennhom || itemMeta?.manhom || 'N/A';
 
-        const baiThiMeta       = state.dsSanPham.find(s => s.idSanPham === idSanPham) || {};
+        const baiThiMeta = state.dsSanPham.find(s => s.idSanPham === idSanPham) || {};
         const trangThaiHienTai = baiThiMeta.trangThaiVongThi || null;
-        const isDone           = trangThaiHienTai === 'Đã duyệt' || trangThaiHienTai === 'Bị loại';
+        const isDone = trangThaiHienTai === 'Đã duyệt' || trangThaiHienTai === 'Bị loại';
 
         // Nhãn: "Giám khảo N" cho GK chính, "Trọng tài [N]" cho trọng tài
         let gkCount = 0, ttCount = 0;
@@ -908,9 +908,9 @@
                 ? (ttCount++ === 0 ? 'Trọng tài' : `Trọng tài ${ttCount}`)
                 : `Giám khảo ${++gkCount}`;
             return {
-                idGV:       gk.idGV,
-                tenGV:      gk.tenGV,
-                tongDiem:   gk.tongDiem || 0,
+                idGV: gk.idGV,
+                tenGV: gk.tenGV,
+                tongDiem: gk.tongDiem || 0,
                 label,
                 isTrongTai,
             };
@@ -922,8 +922,8 @@
             (gk.chiTiet || []).forEach(tc => {
                 if (!criteriaMap[tc.idTieuChi]) {
                     criteriaMap[tc.idTieuChi] = {
-                        id:        tc.idTieuChi,
-                        name:      tc.noiDungTieuChi,
+                        id: tc.idTieuChi,
+                        name: tc.noiDungTieuChi,
                         diemToiDa: parseFloat(tc.diemToiDa) || 10,
                         scoresByGV: {},
                     };
@@ -940,11 +940,11 @@
             ? phanCongTrongTai.map(tt => {
                 const scored = judges.find(j => j.idGV == tt.idGV);
                 return {
-                    idGV:       tt.idGV,
-                    tenGV:      tt.tenGV,
-                    tongDiem:   scored?.tongDiem || 0,
+                    idGV: tt.idGV,
+                    tenGV: tt.tenGV,
+                    tongDiem: scored?.tongDiem || 0,
                     isTrongTai: true,
-                    daChấm:     !!scored,
+                    daChấm: !!scored,
                 };
             })
             : judges.filter(j => j.isTrongTai);
@@ -953,11 +953,11 @@
 
         const criteriaList = Object.values(criteriaMap).map(tc => {
             const mainScores = mainJudges.map(j => tc.scoresByGV[j.idGV]).filter(s => s !== undefined);
-            const allScores  = judges.map(j => tc.scoresByGV[j.idGV]).filter(s => s !== undefined);
+            const allScores = judges.map(j => tc.scoresByGV[j.idGV]).filter(s => s !== undefined);
             let avg = 0, deviation = 0;
             if (mainScores.length >= 2) {
-                avg       = mainScores.reduce((a, b) => a + b, 0) / mainScores.length;
-                const mx  = Math.max(...mainScores), mn = Math.min(...mainScores);
+                avg = mainScores.reduce((a, b) => a + b, 0) / mainScores.length;
+                const mx = Math.max(...mainScores), mn = Math.min(...mainScores);
                 deviation = avg > 0 ? ((mx - mn) / avg) * 100 : 0;
             } else if (allScores.length >= 1) {
                 avg = allScores.reduce((a, b) => a + b, 0) / allScores.length;
@@ -966,16 +966,16 @@
             if (isHigh) {
                 problemCriteria++;
                 if (deviation > maxDeviation) {
-                    maxDeviation     = deviation;
+                    maxDeviation = deviation;
                     maxDeviationName = tc.name;
                 }
             }
             return { ...tc, avg, deviation, isHigh, allScores };
         });
 
-        const totalCriteria  = criteriaList.length;
-        const hasCanhBao     = irr?.canhBao || problemCriteria > 0;
-        const hasArbitrator  = trongTaiJudges.length > 0;
+        const totalCriteria = criteriaList.length;
+        const hasCanhBao = irr?.canhBao || problemCriteria > 0;
+        const hasArbitrator = trongTaiJudges.length > 0;
         // ttScored: true nếu TẤT CẢ trọng tài đã chấm ĐỦ TẤT CẢ tiêu chí (không chỉ 1 tiêu chí)
         const ttScored = hasArbitrator && trongTaiJudges.every(tt =>
             criteriaList.every(tc => tc.scoresByGV[tt.idGV] !== undefined)
@@ -985,7 +985,7 @@
         const scoredMainJudges = mainJudges.filter(j =>
             j.tongDiem > 0 || criteriaList.some(tc => tc.scoresByGV[j.idGV] !== undefined)
         );
-        const overallAvg  = scoredMainJudges.length > 0
+        const overallAvg = scoredMainJudges.length > 0
             ? (scoredMainJudges.reduce((a, j) => a + j.tongDiem, 0) / scoredMainJudges.length).toFixed(2)
             : '0.00';
         const diemHienTai = baiThiMeta.diemTrungBinh != null
@@ -993,8 +993,8 @@
             : overallAvg;
 
         // Tỉ lệ đồng thuận hiển thị = % tiêu chí KHÔNG lệch cao (dễ hiểu với BTC/GK)
-        const okCriteria  = totalCriteria - problemCriteria;
-        const irrPercent  = totalCriteria > 0
+        const okCriteria = totalCriteria - problemCriteria;
+        const irrPercent = totalCriteria > 0
             ? ((okCriteria / totalCriteria) * 100).toFixed(1)
             : '100.0';
 
@@ -1005,13 +1005,13 @@
 
         const criteriaRows = criteriaList.map(tc => {
             const scoreCells = judges.map(j => {
-                const s   = tc.scoresByGV[j.idGV];
+                const s = tc.scoresByGV[j.idGV];
                 const cls = j.isTrongTai ? 'text-amber-700 font-semibold' : '';
                 return `<td class="px-3 py-2.5 text-center text-sm ${cls}">${s !== undefined ? s : '<span class="text-slate-300">—</span>'}</td>`;
             }).join('');
             const avgTxt = tc.allScores.length > 0 ? tc.avg.toFixed(2) : '—';
             const devTxt = mainJudges.length >= 2 ? `${tc.deviation.toFixed(1)}%` : '—';
-            const badge  = mainJudges.length < 2 ? '' : tc.isHigh
+            const badge = mainJudges.length < 2 ? '' : tc.isHigh
                 ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700">&#9651; Lệch cao</span>`
                 : `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700">&#10003; OK</span>`;
             return `<tr class="border-b border-slate-100 ${tc.isHigh ? 'bg-red-50' : 'hover:bg-slate-50'}">
@@ -1089,7 +1089,7 @@
         } else {
             // Bình thường (không có trọng tài / trọng tài đã chấm xong)
             const noteCount = scoredMainJudges.length;
-            const noteText  = noteCount > 1
+            const noteText = noteCount > 1
                 ? `* Điểm gợi ý hiện tại là trung bình cộng của ${noteCount} giám khảo. BTC có thể chốt trực tiếp hoặc sửa lại theo quyết định cuối cùng.`
                 : `* Điểm gợi ý từ giám khảo. BTC có thể điều chỉnh trước khi chốt.`;
 
@@ -1574,7 +1574,7 @@
 
         // Tách danh sách bài có cảnh báo và bài sạch
         const warnedIds = dsSanPham.filter(id => !!state.canhBaoMap[id]);
-        const cleanIds  = dsSanPham.filter(id => !state.canhBaoMap[id]);
+        const cleanIds = dsSanPham.filter(id => !state.canhBaoMap[id]);
         const hasWarned = warnedIds.length > 0;
 
         // Xây dựng nội dung cảnh báo
@@ -1612,11 +1612,11 @@
 
         // Xác định danh sách cần duyệt và cờ skip_warned
         let dsToApprove = dsSanPham;
-        let skipWarned  = false;
+        let skipWarned = false;
         if (confirmResult.isDenied) {
             // Chỉ duyệt bài sạch, bỏ qua bài cảnh báo
             dsToApprove = cleanIds;
-            skipWarned  = false; // Chỉ gửi bài sạch, không cần skip_warned
+            skipWarned = false; // Chỉ gửi bài sạch, không cần skip_warned
         }
 
         if (dsToApprove.length === 0) {
@@ -1953,8 +1953,6 @@
                 timer: 3000,
                 timerProgressBar: true
             });
-        } else {
-            alert(message);
         }
     }
 

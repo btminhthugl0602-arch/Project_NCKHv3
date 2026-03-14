@@ -13,12 +13,12 @@
 (function () {
     'use strict';
 
-    const BASE  = window.APP_BASE_PATH || '';
-    const idSk  = window.EVENT_DETAIL_ID || 0;
-    const TAB   = window.EVENT_DETAIL_TAB || '';
+    const BASE = window.APP_BASE_PATH || '';
+    const idSk = window.EVENT_DETAIL_ID || 0;
+    const TAB = window.EVENT_DETAIL_TAB || '';
     const CAN_EDIT = window.TB_CAN_EDIT === true || window.JUDGES_CAN_EDIT === true;
 
-    const API_TB  = BASE + '/api/su_kien/tieu_ban.php';
+    const API_TB = BASE + '/api/su_kien/tieu_ban.php';
 
     // ══════════════════════════════════════════════════════════
     // HELPERS dùng chung
@@ -28,8 +28,8 @@
         if (el) el.textContent = val;
     }
     function _e(s) {
-        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
-            .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
     function _loading(msg) {
         return `<div class="flex items-center justify-center py-12 text-slate-400">
@@ -51,7 +51,7 @@
     }
     function _toast(msg, type = 'info') {
         const colors = { success: 'bg-emerald-500', error: 'bg-rose-500', info: 'bg-slate-700' };
-        const icons  = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+        const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
         const t = document.createElement('div');
         t.className = `fixed bottom-6 right-6 z-[9999] px-4 py-3 rounded-xl text-white text-sm
             font-semibold shadow-lg flex items-center gap-2 ${colors[type] || colors.info}`;
@@ -78,12 +78,12 @@
     }
     function _badge(text, color) {
         const map = {
-            purple:  'bg-purple-100 text-purple-700',
-            blue:    'bg-blue-100 text-blue-700',
+            purple: 'bg-purple-100 text-purple-700',
+            blue: 'bg-blue-100 text-blue-700',
             emerald: 'bg-emerald-100 text-emerald-700',
-            amber:   'bg-amber-100 text-amber-700',
-            rose:    'bg-rose-100 text-rose-600',
-            slate:   'bg-slate-100 text-slate-600',
+            amber: 'bg-amber-100 text-amber-700',
+            rose: 'bg-rose-100 text-rose-600',
+            slate: 'bg-slate-100 text-slate-600',
         };
         return `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full ${map[color] || map.slate}">${_e(text)}</span>`;
     }
@@ -134,11 +134,11 @@
                 ]);
 
                 const d = jList.data || {};
-                this.data        = d.tieuban_list || [];
+                this.data = d.tieuban_list || [];
                 this.assignedIds = d.assigned_ids || [];
-                this.allGV       = jGV.data  || [];
-                this.allBTC      = jBTC.data || [];
-                this.allSP       = jSP.data  || [];
+                this.allGV = jGV.data || [];
+                this.allBTC = jBTC.data || [];
+                this.allSP = jSP.data || [];
 
                 this.renderThongKe();
                 this.renderFilterVong();
@@ -151,8 +151,8 @@
         renderThongKe() {
             const spXep = this.data.reduce((n, tb) => n + (tb.san_pham?.length || 0), 0);
             _set('statSoTieuBan', this.data.length);
-            _set('statSoBaiXep',  spXep);
-            _set('statSoBaiCho',  this.allSP.length);
+            _set('statSoBaiXep', spXep);
+            _set('statSoBaiCho', this.allSP.length);
         },
 
         renderFilterVong() {
@@ -169,18 +169,18 @@
         },
 
         renderList() {
-            const wrap   = document.getElementById('subcommitteeList');
+            const wrap = document.getElementById('subcommitteeList');
             const search = (document.getElementById('tbSearchInput')?.value || '').toLowerCase();
             const vongId = document.getElementById('tbFilterVong')?.value || '';
-            const count  = document.getElementById('tbFilterCount');
+            const count = document.getElementById('tbFilterCount');
 
             if (!wrap) return;
 
             let filtered = this.data;
             if (vongId) filtered = filtered.filter(tb => String(tb.idVongThi) === vongId);
-            if (search)  filtered = filtered.filter(tb =>
+            if (search) filtered = filtered.filter(tb =>
                 (tb.tenTieuBan || '').toLowerCase().includes(search) ||
-                (tb.diaDiem    || '').toLowerCase().includes(search)
+                (tb.diaDiem || '').toLowerCase().includes(search)
             );
 
             if (count) count.textContent = filtered.length < this.data.length
@@ -200,13 +200,13 @@
                 const btn = e.target.closest('[data-action]');
                 if (!btn) return;
                 const act = btn.dataset.action;
-                const id  = +btn.dataset.id;
-                if (act === 'edit-tb')    this.openModalEdit(id);
-                if (act === 'delete-tb')  this.xoaTieuBan(id, btn.dataset.ten);
-                if (act === 'add-gv')     this.openModalGV(id, btn.dataset.ten);
-                if (act === 'remove-gv')  this.xoaGV(id, +btn.dataset.gv, btn.dataset.tengv);
-                if (act === 'add-sp')     this.openModalSP(id, btn.dataset.ten);
-                if (act === 'remove-sp')  this.xoaSP(id, +btn.dataset.sp, btn.dataset.tensp);
+                const id = +btn.dataset.id;
+                if (act === 'edit-tb') this.openModalEdit(id);
+                if (act === 'delete-tb') this.xoaTieuBan(id, btn.dataset.ten);
+                if (act === 'add-gv') this.openModalGV(id, btn.dataset.ten);
+                if (act === 'remove-gv') this.xoaGV(id, +btn.dataset.gv, btn.dataset.tengv);
+                if (act === 'add-sp') this.openModalSP(id, btn.dataset.ten);
+                if (act === 'remove-sp') this.xoaSP(id, +btn.dataset.sp, btn.dataset.tensp);
             };
         },
 
@@ -247,10 +247,10 @@
                         <div class="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-slate-400">
                             ${tb.tenVongThi ? `<span><i class="fas fa-flag mr-1"></i>${_e(tb.tenVongThi)}</span>` : ''}
                             ${tb.ngayBaoCao ? `<span><i class="fas fa-calendar mr-1"></i>${tb.ngayBaoCao}</span>` : ''}
-                            ${tb.diaDiem    ? `<span><i class="fas fa-map-marker-alt mr-1"></i>${_e(tb.diaDiem)}</span>` : ''}
+                            ${tb.diaDiem ? `<span><i class="fas fa-map-marker-alt mr-1"></i>${_e(tb.diaDiem)}</span>` : ''}
                             ${tb.tenBoTieuChi
-                                ? _badge(tb.tenBoTieuChi, 'purple')
-                                : _badge('Chưa cấu hình bộ tiêu chí', 'rose')}
+                    ? _badge(tb.tenBoTieuChi, 'purple')
+                    : _badge('Chưa cấu hình bộ tiêu chí', 'rose')}
                         </div>
                     </div>
                     ${CAN_EDIT ? `<div class="flex items-center gap-1.5 flex-shrink-0">
@@ -344,8 +344,8 @@
                                 rounded-lg focus:outline-none focus:border-purple-400">
                                 <option value="">-- Chọn vòng thi --</option>
                                 ${this.allBTC.length > 0
-                                    ? `<option value="0">Vòng thi mặc định (sẽ tải sau)</option>`
-                                    : ''}
+                        ? `<option value="0">Vòng thi mặc định (sẽ tải sau)</option>`
+                        : ''}
                             </select>
                         </div>` : ''}
                         <div class="grid grid-cols-2 gap-4">
@@ -413,10 +413,10 @@
                     ).join('');
             }
 
-            document.getElementById('tbModalClose')?.addEventListener('click',  () => this._removeModal());
+            document.getElementById('tbModalClose')?.addEventListener('click', () => this._removeModal());
             document.getElementById('tbModalCancel')?.addEventListener('click', () => this._removeModal());
             document.getElementById('tbModalBackdrop')?.addEventListener('click', () => this._removeModal());
-            document.getElementById('tbModalSave')?.addEventListener('click',   () => this._saveTao());
+            document.getElementById('tbModalSave')?.addEventListener('click', () => this._saveTao());
         },
 
         async openModalEdit(idTieuBan) {
@@ -424,7 +424,7 @@
             if (!tb) return;
 
             document.body.insertAdjacentHTML('beforeend', this._modalHtml('Sửa tiểu ban', tb));
-            document.getElementById('tbModalClose')?.addEventListener('click',  () => this._removeModal());
+            document.getElementById('tbModalClose')?.addEventListener('click', () => this._removeModal());
             document.getElementById('tbModalCancel')?.addEventListener('click', () => this._removeModal());
             document.getElementById('tbModalBackdrop')?.addEventListener('click', () => this._removeModal());
             document.getElementById('tbModalSave')?.addEventListener('click',
@@ -440,14 +440,14 @@
         },
 
         async _saveTao() {
-            const ten      = document.getElementById('tbInputTen')?.value.trim();
-            const idVong   = +(document.getElementById('tbInputVong')?.value || 0);
-            const ngay     = document.getElementById('tbInputNgay')?.value || null;
-            const diaDiem  = document.getElementById('tbInputDiaDiem')?.value.trim() || null;
-            const idBTC    = +(document.getElementById('tbInputBTC')?.value || 0) || null;
-            const moTa     = document.getElementById('tbInputMoTa')?.value.trim() || null;
+            const ten = document.getElementById('tbInputTen')?.value.trim();
+            const idVong = +(document.getElementById('tbInputVong')?.value || 0);
+            const ngay = document.getElementById('tbInputNgay')?.value || null;
+            const diaDiem = document.getElementById('tbInputDiaDiem')?.value.trim() || null;
+            const idBTC = +(document.getElementById('tbInputBTC')?.value || 0) || null;
+            const moTa = document.getElementById('tbInputMoTa')?.value.trim() || null;
 
-            if (!ten)    { _toast('Vui lòng nhập tên tiểu ban', 'error'); return; }
+            if (!ten) { _toast('Vui lòng nhập tên tiểu ban', 'error'); return; }
             if (!idVong) { _toast('Vui lòng chọn vòng thi', 'error'); return; }
 
             const btn = document.getElementById('tbModalSave');
@@ -466,11 +466,11 @@
         },
 
         async _saveEdit(idTieuBan) {
-            const ten     = document.getElementById('tbInputTen')?.value.trim();
-            const ngay    = document.getElementById('tbInputNgay')?.value || null;
+            const ten = document.getElementById('tbInputTen')?.value.trim();
+            const ngay = document.getElementById('tbInputNgay')?.value || null;
             const diaDiem = document.getElementById('tbInputDiaDiem')?.value.trim() || null;
-            const idBTC   = +(document.getElementById('tbInputBTC')?.value || 0) || null;
-            const moTa    = document.getElementById('tbInputMoTa')?.value.trim();
+            const idBTC = +(document.getElementById('tbInputBTC')?.value || 0) || null;
+            const moTa = document.getElementById('tbInputMoTa')?.value.trim();
 
             if (!ten) { _toast('Vui lòng nhập tên tiểu ban', 'error'); return; }
 
@@ -489,7 +489,20 @@
         },
 
         async xoaTieuBan(idTieuBan, ten) {
-            if (!confirm(`Xóa tiểu ban "${ten}"? Thao tác này sẽ xóa luôn toàn bộ GV và bài đã xếp.`)) return;
+            const { isConfirmed } = await Swal.fire({
+                icon: 'warning',
+                title: 'Xác nhận xóa tiểu ban',
+                text: `Xóa tiểu ban "${ten}"? Thao tác này sẽ xóa luôn toàn bộ GV và bài đã xếp.`,
+                showCancelButton: true,
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Huỷ',
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: 'inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors',
+                    cancelButton: 'inline-flex items-center px-5 py-2.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors ml-2',
+                },
+            });
+            if (!isConfirmed) return;
             const j = await _post(API_TB, { action: 'xoa', id_tieu_ban: idTieuBan });
             _toast(j.message, j.status === 'success' ? 'success' : 'error');
             if (j.status === 'success') this.load();
@@ -497,9 +510,9 @@
 
         // ── Modal Thêm GV ─────────────────────────────────────
         openModalGV(idTieuBan, tenTieuBan) {
-            const tb     = this.data.find(t => t.idTieuBan == idTieuBan);
+            const tb = this.data.find(t => t.idTieuBan == idTieuBan);
             const daDung = new Set((tb?.giang_vien || []).map(g => g.idGV));
-            const gvCon  = this.allGV.filter(g => !daDung.has(g.idGV));
+            const gvCon = this.allGV.filter(g => !daDung.has(g.idGV));
 
             const html = `<div id="tbGVModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" id="tbGVBackdrop"></div>
@@ -516,14 +529,14 @@
                     </div>
                     <div class="p-6 space-y-4">
                         ${gvCon.length === 0
-                            ? `<p class="text-sm text-slate-400 text-center py-4">Tất cả giảng viên đã có trong tiểu ban.</p>`
-                            : `<div>
+                    ? `<p class="text-sm text-slate-400 text-center py-4">Tất cả giảng viên đã có trong tiểu ban.</p>`
+                    : `<div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Chọn giảng viên</label>
                                 <select id="tbGVSelect" class="w-full px-3 py-2 text-sm border border-slate-200
                                     rounded-lg focus:outline-none focus:border-purple-400">
                                     ${gvCon.map(g =>
-                                        `<option value="${g.idGV}">${_e(g.tenGV)}</option>`
-                                    ).join('')}
+                        `<option value="${g.idGV}">${_e(g.tenGV)}</option>`
+                    ).join('')}
                                 </select>
                             </div>
                             <div>
@@ -535,7 +548,7 @@
                                     <option value="Thư ký">Thư ký</option>
                                 </select>
                             </div>`
-                        }
+                }
                     </div>
                     ${gvCon.length > 0 ? `<div class="flex justify-end gap-2 px-6 py-4 border-t border-slate-100">
                         <button id="tbGVCancel" class="px-4 py-2 text-sm font-semibold text-slate-600
@@ -547,11 +560,11 @@
             </div>`;
 
             document.body.insertAdjacentHTML('beforeend', html);
-            document.getElementById('tbGVClose')?.addEventListener('click',   () => this._removeModal());
-            document.getElementById('tbGVCancel')?.addEventListener('click',  () => this._removeModal());
-            document.getElementById('tbGVBackdrop')?.addEventListener('click',() => this._removeModal());
+            document.getElementById('tbGVClose')?.addEventListener('click', () => this._removeModal());
+            document.getElementById('tbGVCancel')?.addEventListener('click', () => this._removeModal());
+            document.getElementById('tbGVBackdrop')?.addEventListener('click', () => this._removeModal());
             document.getElementById('tbGVSave')?.addEventListener('click', async () => {
-                const idGV  = +(document.getElementById('tbGVSelect')?.value || 0);
+                const idGV = +(document.getElementById('tbGVSelect')?.value || 0);
                 const vaiTro = document.getElementById('tbGVVaiTro')?.value || 'Thành viên';
                 if (!idGV) return;
                 const j = await _post(API_TB, { action: 'them_gv', id_tieu_ban: idTieuBan, id_gv: idGV, vai_tro: vaiTro });
@@ -561,7 +574,20 @@
         },
 
         async xoaGV(idTieuBan, idGV, tenGV) {
-            if (!confirm(`Xóa "${tenGV}" khỏi tiểu ban?`)) return;
+            const { isConfirmed } = await Swal.fire({
+                icon: 'warning',
+                title: 'Xác nhận xóa giảng viên',
+                text: `Xóa "${tenGV}" khỏi tiểu ban?`,
+                showCancelButton: true,
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Huỷ',
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: 'inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors',
+                    cancelButton: 'inline-flex items-center px-5 py-2.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors ml-2',
+                },
+            });
+            if (!isConfirmed) return;
             const j = await _post(API_TB, { action: 'xoa_gv', id_tieu_ban: idTieuBan, id_gv: idGV });
             _toast(j.message, j.status === 'success' ? 'success' : 'error');
             if (j.status === 'success') this.load();
@@ -584,11 +610,11 @@
                     </div>
                     <div class="p-6">
                         ${this.allSP.length === 0
-                            ? `<p class="text-sm text-slate-400 text-center py-4">Không còn bài nào chờ xếp phòng.</p>`
-                            : `<p class="text-xs text-slate-500 mb-3">Chọn các bài muốn xếp vào tiểu ban này:</p>
+                    ? `<p class="text-sm text-slate-400 text-center py-4">Không còn bài nào chờ xếp phòng.</p>`
+                    : `<p class="text-xs text-slate-500 mb-3">Chọn các bài muốn xếp vào tiểu ban này:</p>
                                <div class="space-y-1.5 max-h-64 overflow-y-auto">
                                    ${this.allSP.map(sp =>
-                                       `<label class="flex items-center gap-3 px-3 py-2.5 rounded-xl border
+                        `<label class="flex items-center gap-3 px-3 py-2.5 rounded-xl border
                                            border-slate-200 hover:border-blue-300 hover:bg-blue-50/40 cursor-pointer transition-colors">
                                            <input type="checkbox" value="${sp.idSanPham}"
                                                class="tb-sp-check w-4 h-4 rounded accent-blue-600">
@@ -600,9 +626,9 @@
                                                </p>
                                            </div>
                                        </label>`
-                                   ).join('')}
+                    ).join('')}
                                </div>`
-                        }
+                }
                     </div>
                     ${this.allSP.length > 0 ? `<div class="flex justify-end gap-2 px-6 py-4 border-t border-slate-100">
                         <button id="tbSPCancel" class="px-4 py-2 text-sm font-semibold text-slate-600
@@ -614,9 +640,9 @@
             </div>`;
 
             document.body.insertAdjacentHTML('beforeend', html);
-            document.getElementById('tbSPClose')?.addEventListener('click',   () => this._removeModal());
-            document.getElementById('tbSPCancel')?.addEventListener('click',  () => this._removeModal());
-            document.getElementById('tbSPBackdrop')?.addEventListener('click',() => this._removeModal());
+            document.getElementById('tbSPClose')?.addEventListener('click', () => this._removeModal());
+            document.getElementById('tbSPCancel')?.addEventListener('click', () => this._removeModal());
+            document.getElementById('tbSPBackdrop')?.addEventListener('click', () => this._removeModal());
             document.getElementById('tbSPSave')?.addEventListener('click', async () => {
                 const ids = [...document.querySelectorAll('.tb-sp-check:checked')].map(c => +c.value);
                 if (!ids.length) { _toast('Vui lòng chọn ít nhất 1 bài', 'error'); return; }
@@ -627,7 +653,20 @@
         },
 
         async xoaSP(idTieuBan, idSanPham, tenSP) {
-            if (!confirm(`Rút "${tenSP}" khỏi tiểu ban?`)) return;
+            const { isConfirmed } = await Swal.fire({
+                icon: 'warning',
+                title: 'Xác nhận rút sản phẩm',
+                text: `Rút "${tenSP}" khỏi tiểu ban?`,
+                showCancelButton: true,
+                confirmButtonText: 'Rút',
+                cancelButtonText: 'Huỷ',
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: 'inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors',
+                    cancelButton: 'inline-flex items-center px-5 py-2.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors ml-2',
+                },
+            });
+            if (!isConfirmed) return;
             const j = await _post(API_TB, { action: 'xoa_sp', id_tieu_ban: idTieuBan, id_san_pham: idSanPham });
             _toast(j.message, j.status === 'success' ? 'success' : 'error');
             if (j.status === 'success') this.load();
@@ -713,7 +752,7 @@
                         <p class="mb-0 text-sm font-semibold text-slate-700">${_e(tb.tenTieuBan)}</p>
                         <p class="mb-0 text-xs text-slate-400">
                             ${tb.tenVongThi ? `<span class="mr-2"><i class="fas fa-flag mr-1"></i>${_e(tb.tenVongThi)}</span>` : ''}
-                            ${tb.diaDiem    ? `<span><i class="fas fa-map-marker-alt mr-1"></i>${_e(tb.diaDiem)}</span>` : ''}
+                            ${tb.diaDiem ? `<span><i class="fas fa-map-marker-alt mr-1"></i>${_e(tb.diaDiem)}</span>` : ''}
                         </p>
                     </td>
                     <td class="px-3 py-3 text-center text-sm font-bold text-slate-600">
@@ -746,7 +785,7 @@
 
         renderStat() {
             const summary = document.getElementById('judgesStatSummary');
-            const text    = document.getElementById('judgesStatText');
+            const text = document.getElementById('judgesStatText');
             if (!summary || !text) return;
 
             const soTB = this.data.length;
