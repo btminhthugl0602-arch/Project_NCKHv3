@@ -14,7 +14,7 @@
 
 .ov-stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 28px rgba(146, 19, 236, .10);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, .08);
 }
 
 .ov-round-card {
@@ -26,37 +26,37 @@
 }
 
 .ov-btn-register {
-    background: linear-gradient(135deg, #9213ec, #c026d3);
-    box-shadow: 0 4px 18px rgba(146, 19, 236, .35);
-    transition: box-shadow .2s, transform .2s;
+    background: var(--color-primary);
+    transition: background-color .2s, transform .2s;
 }
 
 .ov-btn-register:hover {
-    box-shadow: 0 6px 26px rgba(146, 19, 236, .50);
+    background: var(--color-primary-dark);
     transform: translateY(-1px);
 }
 
 .ov-skeleton {
-    background: linear-gradient(90deg, #f0eef5 25%, #e8e4f0 50%, #f0eef5 75%);
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
     background-size: 200% 100%;
     animation: ov-shimmer 1.5s infinite;
     border-radius: 8px;
 }
 
 @keyframes ov-shimmer {
-    0% {
-        background-position: 200% 0
-    }
+    0% { background-position: 200% 0 }
+    100% { background-position: -200% 0 }
+}
 
-    100% {
-        background-position: -200% 0
-    }
+@media (prefers-reduced-motion: reduce) {
+    .ov-skeleton { animation: none; }
+    .ov-stat-card, .ov-round-card { transition: none; }
+    .ov-btn-register { transition: none; }
 }
 </style>
 
 <!-- ── Loading State ── -->
 <div id="ov-loading" class="space-y-5">
-    <div class="bg-white rounded-2xl p-7" style="box-shadow:0 1px 8px rgba(146,19,236,.06)">
+    <div class="bg-white rounded-2xl p-7 border border-slate-100">
         <div class="ov-skeleton h-5 w-32 mb-4"></div>
         <div class="ov-skeleton h-9 w-2/3 mb-3"></div>
         <div class="flex gap-2">
@@ -89,7 +89,7 @@
 <div id="ov-content" class="hidden space-y-5">
 
     <!-- Hero -->
-    <div class="bg-white rounded-2xl px-8 py-7" style="box-shadow:0 1px 8px rgba(146,19,236,.06)">
+    <div class="bg-white rounded-2xl px-8 py-7 border border-slate-100">
         <div class="flex items-start justify-between gap-6 flex-wrap">
             <div class="flex-1 min-w-0">
                 <div class="flex flex-wrap gap-2 items-center mb-3">
@@ -115,10 +115,8 @@
             ['id' => 'ov-time-kt',   'icon' => 'verified',    'label' => 'Kết thúc'],
         ];
         foreach ($timeChips as $chip): ?>
-        <div class="bg-white rounded-2xl px-5 py-4 flex items-center gap-4 border border-primary/5 hover:border-primary/25 transition-colors"
-            style="box-shadow:0 1px 6px rgba(146,19,236,.05)">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style="background:rgba(146,19,236,.08)">
+        <div class="bg-white rounded-2xl px-5 py-4 flex items-center gap-4 border border-slate-100 hover:border-primary/25 transition-colors">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/10">
                 <span class="material-symbols-outlined text-primary text-[20px]"><?php echo $chip['icon']; ?></span>
             </div>
             <div>
@@ -139,8 +137,7 @@
             ['id' => 'ov-stat-cd',   'icon' => 'description', 'label' => 'Số bài đã nộp'],
         ];
         foreach ($statCards as $card): ?>
-        <div class="ov-stat-card bg-white rounded-2xl p-6 relative overflow-hidden"
-            style="border:1px solid rgba(146,19,236,.08);box-shadow:0 1px 8px rgba(146,19,236,.05)">
+        <div class="ov-stat-card bg-white rounded-2xl p-6 relative overflow-hidden border border-slate-100 border-l-4 border-l-primary">
             <div class="absolute -right-3 -bottom-3 opacity-[0.07]">
                 <span class="material-symbols-outlined text-primary"
                     style="font-size:80px;"><?php echo $card['icon']; ?></span>
@@ -154,7 +151,7 @@
     </div>
 
     <!-- Vòng thi -->
-    <div class="bg-white rounded-2xl p-6" style="box-shadow:0 1px 8px rgba(146,19,236,.06)">
+    <div class="bg-white rounded-2xl p-6 border border-slate-100">
         <div class="flex items-center gap-2 mb-5">
             <span class="material-symbols-outlined text-primary text-[20px]">alt_route</span>
             <h2 class="text-base font-bold text-slate-800">Lộ trình cuộc thi</h2>
@@ -212,10 +209,10 @@
             const titleCls = isActive ? 'text-primary' : 'text-slate-800';
             const deadlineCls = isActive ? 'text-primary' : 'text-slate-600';
             const activeDot = isActive ?
-                `<div style="position:absolute;left:-10px;top:50%;transform:translateY(-50%);width:20px;height:20px;background:#9213ec;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px rgba(146,19,236,.15);"><span class="material-symbols-outlined" style="font-size:11px;color:white;">adjust</span></div>` :
+                `<div class="absolute -left-[10px] top-1/2 -translate-y-1/2 size-5 rounded-full bg-primary flex items-center justify-center ring-4 ring-primary/15"><span class="material-symbols-outlined text-white" style="font-size:11px;">adjust</span></div>` :
                 '';
             const badgeHienTai = isActive ?
-                `<span style="padding:2px 8px;background:rgba(146,19,236,.1);color:#9213ec;font-size:10px;font-weight:700;border-radius:99px;text-transform:uppercase;">Hiện tại</span>` :
+                `<span class="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase">Hiện tại</span>` :
                 '';
             const deadline = v.thoiGianDongNop ?
                 `<div class="text-xs font-semibold ${deadlineCls}">Hạn nộp: ${fmt(v.thoiGianDongNop)}</div>` :
@@ -231,7 +228,7 @@
         const $el = document.getElementById('ov-chu-de');
         if (!list || list.length === 0) return;
         $el.innerHTML = list.map(c =>
-            `<span style="padding:4px 10px;background:rgba(146,19,236,.08);color:#7c3aed;font-size:11px;font-weight:600;border-radius:6px;">#${c.tenChuDe}</span>`
+            `<span class="inline-flex items-center px-3 py-1 bg-primary/10 text-primary text-[11px] font-semibold rounded-md">#${c.tenChuDe}</span>`
         ).join('');
     }
 

@@ -2022,42 +2022,39 @@
             return;
         }
 
+        const inputCls = 'w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-700 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors';
         const { value: formValues } = await Swal.fire({
             title: 'Sửa vòng thi',
             html:
-                '<div class="text-left swal-round-form">' +
-                '<div class="space-y-3">' +
+                '<div class="text-left space-y-3">' +
                 '<div>' +
-                '<label class="block mb-1 text-xs font-semibold text-slate-700">Tên vòng thi <span class="text-rose-500">*</span></label>' +
-                `<input id="swal-edit-tenVongThi" type="text" class="swal2-input !w-full !m-0" value="${round.tenVongThi || ''}" />` +
+                '<label class="block mb-1.5 text-xs font-semibold text-slate-700">Tên vòng thi <span class="text-rose-500">*</span></label>' +
+                `<input id="swal-edit-tenVongThi" type="text" class="${inputCls}" value="${round.tenVongThi || ''}" />` +
                 '</div>' +
                 '<div>' +
-                '<label class="block mb-1 text-xs font-semibold text-slate-700">Mô tả</label>' +
-                `<textarea id="swal-edit-moTaVongThi" rows="2" class="swal2-textarea !w-full !m-0">${round.moTa || ''}</textarea>` +
+                '<label class="block mb-1.5 text-xs font-semibold text-slate-700">Mô tả</label>' +
+                `<textarea id="swal-edit-moTaVongThi" rows="2" class="${inputCls} resize-none">${round.moTa || ''}</textarea>` +
                 '</div>' +
                 '<div>' +
-                '<label class="block mb-1 text-xs font-semibold text-slate-700">Thứ tự</label>' +
-                `<input id="swal-edit-thuTuVongThi" type="number" min="1" class="swal2-input !w-full !m-0" value="${round.thuTu || 1}" />` +
+                '<label class="block mb-1.5 text-xs font-semibold text-slate-700">Thứ tự</label>' +
+                `<input id="swal-edit-thuTuVongThi" type="number" min="1" class="${inputCls}" value="${round.thuTu || 1}" />` +
                 '</div>' +
                 '<div class="grid grid-cols-2 gap-3">' +
                 '<div>' +
-                '<label class="block mb-1 text-xs font-semibold text-slate-700">Ngày bắt đầu</label>' +
-                `<input id="swal-edit-ngayBDVongThi" type="datetime-local" class="swal2-input !w-full !m-0" value="${toDatetimeLocal(round.ngayBatDau)}" />` +
+                '<label class="block mb-1.5 text-xs font-semibold text-slate-700">Ngày bắt đầu</label>' +
+                `<input id="swal-edit-ngayBDVongThi" type="datetime-local" class="${inputCls}" value="${toDatetimeLocal(round.ngayBatDau)}" />` +
                 '</div>' +
                 '<div>' +
-                '<label class="block mb-1 text-xs font-semibold text-slate-700">Ngày kết thúc</label>' +
-                `<input id="swal-edit-ngayKTVongThi" type="datetime-local" class="swal2-input !w-full !m-0" value="${toDatetimeLocal(round.ngayKetThuc)}" />` +
-                '</div>' +
+                '<label class="block mb-1.5 text-xs font-semibold text-slate-700">Ngày kết thúc</label>' +
+                `<input id="swal-edit-ngayKTVongThi" type="datetime-local" class="${inputCls}" value="${toDatetimeLocal(round.ngayKetThuc)}" />` +
                 '</div>' +
                 '</div>' +
                 '</div>',
             showCancelButton: true,
             buttonsStyling: false,
             customClass: {
-                popup: 'swal-round-popup',
-                confirmButton: 'swal-round-confirm',
-                cancelButton: 'swal-round-cancel',
-                actions: 'swal-round-actions',
+                confirmButton: 'inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors',
+                cancelButton:  'inline-flex items-center px-5 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors ml-2',
             },
             confirmButtonText: 'Lưu thay đổi',
             cancelButtonText: 'Huỷ',
@@ -2509,43 +2506,40 @@
 
     if (btnCreateRound) {
         btnCreateRound.addEventListener('click', async function () {
+            const inputCls = 'w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-700 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors';
             const { value: formValues } = await Swal.fire({
                 title: 'Thêm vòng thi',
                 width: 620,
                 html:
                     '<div class="text-left space-y-3">' +
                     '<div>' +
-                    '<label class="block mb-1 text-xs font-semibold text-slate-700">Tên vòng thi</label>' +
-                    '<input id="swal-tenVongThi" class="swal2-input !w-full !m-0" placeholder="Ví dụ: Vòng sơ loại" />' +
+                    '<label class="block mb-1.5 text-xs font-semibold text-slate-700">Tên vòng thi <span class="text-rose-500">*</span></label>' +
+                    `<input id="swal-tenVongThi" type="text" class="${inputCls}" placeholder="Ví dụ: Vòng sơ loại" />` +
                     '</div>' +
                     '<div>' +
-                    '<label class="block mb-1 text-xs font-semibold text-slate-700">Mô tả vòng thi</label>' +
-                    '<textarea id="swal-moTaVongThi" class="swal2-textarea !w-full !m-0 min-h-[84px]" placeholder="Mô tả mục tiêu của vòng thi"></textarea>' +
+                    '<label class="block mb-1.5 text-xs font-semibold text-slate-700">Mô tả vòng thi</label>' +
+                    `<textarea id="swal-moTaVongThi" rows="3" class="${inputCls} resize-none" placeholder="Mô tả mục tiêu của vòng thi"></textarea>` +
                     '</div>' +
-                    '<div class="grid grid-cols-1 gap-3 md:grid-cols-3">' +
+                    '<div class="grid grid-cols-3 gap-3">' +
                     '<div>' +
-                    '<label class="block mb-1 text-xs font-semibold text-slate-700">Thứ tự</label>' +
-                    '<input id="swal-thuTuVongThi" type="number" class="swal2-input !w-full !m-0" min="1" value="1" />' +
-                    '</div>' +
-                    '<div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">' +
-                    '<div>' +
-                    '<label class="block mb-1 text-xs font-semibold text-slate-700">Ngày bắt đầu</label>' +
-                    '<input id="swal-ngayBDVongThi" type="datetime-local" class="swal2-input !w-full !m-0" />' +
+                    '<label class="block mb-1.5 text-xs font-semibold text-slate-700">Thứ tự</label>' +
+                    `<input id="swal-thuTuVongThi" type="number" min="1" value="1" class="${inputCls}" />` +
                     '</div>' +
                     '<div>' +
-                    '<label class="block mb-1 text-xs font-semibold text-slate-700">Ngày kết thúc</label>' +
-                    '<input id="swal-ngayKTVongThi" type="datetime-local" class="swal2-input !w-full !m-0" />' +
+                    '<label class="block mb-1.5 text-xs font-semibold text-slate-700">Ngày bắt đầu</label>' +
+                    `<input id="swal-ngayBDVongThi" type="datetime-local" class="${inputCls}" />` +
                     '</div>' +
+                    '<div>' +
+                    '<label class="block mb-1.5 text-xs font-semibold text-slate-700">Ngày kết thúc</label>' +
+                    `<input id="swal-ngayKTVongThi" type="datetime-local" class="${inputCls}" />` +
                     '</div>' +
                     '</div>' +
                     '</div>',
                 showCancelButton: true,
                 buttonsStyling: false,
                 customClass: {
-                    popup: 'swal-round-popup',
-                    confirmButton: 'swal-round-confirm',
-                    cancelButton: 'swal-round-cancel',
-                    actions: 'swal-round-actions',
+                    confirmButton: 'inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors',
+                    cancelButton:  'inline-flex items-center px-5 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors ml-2',
                 },
                 confirmButtonText: 'Tạo vòng thi',
                 cancelButtonText: 'Huỷ',
@@ -2572,24 +2566,14 @@
                 },
             });
 
-            if (!formValues) {
-                return;
-            }
+            if (!formValues) return;
 
             try {
                 await taoVongThi(formValues);
                 await napDanhSachVongThi();
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Đã tạo vòng thi',
-                    text: 'Vòng thi mới đã được thêm vào sự kiện.',
-                });
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Đã tạo vòng thi mới', showConfirmButton: false, timer: 2500 });
             } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Không thể tạo vòng thi',
-                    text: error.message || 'Vui lòng thử lại.',
-                });
+                Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: error.message || 'Không thể tạo vòng thi', showConfirmButton: false, timer: 3000 });
             }
         });
     }

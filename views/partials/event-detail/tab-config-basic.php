@@ -14,23 +14,25 @@
             <div>
                 <label class="block mb-1 text-xs font-semibold text-slate-700">Tên sự kiện</label>
                 <input id="basicTenSuKien" type="text"
-                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-200 text-slate-700
+                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors" />
             </div>
             <div>
                 <label class="block mb-1 text-xs font-semibold text-slate-700">Mô tả</label>
-                <textarea id="basicMoTa"
-                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none"
-                    rows="3"></textarea>
+                <textarea id="basicMoTa" rows="3"
+                    class="w-full px-3 py-2 text-sm border rounded-lg border-slate-200 text-slate-700 resize-none
+                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors"></textarea>
             </div>
             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div>
                     <label class="block mb-1 text-xs font-semibold text-slate-700">Cấp tổ chức</label>
                     <select id="basicIdCap"
-                        class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none"></select>
+                        class="w-full px-3 py-2 text-sm border rounded-lg border-slate-200 bg-white text-slate-700
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors"></select>
                 </div>
                 <div>
                     <label class="block mb-1 text-xs font-semibold text-slate-700">Trạng thái</label>
-                    <div id="basicTrangThaiText" class="px-3 py-2 text-sm border rounded-lg border-slate-200 bg-white">
+                    <div id="basicTrangThaiText" class="px-3 py-2 text-sm border rounded-lg border-slate-200 bg-white text-slate-700">
                         --</div>
                 </div>
             </div>
@@ -38,33 +40,41 @@
                 <div>
                     <label class="block mb-1 text-xs font-semibold text-slate-700">Mở đăng ký</label>
                     <input id="basicNgayMoDK" type="datetime-local"
-                        class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+                        class="w-full px-3 py-2 text-sm border rounded-lg border-slate-200 text-slate-700
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors" />
                 </div>
                 <div>
                     <label class="block mb-1 text-xs font-semibold text-slate-700">Đóng đăng ký</label>
                     <input id="basicNgayDongDK" type="datetime-local"
-                        class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+                        class="w-full px-3 py-2 text-sm border rounded-lg border-slate-200 text-slate-700
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors" />
                 </div>
             </div>
             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div>
                     <label class="block mb-1 text-xs font-semibold text-slate-700">Ngày bắt đầu</label>
                     <input id="basicNgayBatDau" type="datetime-local"
-                        class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+                        class="w-full px-3 py-2 text-sm border rounded-lg border-slate-200 text-slate-700
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors" />
                 </div>
                 <div>
                     <label class="block mb-1 text-xs font-semibold text-slate-700">Ngày kết thúc</label>
                     <input id="basicNgayKetThuc" type="datetime-local"
-                        class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:border-fuchsia-500 focus:outline-none" />
+                        class="w-full px-3 py-2 text-sm border rounded-lg border-slate-200 text-slate-700
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors" />
                 </div>
             </div>
             <div class="flex flex-wrap gap-2 pt-1">
                 <button id="btnSaveBasicConfig" type="button"
-                    class="inline-flex items-center px-4 py-2 text-xs font-bold text-white uppercase transition-all bg-gradient-to-tl from-purple-700 to-pink-500 rounded-lg shadow-soft-md">
+                    class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white uppercase rounded-lg
+                           bg-primary hover:bg-primary-dark transition-colors
+                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
                     Lưu thông tin
                 </button>
                 <button id="btnToggleEventStatus" type="button"
-                    class="inline-flex items-center px-4 py-2 text-xs font-bold uppercase transition-all bg-white border rounded-lg text-slate-700 border-slate-300">
+                    class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase rounded-lg
+                           bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors
+                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300">
                     Mở/Đóng sự kiện
                 </button>
             </div>
@@ -79,8 +89,10 @@
                 <p class="mb-0 text-sm text-slate-500">Quản lý các vòng thi theo thứ tự triển khai của sự kiện.</p>
             </div>
             <button id="btnCreateRound" type="button"
-                class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white uppercase transition-all bg-gradient-to-tl from-purple-700 to-pink-500 rounded-lg shadow-soft-md shrink-0 hover:scale-102 active:opacity-85">
-                <i class="fas fa-plus"></i>
+                class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white uppercase rounded-lg shrink-0
+                       bg-primary hover:bg-primary-dark transition-colors
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+                <span class="material-symbols-outlined text-[14px]" aria-hidden="true">add</span>
                 Thêm vòng thi
             </button>
         </div>

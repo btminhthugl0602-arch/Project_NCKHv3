@@ -1,48 +1,62 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const openCreateEventBtn = document.getElementById('openCreateEventBtn');
-    const eventList = document.getElementById('eventList');
-    const eventListGrid = document.getElementById('eventListGrid');
-    const eventListEmpty = document.getElementById('eventListEmpty');
+
+    // ── DOM refs ─────────────────────────────────────────────────
+    const eventList        = document.getElementById('eventList');
+    const eventListGrid    = document.getElementById('eventListGrid');
+    const eventListEmpty   = document.getElementById('eventListEmpty');
     const eventListLoading = document.getElementById('eventListLoading');
-    const eventPagination = document.getElementById('eventPagination');
+    const eventPagination  = document.getElementById('eventPagination');
     const eventPaginationInfo = document.getElementById('eventPaginationInfo');
-    const eventPrevBtn = document.getElementById('eventPrevBtn');
-    const eventNextBtn = document.getElementById('eventNextBtn');
-    const eventPageBtns = document.getElementById('eventPageBtns');
+    const eventPrevBtn     = document.getElementById('eventPrevBtn');
+    const eventNextBtn     = document.getElementById('eventNextBtn');
+    const eventPageBtns    = document.getElementById('eventPageBtns');
+    const evSearch         = document.getElementById('evSearch');
+    const evFilterCap      = document.getElementById('evFilterCap');
+    const evFilterThoiGian = document.getElementById('evFilterThoiGian');
 
-    // openCreateEventBtn chỉ hiện với người có quyền tao_su_kien
-    // nhưng list sự kiện vẫn cần load cho tất cả user
+    // Modal refs
+    const evCreateModal    = document.getElementById('evCreateModal');
+    const evCreateBox      = document.getElementById('evCreateBox');
+    const evCreateBackdrop = document.getElementById('evCreateBackdrop');
+    const evCreateClose    = document.getElementById('evCreateClose');
+    const evCreateCancel   = document.getElementById('evCreateCancel');
+    const evCreateSubmit   = document.getElementById('evCreateSubmit');
+    const evCreateSubmitLabel = document.getElementById('evCreateSubmitLabel');
+    const openCreateEventBtn  = document.getElementById('openCreateEventBtn');
 
-    const PAGE_SIZE = 9;
-    let allEvents = [];
-    let currentPage = 1;
+    // ── State ────────────────────────────────────────────────────
+    const PAGE_LIMIT = 10;
+    let currentPage  = 1;
+    let totalPages   = 1;
+    let _searchDebounce = null;
+
+    const state = {
+        search:    '',
+        idCap:     '',
+        thoiGian:  '',
+    };
 
     const normalizeDateTime = (value) => (value ? value.replace('T', ' ') + ':00' : null);
 
     // ── API helpers ──────────────────────────────────────────────
 
     async function layDanhSachCapToChuc() {
-        const response = await fetch('/api/su_kien/danh_sach_cap_to_chuc.php', {
-            method: 'GET',
-            credentials: 'same-origin',
-        });
-        const payload = await response.json();
-        if (payload.status !== 'success' || !Array.isArray(payload.data)) {
-            throw new Error(payload.message || 'Không lấy được danh sách cấp tổ chức');
-        }
-        return payload.data;
+        const r = await fetch('/api/su_kien/danh_sach_cap_to_chuc.php', { credentials: 'same-origin' });
+        const p = await r.json();
+        if (p.status !== 'success' || !Array.isArray(p.data)) throw new Error(p.message);
+        return p.data;
     }
 
-    async function layDanhSachSuKien() {
-        const response = await fetch('/api/su_kien/danh_sach_su_kien.php', {
-            method: 'GET',
-            credentials: 'same-origin',
-        });
-        const payload = await response.json();
-        if (payload.status !== 'success' || !Array.isArray(payload.data)) {
-            throw new Error(payload.message || 'Không lấy được danh sách sự kiện');
-        }
-        return payload.data;
+    async function layDanhSachSuKien(page = 1) {
+        const params = new URLSearchParams({ page, limit: PAGE_LIMIT });
+        if (state.search)   params.set('search',    state.search);
+        if (state.idCap)    params.set('id_cap',    state.idCap);
+        if (state.thoiGian) params.set('thoi_gian', state.thoiGian);
+
+        const r = await fetch(`/api/su_kien/danh_sach_su_kien.php?${params}`, { credentials: 'same-origin' });
+        const p = await r.json();
+        if (p.status !== 'success') throw new Error(p.message);
+        return p;
     }
 
     // ── Formatters ───────────────────────────────────────────────
@@ -51,11 +65,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!value) return '--';
         const date = new Date(String(value).replace(' ', 'T'));
         if (Number.isNaN(date.getTime())) return String(value);
-        return date.toLocaleString('vi-VN', {
-            hour12: false,
-            year: 'numeric', month: '2-digit', day: '2-digit',
-            hour: '2-digit', minute: '2-digit',
-        });
+        const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0;
+        if (hasTime) {
+            return date.toLocaleString('vi-VN', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+        return date.toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' });
     }
 
     function capText(item) {
@@ -67,10 +81,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function escapeHtml(value) {
         return String(value || '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
     }
 
@@ -79,42 +91,44 @@ document.addEventListener('DOMContentLoaded', function () {
     function taoCard(item) {
         const isActive = Number(item.isActive || 0) === 1;
         const idSk = Number(item.idSK || 0);
-
-        const badge = isActive
-            ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">Đang mở</span>'
-            : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">Tạm ẩn</span>';
-
         const detailUrl = idSk > 0 ? `/event-detail?id_sk=${idSk}` : '#';
 
+        const badge = isActive
+            ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500 text-white">Đang diễn ra</span>'
+            : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-400 text-white">Đã kết thúc</span>';
+
+        const thumbIcon = isActive ? 'event_available' : 'visibility_off';
+        const capLabel = capText(item) !== '--' ? escapeHtml(capText(item)) : '';
+
         const card = document.createElement('article');
-        card.className = 'rounded-xl overflow-hidden border border-slate-100 flex flex-col bg-white';
+        card.className = 'rounded-xl overflow-hidden border border-slate-100 bg-white flex hover:shadow-md transition-shadow';
         card.innerHTML =
-            `<div class="relative p-4 min-h-[100px] flex flex-col justify-end"
-                  style="background:linear-gradient(135deg,#7d1f2e 0%,#a8293d 100%)">
-                <div class="absolute top-3 right-3">${badge}</div>
-                <h2 class="text-sm font-bold text-white leading-snug line-clamp-2 min-w-0 pr-16">
-                    ${escapeHtml(item.tenSK)}
-                </h2>
+            `<div class="relative w-56 shrink-0 flex flex-col justify-between p-4"
+                  style="background:linear-gradient(135deg,#7d1f2e 0%,#a8293d 100%);min-height:180px">
+                <div>${badge}</div>
+                <span class="material-symbols-outlined text-white/20 text-[48px]" aria-hidden="true">${thumbIcon}</span>
             </div>` +
-            `<div class="flex-1 flex flex-col p-4 gap-2">
-                <div class="flex items-center gap-2 text-xs text-slate-500 min-w-0">
-                    <span class="material-symbols-outlined text-[14px] text-slate-400 shrink-0" aria-hidden="true">calendar_month</span>
-                    <span class="truncate">Bắt đầu: <span class="font-medium text-slate-700">${escapeHtml(formatDateTime(item.ngayBatDau))}</span></span>
+            `<div class="flex-1 flex flex-col justify-between p-5 min-w-0">
+                <div class="space-y-2">
+                    <h2 class="text-base font-bold text-slate-800 leading-snug">${escapeHtml(item.tenSK)}</h2>
+                    ${capLabel ? `<p class="text-xs font-bold text-slate-400 uppercase tracking-widest">${capLabel}</p>` : ''}
+                    <div class="flex items-center gap-2 text-sm text-slate-500 mt-1">
+                        <span class="material-symbols-outlined text-[15px] text-slate-400 shrink-0" aria-hidden="true">calendar_month</span>
+                        <span>Ngày diễn ra: <span class="font-medium text-slate-700">${escapeHtml(formatDateTime(item.ngayBatDau))}</span></span>
+                    </div>
+                    ${item.ngayKetThuc ? `
+                    <div class="flex items-center gap-2 text-sm text-slate-500">
+                        <span class="material-symbols-outlined text-[15px] text-slate-400 shrink-0" aria-hidden="true">event_busy</span>
+                        <span>Ngày kết thúc: <span class="font-medium text-slate-700">${escapeHtml(formatDateTime(item.ngayKetThuc))}</span></span>
+                    </div>` : ''}
                 </div>
-                <div class="flex items-center gap-2 text-xs text-slate-500 min-w-0">
-                    <span class="material-symbols-outlined text-[14px] text-slate-400 shrink-0" aria-hidden="true">event_busy</span>
-                    <span class="truncate">Kết thúc: <span class="font-medium text-slate-700">${escapeHtml(formatDateTime(item.ngayKetThuc))}</span></span>
-                </div>
-                <div class="flex items-center gap-2 text-xs text-slate-500 min-w-0">
-                    <span class="material-symbols-outlined text-[14px] text-slate-400 shrink-0" aria-hidden="true">corporate_fare</span>
-                    <span class="truncate">Cấp tổ chức: <span class="font-medium text-slate-700">${escapeHtml(capText(item))}</span></span>
-                </div>
-                <div class="mt-auto pt-3 border-t border-slate-100 flex justify-end">
+                <div class="flex justify-end pt-4 border-t border-slate-100 mt-4">
                     <a href="${detailUrl}"
-                       class="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:opacity-75 transition-opacity
-                              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded">
+                       class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white
+                              bg-primary hover:bg-primary-dark rounded-lg transition-colors
+                              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
                         Xem chi tiết
-                        <span class="material-symbols-outlined text-[14px]" aria-hidden="true">arrow_forward</span>
+                        <span class="material-symbols-outlined text-[15px]" aria-hidden="true">arrow_forward</span>
                     </a>
                 </div>
             </div>`;
@@ -124,47 +138,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── Pagination ───────────────────────────────────────────────
 
-    function totalPages() {
-        return Math.ceil(allEvents.length / PAGE_SIZE);
-    }
-
-    function renderPage(page) {
-        currentPage = Math.max(1, Math.min(page, totalPages()));
-        const start = (currentPage - 1) * PAGE_SIZE;
-        const slice = allEvents.slice(start, start + PAGE_SIZE);
-
-        eventListGrid.innerHTML = '';
-        slice.forEach((item) => eventListGrid.appendChild(taoCard(item)));
-
-        const total = allEvents.length;
-        const from = start + 1;
-        const to = Math.min(start + PAGE_SIZE, total);
-        if (eventPaginationInfo) {
-            eventPaginationInfo.textContent = `Hiển thị ${from}–${to} trong số ${total} sự kiện`;
-        }
-
-        if (eventPrevBtn) eventPrevBtn.disabled = currentPage === 1;
-        if (eventNextBtn) eventNextBtn.disabled = currentPage === totalPages();
-
-        renderPageBtns();
-    }
-
     function renderPageBtns() {
         if (!eventPageBtns) return;
-        const total = totalPages();
         eventPageBtns.innerHTML = '';
 
         const pages = [];
-        if (total <= 5) {
-            for (let i = 1; i <= total; i++) pages.push(i);
+        if (totalPages <= 5) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
         } else {
             pages.push(1);
             if (currentPage > 3) pages.push('…');
-            for (let i = Math.max(2, currentPage - 1); i <= Math.min(total - 1, currentPage + 1); i++) {
-                pages.push(i);
-            }
-            if (currentPage < total - 2) pages.push('…');
-            pages.push(total);
+            for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) pages.push(i);
+            if (currentPage < totalPages - 2) pages.push('…');
+            pages.push(totalPages);
         }
 
         pages.forEach((p) => {
@@ -183,204 +169,218 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.className = p === currentPage
                 ? 'inline-flex items-center justify-center size-8 rounded-lg text-xs font-semibold bg-primary text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
                 : 'inline-flex items-center justify-center size-8 rounded-lg text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40';
-            btn.addEventListener('click', () => renderPage(p));
+            btn.addEventListener('click', () => napDanhSachSuKien(p));
             eventPageBtns.appendChild(btn);
         });
     }
 
-    // ── Load list ────────────────────────────────────────────────
+    // ── Load list (server-side) ───────────────────────────────────
 
-    async function napDanhSachSuKien() {
-        if (eventListLoading) eventListLoading.classList.remove('hidden');
-        if (eventList) eventList.classList.add('hidden');
-        if (eventListEmpty) eventListEmpty.classList.add('hidden');
-        if (eventPagination) eventPagination.classList.add('hidden');
+    async function napDanhSachSuKien(page = 1) {
+        eventListLoading?.classList.remove('hidden');
+        eventList?.classList.add('hidden');
+        eventListEmpty?.classList.add('hidden');
+        eventPagination?.classList.add('hidden');
 
         try {
-            allEvents = await layDanhSachSuKien();
+            const payload = await layDanhSachSuKien(page);
+            const rows = payload.data || [];
+            const pg   = payload.pagination || {};
 
-            if (eventListLoading) eventListLoading.classList.add('hidden');
+            currentPage  = pg.page       || 1;
+            totalPages   = pg.totalPages || 1;
+            const total  = pg.total      || rows.length;
 
-            if (allEvents.length === 0) {
-                if (eventListEmpty) eventListEmpty.classList.remove('hidden');
+            eventListLoading?.classList.add('hidden');
+
+            if (rows.length === 0) {
+                eventListEmpty?.classList.remove('hidden');
                 return;
             }
 
-            eventList.classList.remove('hidden');
-            renderPage(1);
+            eventListGrid.innerHTML = '';
+            rows.forEach((item) => eventListGrid.appendChild(taoCard(item)));
+            eventList?.classList.remove('hidden');
 
-            if (eventPagination && totalPages() > 1) {
-                eventPagination.classList.remove('hidden');
-            }
+            // Pagination info
+            const from = (currentPage - 1) * PAGE_LIMIT + 1;
+            const to   = Math.min(currentPage * PAGE_LIMIT, total);
+            if (eventPaginationInfo) eventPaginationInfo.textContent = `Hiển thị ${from}–${to} trong ${total} sự kiện`;
+            if (eventPrevBtn) eventPrevBtn.disabled = currentPage === 1;
+            if (eventNextBtn) eventNextBtn.disabled = currentPage === totalPages;
+            renderPageBtns();
+
+            if (eventPagination && totalPages > 1) eventPagination.classList.remove('hidden');
+
         } catch {
-            if (eventListLoading) eventListLoading.classList.add('hidden');
-            if (eventListEmpty) eventListEmpty.classList.remove('hidden');
+            eventListLoading?.classList.add('hidden');
+            eventListEmpty?.classList.remove('hidden');
         }
     }
 
-    napDanhSachSuKien();
+    // ── Filter + Search ──────────────────────────────────────────
 
-    if (eventPrevBtn) eventPrevBtn.addEventListener('click', () => renderPage(currentPage - 1));
-    if (eventNextBtn) eventNextBtn.addEventListener('click', () => renderPage(currentPage + 1));
-
-    function taoOptionsCap(capList) {
-        const firstOption = '<option value="">-- Chọn cấp tổ chức --</option>';
-        const dynamicOptions = capList
-            .map((item) => {
-                const idCap = Number(item.idCap || 0);
-                const tenCap = String(item.tenCap || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                const tenLoaiCap = String(item.tenLoaiCap || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                return `<option value="${idCap}" data-ten-cap="${tenCap}" data-ten-loai-cap="${tenLoaiCap}">${tenCap}${tenLoaiCap ? ` (${tenLoaiCap})` : ''}</option>`;
-            })
-            .join('');
-
-        return firstOption + dynamicOptions;
+    function onFilterChange() {
+        state.search   = evSearch?.value.trim()        || '';
+        state.idCap    = evFilterCap?.value            || '';
+        state.thoiGian = evFilterThoiGian?.value       || '';
+        napDanhSachSuKien(1);
     }
 
-    if (openCreateEventBtn) openCreateEventBtn.addEventListener('click', async function () {
-        let capList = [];
-        try {
-            capList = await layDanhSachCapToChuc();
-        } catch (error) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Không tải được cấp tổ chức',
-                text: error.message || 'Vui lòng thử lại sau.',
-            });
-            return;
-        }
-
-        const { value: formValues } = await Swal.fire({
-            title: 'Tạo sự kiện mới',
-            width: 640,
-            padding: '1.25rem',
-            heightAuto: false,
-            html:
-                '<div class="text-left mt-1 space-y-3">' +
-                '<div class="grid grid-cols-2 gap-3">' +
-                '<div>' +
-                '<label for="swal-tenSK" class="block mb-1 text-xs font-semibold text-slate-700">Tên sự kiện</label>' +
-                '<input id="swal-tenSK" class="swal2-input !w-full !mx-0 !mt-0 !mb-0 !h-11" placeholder="Nhập tên sự kiện" />' +
-                '</div>' +
-                '<div>' +
-                '<label for="swal-idCap" class="block mb-1 text-xs font-semibold text-slate-700">Cấp tổ chức</label>' +
-                `<select id="swal-idCap" class="swal2-select !w-full !mx-0 !mt-0 !mb-0 !h-11">${taoOptionsCap(capList)}</select>` +
-                '</div>' +
-                '</div>' +
-
-                '<div>' +
-                '<label for="swal-moTa" class="block mb-1 text-xs font-semibold text-slate-700">Mô tả</label>' +
-                '<textarea id="swal-moTa" class="swal2-textarea !w-full !mx-0 !mt-0 !mb-0 min-h-[84px]" placeholder="Mô tả ngắn về sự kiện"></textarea>' +
-                '</div>' +
-
-                '<div class="grid grid-cols-2 gap-3">' +
-                '<div>' +
-                '<label for="swal-ngayBatDau" class="block mb-1 text-xs font-semibold text-slate-700">Ngày bắt đầu</label>' +
-                '<input id="swal-ngayBatDau" type="datetime-local" class="swal2-input !w-full !m-0 !h-11" />' +
-                '</div>' +
-                '<div>' +
-                '<label for="swal-ngayKetThuc" class="block mb-1 text-xs font-semibold text-slate-700">Ngày kết thúc</label>' +
-                '<input id="swal-ngayKetThuc" type="datetime-local" class="swal2-input !w-full !m-0 !h-11" />' +
-                '</div>' +
-                '</div>' +
-
-                '<div class="rounded-xl border border-slate-200 bg-slate-50 p-3">' +
-                '<label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">' +
-                '<input id="swal-coGVHDTheoSuKien" type="checkbox" class="h-4 w-4 accent-[#7d1f2e]" checked />' +
-                'Sự kiện có giảng viên hướng dẫn (GVHD)' +
-                '</label>' +
-                '<p class="mt-1 text-xs text-slate-500">Nếu tắt, toàn bộ luồng mời/xin/duyệt GVHD sẽ bị loại trừ cho sự kiện này.</p>' +
-                '</div>' +
-                '</div>',
-            focusConfirm: false,
-            showCancelButton: true,
-            buttonsStyling: false,
-            customClass: {
-                popup: '!rounded-2xl',
-                actions: '!w-full !mt-5 !gap-3 !justify-end',
-                confirmButton: 'inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors min-w-[140px]',
-                cancelButton: 'inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors min-w-[120px]',
-            },
-            confirmButtonText: 'Tạo sự kiện',
-            cancelButtonText: 'Huỷ',
-            preConfirm: () => {
-                const tenSK = document.getElementById('swal-tenSK').value.trim();
-                const moTa = document.getElementById('swal-moTa').value.trim();
-                const capSelect = document.getElementById('swal-idCap');
-                const idCapRaw = capSelect.value.trim();
-                const ngayBatDauRaw = document.getElementById('swal-ngayBatDau').value;
-                const ngayKetThucRaw = document.getElementById('swal-ngayKetThuc').value;
-                const coGVHDTheoSuKien = document.getElementById('swal-coGVHDTheoSuKien').checked;
-
-                if (!tenSK) {
-                    Swal.showValidationMessage('Tên sự kiện không được để trống');
-                    return false;
-                }
-
-                if (!idCapRaw) {
-                    Swal.showValidationMessage('Vui lòng chọn cấp tổ chức');
-                    return false;
-                }
-
-                const selectedOption = capSelect.options[capSelect.selectedIndex];
-                const tenCap = selectedOption?.dataset?.tenCap || '';
-                const tenLoaiCap = selectedOption?.dataset?.tenLoaiCap || '';
-
-                return {
-                    ten_su_kien: tenSK,
-                    mo_ta: moTa,
-                    id_cap: Number(idCapRaw),
-                    ngay_bat_dau: normalizeDateTime(ngayBatDauRaw),
-                    ngay_ket_thuc: normalizeDateTime(ngayKetThucRaw),
-                    is_active: 1,
-                    co_gvhd_theo_su_kien: coGVHDTheoSuKien ? 1 : 0,
-                    ten_cap_label: tenCap,
-                    ten_loai_cap_label: tenLoaiCap,
-                };
-            },
+    if (evSearch) {
+        evSearch.addEventListener('input', () => {
+            clearTimeout(_searchDebounce);
+            _searchDebounce = setTimeout(onFilterChange, 350);
         });
+    }
+    if (evFilterCap)      evFilterCap.addEventListener('change', onFilterChange);
+    if (evFilterThoiGian) evFilterThoiGian.addEventListener('change', onFilterChange);
 
-        if (!formValues) {
-            return;
-        }
+    if (eventPrevBtn) eventPrevBtn.addEventListener('click', () => napDanhSachSuKien(currentPage - 1));
+    if (eventNextBtn) eventNextBtn.addEventListener('click', () => napDanhSachSuKien(currentPage + 1));
 
+    // ── Load dropdown cấp tổ chức vào filter bar ─────────────────
+
+    async function napCapToChucFilter() {
         try {
-            const response = await fetch('/api/su_kien/tao_su_kien.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify(formValues),
+            const capList = await layDanhSachCapToChuc();
+            if (!evFilterCap) return;
+            capList.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.idCap;
+                opt.textContent = item.tenCap + (item.tenLoaiCap ? ` (${item.tenLoaiCap})` : '');
+                evFilterCap.appendChild(opt);
             });
+        } catch { /* silent */ }
+    }
 
-            const payload = await response.json();
+    // ── Modal tạo sự kiện ────────────────────────────────────────
 
-            if (payload.status === 'success') {
-                await Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: payload.message || 'Đã tạo sự kiện mới',
-                    showConfirmButton: false,
-                    timer: 2500,
-                    timerProgressBar: true,
-                });
-                await napDanhSachSuKien();
-                return;
-            }
+    function openModal() {
+        if (!evCreateModal) return;
+        evCreateModal.classList.remove('opacity-0', 'pointer-events-none');
+        evCreateBox?.classList.remove('scale-95', 'opacity-0');
+        document.getElementById('evTenSK')?.focus();
+    }
 
-            Swal.fire({
-                icon: 'error',
-                title: 'Không thể tạo sự kiện',
-                text: payload.message || 'Có lỗi xảy ra',
+    function closeModal() {
+        if (!evCreateModal) return;
+        evCreateModal.classList.add('opacity-0', 'pointer-events-none');
+        evCreateBox?.classList.add('scale-95', 'opacity-0');
+        // Reset form
+        ['evTenSK','evMoTa'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        ['evNgayBatDau','evNgayKetThuc'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        const evIdCap = document.getElementById('evIdCap'); if (evIdCap) evIdCap.value = '';
+        const evCoGVHD = document.getElementById('evCoGVHD'); if (evCoGVHD) evCoGVHD.checked = true;
+        ['evTenSKError','evIdCapError'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('hidden'); });
+    }
+
+    async function napCapToChucModal() {
+        const select = document.getElementById('evIdCap');
+        if (!select || select.options.length > 1) return; // đã load rồi
+        try {
+            const capList = await layDanhSachCapToChuc();
+            capList.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.idCap;
+                opt.dataset.tenCap      = item.tenCap || '';
+                opt.dataset.tenLoaiCap  = item.tenLoaiCap || '';
+                opt.textContent = item.tenCap + (item.tenLoaiCap ? ` (${item.tenLoaiCap})` : '');
+                select.appendChild(opt);
             });
-        } catch (error) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Lỗi kết nối',
-                text: 'Không thể gọi API tạo sự kiện. Vui lòng thử lại.',
-            });
+        } catch {
+            Toast?.fire({ icon: 'error', title: 'Không tải được cấp tổ chức' });
         }
-    });
-}); // end openCreateEventBtn listener
+    }
+
+    const Toast = typeof Swal !== 'undefined' ? Swal.mixin({
+        toast: true, position: 'top-end', showConfirmButton: false,
+        timer: 3000, timerProgressBar: true,
+    }) : null;
+
+    if (openCreateEventBtn) {
+        openCreateEventBtn.addEventListener('click', async () => {
+            await napCapToChucModal();
+            openModal();
+        });
+    }
+    evCreateClose?.addEventListener('click', closeModal);
+    evCreateCancel?.addEventListener('click', closeModal);
+    evCreateBackdrop?.addEventListener('click', closeModal);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    if (evCreateSubmit) {
+        evCreateSubmit.addEventListener('click', async () => {
+            const tenSK = document.getElementById('evTenSK')?.value.trim() || '';
+            const moTa  = document.getElementById('evMoTa')?.value.trim()  || '';
+            const capSelect = document.getElementById('evIdCap');
+            const idCapRaw  = capSelect?.value.trim() || '';
+            const ngayBatDau   = document.getElementById('evNgayBatDau')?.value  || '';
+            const ngayKetThuc  = document.getElementById('evNgayKetThuc')?.value || '';
+            const coGVHD = document.getElementById('evCoGVHD')?.checked ?? true;
+
+            // Validate
+            let valid = true;
+            const tenSKErr = document.getElementById('evTenSKError');
+            const idCapErr = document.getElementById('evIdCapError');
+
+            if (!tenSK) {
+                if (tenSKErr) { tenSKErr.textContent = 'Tên sự kiện không được để trống'; tenSKErr.classList.remove('hidden'); }
+                valid = false;
+            } else {
+                tenSKErr?.classList.add('hidden');
+            }
+            if (!idCapRaw) {
+                if (idCapErr) { idCapErr.textContent = 'Vui lòng chọn cấp tổ chức'; idCapErr.classList.remove('hidden'); }
+                valid = false;
+            } else {
+                idCapErr?.classList.add('hidden');
+            }
+            if (!valid) return;
+
+            const selectedOpt = capSelect?.options[capSelect.selectedIndex];
+            const body = {
+                ten_su_kien: tenSK,
+                mo_ta:       moTa,
+                id_cap:      Number(idCapRaw),
+                ngay_bat_dau:   normalizeDateTime(ngayBatDau),
+                ngay_ket_thuc:  normalizeDateTime(ngayKetThuc),
+                is_active:      1,
+                co_gvhd_theo_su_kien: coGVHD ? 1 : 0,
+                ten_cap_label:      selectedOpt?.dataset?.tenCap     || '',
+                ten_loai_cap_label: selectedOpt?.dataset?.tenLoaiCap || '',
+            };
+
+            evCreateSubmit.disabled = true;
+            if (evCreateSubmitLabel) evCreateSubmitLabel.textContent = 'Đang tạo…';
+
+            try {
+                const r = await fetch('/api/su_kien/tao_su_kien.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(body),
+                });
+                const p = await r.json();
+
+                if (p.status === 'success') {
+                    closeModal();
+                    Toast?.fire({ icon: 'success', title: p.message || 'Đã tạo sự kiện mới' });
+                    await napDanhSachSuKien(1);
+                } else {
+                    Toast?.fire({ icon: 'error', title: p.message || 'Có lỗi xảy ra' });
+                }
+            } catch {
+                Toast?.fire({ icon: 'error', title: 'Lỗi kết nối' });
+            } finally {
+                evCreateSubmit.disabled = false;
+                if (evCreateSubmitLabel) evCreateSubmitLabel.textContent = 'Tạo sự kiện';
+            }
+        });
+    }
+
+    // ── Init ─────────────────────────────────────────────────────
+    napCapToChucFilter();
+    napDanhSachSuKien(1);
+
+}); // end DOMContentLoaded

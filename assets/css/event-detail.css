@@ -3,66 +3,12 @@
     z-index: 20000 !important;
 }
 
-.swal2-container .swal2-popup.swal-round-popup {
-    border-radius: 14px !important;
-}
-
-.swal2-container .swal2-popup .swal2-actions.swal-round-actions {
-    width: 100% !important;
-    margin-top: 1rem !important;
-    justify-content: flex-end !important;
-    gap: 0.625rem !important;
-    padding: 0 !important;
-}
-
-.swal2-container .swal2-popup .swal2-actions .swal-round-confirm,
-.swal2-container .swal2-popup .swal2-actions .swal-round-cancel {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-width: 140px !important;
-    min-height: 42px !important;
-    padding: 0.68rem 1rem !important;
-    margin: 0 !important;
-    border-radius: 10px !important;
-    font-size: 12px !important;
-    font-weight: 700 !important;
-    line-height: 1 !important;
-    letter-spacing: 0.02em !important;
-    text-transform: uppercase !important;
-    text-decoration: none !important;
-    border: 1px solid transparent !important;
-    cursor: pointer !important;
-    box-sizing: border-box !important;
-}
-
-.swal2-container .swal2-popup .swal2-actions .swal-round-confirm {
-    color: #fff !important;
-    background: linear-gradient(310deg, #7928ca, #ff0080) !important;
-    box-shadow: 0 4px 12px rgba(121, 40, 202, 0.35) !important;
-}
-
-.swal2-container .swal2-popup .swal2-actions .swal-round-confirm:hover {
-    filter: brightness(1.03) !important;
-}
-
-.swal2-container .swal2-popup .swal2-actions .swal-round-cancel {
-    color: #334155 !important;
-    background: #fff !important;
-    border-color: #cbd5e1 !important;
-    box-shadow: none !important;
-}
-
-.swal2-container .swal2-popup .swal2-actions .swal-round-cancel:hover {
-    background: #f8fafc !important;
-}
-
 .criteria-workspace #criteriaTableBody tr:nth-child(odd) {
-    background: #fcfcff;
+    background: #f8fafc;
 }
 
 .criteria-workspace #criteriaTableBody tr:hover {
-    background: #f8faff;
+    background: #f1f5f9;
 }
 
 .criteria-workspace #criteriaTableBody td {
@@ -74,8 +20,8 @@
 }
 
 .criteria-workspace #criteriaSetList>div:hover {
-    border-color: #d8b4fe;
-    box-shadow: 0 4px 14px rgba(148, 85, 255, 0.12);
+    border-color: var(--color-primary-light);
+    box-shadow: 0 4px 14px rgba(125, 31, 46, 0.08);
 }
 
 .criteria-workspace #criteriaSaveBtn,
@@ -97,6 +43,6 @@
 .criteria-workspace #criteriaVongThi:focus,
 .criteria-workspace #criteriaReuseSetDropdown:focus {
     outline: none;
-    border-color: #a855f7;
-    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.12);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(125, 31, 46, 0.12);
 }
