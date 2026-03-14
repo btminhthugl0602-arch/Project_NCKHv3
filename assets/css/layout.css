@@ -1,61 +1,139 @@
 /**
  * layout.css — Custom overrides & utilities for ezManagement
  * Works alongside Tailwind CDN build.
+ *
+ * REBUILT: Burgundy + Sand palette
+ * Đổi màu toàn app: chỉ cần sửa các biến trong :root bên dưới.
  */
 
-/* ── Material Symbols defaults ── */
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS — đổi màu toàn app tại đây
+   ═══════════════════════════════════════════ */
+:root {
+    /* Primary — Burgundy */
+    --color-primary: #7d1f2e;
+    --color-primary-dark: #621828;
+    --color-primary-light: #f9edef;
+    --color-primary-ring: rgba(125, 31, 46, 0.22);
+
+    /* Accent — Warm Gold */
+    --color-accent: #9a6c2e;
+    --color-accent-light: #fdf6ec;
+
+    /* Gradient — dùng cho logo, avatar, highlight */
+    --gradient-primary: linear-gradient(135deg, #7d1f2e 0%, #a8293d 100%);
+    --gradient-accent: linear-gradient(135deg, #9a6c2e 0%, #c4922e 100%);
+
+    /* Surface */
+    --color-surface: #ffffff;
+    --color-bg: #f7f6f5;
+    --color-sand: #f5f0e8;
+    --color-sand-border: #ede7da;
+
+    /* Border */
+    --color-border: #f1eef0;
+    --color-border-strong: #e2dce0;
+
+    /* Text */
+    --color-text-primary: #1e1215;
+    --color-text-muted: #94a3b8;
+
+    /* Semantic */
+    --color-success: #16a34a;
+    --color-success-light: #f0fdf4;
+    --color-warning: #d97706;
+    --color-warning-light: #fffbeb;
+    --color-danger: #dc2626;
+    --color-danger-light: #fef2f2;
+    --color-info: #0369a1;
+    --color-info-light: #f0f9ff;
+}
+
+/* ═══════════════════════════════════════════
+   MATERIAL SYMBOLS
+   ═══════════════════════════════════════════ */
 .material-symbols-outlined {
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     font-family: 'Material Symbols Outlined', sans-serif;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     vertical-align: middle;
     line-height: 1;
     user-select: none;
 }
+
 .active-icon {
     font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
 }
 
-/* ── Sidebar ── */
-aside {
-    scrollbar-width: thin;
-    scrollbar-color: #e2e8f0 transparent;
-}
-aside::-webkit-scrollbar { width: 4px; }
-aside::-webkit-scrollbar-track { background: transparent; }
-aside::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
-
-/* ── Main content scrollbar ── */
-main {
-    scrollbar-width: thin;
-    scrollbar-color: #e2e8f0 transparent;
-}
-main::-webkit-scrollbar { width: 6px; }
-main::-webkit-scrollbar-track { background: transparent; }
-main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 6px; }
-
-/* ── Focus visible ring — primary color ── */
+/* ═══════════════════════════════════════════
+   FOCUS RING — dùng primary token
+   ═══════════════════════════════════════════ */
 :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgb(146 19 236 / 0.25);
+    box-shadow: 0 0 0 3px var(--color-primary-ring);
 }
 
-/* ── Cards ── */
+/* ═══════════════════════════════════════════
+   SCROLLBARS
+   ═══════════════════════════════════════════ */
+aside {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-sand-border) transparent;
+}
+
+aside::-webkit-scrollbar {
+    width: 4px;
+}
+
+aside::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+aside::-webkit-scrollbar-thumb {
+    background: var(--color-sand-border);
+    border-radius: 4px;
+}
+
+main {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+}
+
+main::-webkit-scrollbar {
+    width: 6px;
+}
+
+main::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+main::-webkit-scrollbar-thumb {
+    background: var(--color-border-strong);
+    border-radius: 6px;
+}
+
+/* ═══════════════════════════════════════════
+   CARDS
+   ═══════════════════════════════════════════ */
 .card {
-    background: #ffffff;
-    border: 1px solid #f1f0f2;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 0.75rem;
     padding: 1.5rem;
 }
 
-/* ── Gradient text utility ── */
+/* ═══════════════════════════════════════════
+   GRADIENT TEXT UTILITY
+   ═══════════════════════════════════════════ */
 .text-gradient {
-    background: linear-gradient(135deg, #d946ef, #9333ea);
+    background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
-/* ── Badge ── */
+/* ═══════════════════════════════════════════
+   BADGES
+   ═══════════════════════════════════════════ */
 .badge {
     display: inline-flex;
     align-items: center;
@@ -66,8 +144,44 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 6px; }
     font-weight: 600;
 }
 
-/* ── Table ── */
-.data-table { width: 100%; border-collapse: collapse; }
+.badge-primary {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
+.badge-accent {
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+}
+
+.badge-success {
+    background: var(--color-success-light);
+    color: var(--color-success);
+}
+
+.badge-warning {
+    background: var(--color-warning-light);
+    color: var(--color-warning);
+}
+
+.badge-danger {
+    background: var(--color-danger-light);
+    color: var(--color-danger);
+}
+
+.badge-info {
+    background: var(--color-info-light);
+    color: var(--color-info);
+}
+
+/* ═══════════════════════════════════════════
+   DATA TABLE
+   ═══════════════════════════════════════════ */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
 .data-table thead th {
     padding: 0.75rem 1rem;
     text-align: left;
@@ -75,38 +189,61 @@ main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 6px; }
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #94a3b8;
-    background: #f8f8fa;
-    border-bottom: 1px solid #f1f0f2;
-}
-.data-table tbody tr { border-bottom: 1px solid #f1f0f2; transition: background 150ms; }
-.data-table tbody tr:hover { background: #f7f6f8; }
-.data-table tbody td { padding: 0.875rem 1rem; font-size: 0.875rem; color: #334155; }
-
-/* ── Reduce motion ── */
-@media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
 }
 
-/* ── Navbar Search — chỉ giữ những gì Tailwind không có ── */
-/* Shimmer animation cho skeleton loading */
+.data-table tbody tr {
+    border-bottom: 1px solid var(--color-border);
+    transition: background-color 150ms ease;
+}
+
+.data-table tbody tr:hover {
+    background: var(--color-sand);
+}
+
+.data-table tbody td {
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+    color: #334155;
+}
+
+/* ═══════════════════════════════════════════
+   NAVBAR SEARCH
+   ═══════════════════════════════════════════ */
 .nss-shimmer {
     background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
     background-size: 200% 100%;
     animation: nss-shimmer 1.2s infinite;
 }
-@keyframes nss-shimmer { to { background-position: -200% 0; } }
 
-/* Highlight từ khớp trong kết quả search */
+@keyframes nss-shimmer {
+    to {
+        background-position: -200% 0;
+    }
+}
+
+/* Highlight từ khớp — dùng primary token */
 .nss-mark {
-    background: #ede9fe;
-    color: #7c3aed;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
     border-radius: 2px;
     padding: 0 2px;
     font-weight: 700;
     font-style: normal;
+}
+
+/* ═══════════════════════════════════════════
+   REDUCE MOTION
+   ═══════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

@@ -1,6 +1,14 @@
 <?php
+
 /**
  * Dashboard Page
+ * views/dashboard.php
+ *
+ * REBUILT: Burgundy + Sand palette — theo mockup Stitch
+ * - 4 stat cards hàng đầu
+ * - Cột trái: thông báo mới (load từ JS)
+ * - Cột phải: welcome card + sự kiện sắp tới
+ * - Bỏ: ni-* icons, shadow-soft-xl, hard-code gradient tím
  */
 
 if (session_status() === PHP_SESSION_NONE) session_start();
@@ -10,171 +18,137 @@ if (!isset($_SESSION['idTK']) && !$_isGuest) {
     exit;
 }
 
-// Thiết lập các biến cho layout
-$pageTitle = "Dashboard - ezManagement";
-$currentPage = "dashboard";
-$pageHeading = "Dashboard";
-$pageJs = 'dashboard-notifications.js';
-$breadcrumbs = [
-    ['title' => 'Dashboard']
-];
+$pageTitle   = 'Dashboard — ezManagement';
+$currentPage = 'dashboard';
+$pageHeading = 'Dashboard';
+$pageJs      = 'dashboard-notifications.js';
+$breadcrumbs = [['title' => 'Dashboard']];
 
-// Bắt đầu output buffering để capture nội dung trang
 ob_start();
 ?>
 
-<!-- NỘI DUNG DASHBOARD -->
-<div class="w-full px-6 py-6 mx-auto">
-    <!-- Row 1: Thống kê Cards -->
-    <div class="flex flex-wrap -mx-3">
-        <!-- Card 1: Tổng số sự kiện -->
-        <div class="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
-            <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-                <div class="flex-auto p-4">
-                    <div class="flex flex-row -mx-3">
-                        <div class="flex-none w-2/3 max-w-full px-3">
-                            <div>
-                                <p class="mb-0 font-sans text-sm font-semibold leading-normal">Tổng Sự kiện</p>
-                                <h5 class="mb-0 font-bold">
-                                    12
-                                    <span class="text-sm leading-normal font-weight-bolder text-lime-500">+5%</span>
-                                </h5>
-                            </div>
-                        </div>
-                        <div class="px-3 text-right basis-1/3">
-                            <div class="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500">
-                                <i class="ni leading-none ni-money-coins text-lg relative top-3.5 text-white"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="w-full px-4 sm:px-6 py-4 sm:py-6 mx-auto max-w-screen-xl">
 
-        <!-- Card 2: Nhóm đăng ký -->
-        <div class="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
-            <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-                <div class="flex-auto p-4">
-                    <div class="flex flex-row -mx-3">
-                        <div class="flex-none w-2/3 max-w-full px-3">
-                            <div>
-                                <p class="mb-0 font-sans text-sm font-semibold leading-normal">Nhóm Tham gia</p>
-                                <h5 class="mb-0 font-bold">
-                                    48
-                                    <span class="text-sm leading-normal font-weight-bolder text-lime-500">+12%</span>
-                                </h5>
-                            </div>
-                        </div>
-                        <div class="px-3 text-right basis-1/3">
-                            <div class="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500">
-                                <i class="ni leading-none ni-world text-lg relative top-3.5 text-white"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- ── Row 1: Stat cards ── -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
 
-        <!-- Card 3: Bài báo nộp -->
-        <div class="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
-            <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-                <div class="flex-auto p-4">
-                    <div class="flex flex-row -mx-3">
-                        <div class="flex-none w-2/3 max-w-full px-3">
-                            <div>
-                                <p class="mb-0 font-sans text-sm font-semibold leading-normal">Bài Báo</p>
-                                <h5 class="mb-0 font-bold">
-                                    35
-                                    <span class="text-sm leading-normal text-red-600 font-weight-bolder">-2%</span>
-                                </h5>
-                            </div>
-                        </div>
-                        <div class="px-3 text-right basis-1/3">
-                            <div class="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500">
-                                <i class="ni leading-none ni-paper-diploma text-lg relative top-3.5 text-white"></i>
-                            </div>
-                        </div>
+        <?php
+        $stats = [
+            ['label' => 'Tổng sự kiện',   'id' => 'statSuKien',  'icon' => 'event',          'delta' => '+12%', 'up' => true],
+            ['label' => 'Nhóm tham gia',  'id' => 'statNhom',    'icon' => 'groups',          'delta' => '+5%',  'up' => true],
+            ['label' => 'Bài báo nộp',    'id' => 'statBaiBao',  'icon' => 'description',     'delta' => '-2%',  'up' => false],
+            ['label' => 'Đánh giá',       'id' => 'statDanhGia', 'icon' => 'rate_review',     'delta' => '+8%',  'up' => true],
+        ];
+        foreach ($stats as $s):
+            $deltaColor = $s['up'] ? 'text-emerald-600 bg-emerald-50' : 'text-red-500 bg-red-50';
+            $deltaIcon  = $s['up'] ? 'trending_up' : 'trending_down';
+        ?>
+            <div class="bg-white rounded-xl border border-slate-100 p-4 flex flex-col gap-3">
+                <div class="flex items-start justify-between gap-2">
+                    <p class="text-xs font-semibold text-slate-500 leading-tight"><?php echo $s['label']; ?></p>
+                    <div class="size-9 rounded-lg flex items-center justify-center shrink-0 bg-primary-light">
+                        <span class="material-symbols-outlined text-[18px] text-primary"
+                            aria-hidden="true"><?php echo $s['icon']; ?></span>
                     </div>
                 </div>
+                <p id="<?php echo $s['id']; ?>" class="text-2xl font-bold text-slate-800 leading-none" aria-live="polite">—
+                </p>
+                <span
+                    class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full w-fit <?php echo $deltaColor; ?>">
+                    <span class="material-symbols-outlined text-[13px]" aria-hidden="true"><?php echo $deltaIcon; ?></span>
+                    <?php echo $s['delta']; ?>
+                </span>
             </div>
-        </div>
+        <?php endforeach; ?>
 
-        <!-- Card 4: Đánh giá -->
-        <div class="w-full max-w-full px-3 sm:w-1/2 sm:flex-none xl:w-1/4">
-            <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-                <div class="flex-auto p-4">
-                    <div class="flex flex-row -mx-3">
-                        <div class="flex-none w-2/3 max-w-full px-3">
-                            <div>
-                                <p class="mb-0 font-sans text-sm font-semibold leading-normal">Đánh Giá</p>
-                                <h5 class="mb-0 font-bold">
-                                    28
-                                    <span class="text-sm leading-normal font-weight-bolder text-lime-500">+8%</span>
-                                </h5>
-                            </div>
-                        </div>
-                        <div class="px-3 text-right basis-1/3">
-                            <div class="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500">
-                                <i class="ni leading-none ni-cart text-lg relative top-3.5 text-white"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
-    <!-- Row 2: Thông báo và Hoạt động -->
-    <div class="flex flex-wrap mt-6 -mx-3">
-        <!-- Thông báo -->
-        <div class="w-full max-w-full px-3 mb-6 lg:mb-0 lg:w-7/12 lg:flex-none">
-            <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-                <div class="border-black/12.5 mb-0 rounded-t-2xl border-b-0 border-solid bg-white p-6 pb-0">
-                    <h6 class="mb-2">Thông báo mới</h6>
-                    <p class="text-sm leading-normal">
-                        <i class="fa fa-bell text-lime-500"></i>
-                        <span id="dashboardNotificationCount" class="font-semibold">Đang tải thông báo...</span>
-                    </p>
-                </div>
-                <div class="flex-auto p-6">
-                    <div id="dashboardNotificationList" class="space-y-4">
-                        <div class="flex items-start gap-3">
-                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                                <i class="ni ni-bell-55 leading-none"></i>
-                            </span>
-                            <div>
-                                <h6 class="mb-0 text-sm font-semibold leading-normal text-slate-700">Đang tải thông báo cá nhân...</h6>
-                            </div>
+    <!-- ── Row 2: Thông báo + Cột phải ── -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_340px] gap-4">
+
+        <!-- Thông báo mới -->
+        <div class="bg-white rounded-xl border border-slate-100 flex flex-col">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <h2 class="text-sm font-bold text-slate-800">Thông báo mới</h2>
+                <a href="/dashboard"
+                    class="text-xs font-semibold text-primary hover:opacity-75 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded">
+                    Xem tất cả
+                </a>
+            </div>
+            <div id="dashboardNotificationList" class="flex-1 divide-y divide-slate-50" aria-live="polite"
+                aria-atomic="false" aria-label="Danh sách thông báo mới">
+                <!-- Skeleton loading -->
+                <?php for ($i = 0; $i < 4; $i++): ?>
+                    <div class="flex items-start gap-3 px-5 py-4">
+                        <div class="size-9 rounded-full bg-slate-100 shrink-0 nss-shimmer"></div>
+                        <div class="flex-1 min-w-0 space-y-2">
+                            <div class="h-3 bg-slate-100 rounded w-3/4 nss-shimmer"></div>
+                            <div class="h-2.5 bg-slate-100 rounded w-1/2 nss-shimmer"></div>
                         </div>
+                        <div class="h-2.5 bg-slate-100 rounded w-14 shrink-0 nss-shimmer"></div>
                     </div>
-                </div>
+                <?php endfor; ?>
             </div>
         </div>
 
-        <!-- Welcome Card -->
-        <div class="w-full max-w-full px-3 lg:w-5/12 lg:flex-none">
-            <div class="border-black/12.5 shadow-soft-xl relative flex h-full min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border p-4">
-                <div class="relative h-full overflow-hidden bg-cover rounded-xl" style="background-image: url('../assets/img/ivancik.jpg')">
-                    <span class="absolute top-0 left-0 w-full h-full bg-center bg-cover bg-gradient-to-tl from-gray-900 to-slate-800 opacity-80"></span>
-                    <div class="relative z-10 flex flex-col flex-auto h-full p-4">
-                        <h5 class="pt-2 mb-6 font-bold text-white">Chào mừng đến với ezManagement</h5>
-                        <p class="text-white">Hệ thống quản lý hội thảo nghiên cứu khoa học. Tạo sự kiện, quản lý nhóm, bình duyệt bài báo một cách dễ dàng.</p>
-                        <a class="mt-auto mb-0 text-sm font-semibold leading-normal text-white group" href="javascript:;">
-                            Tìm hiểu thêm
-                            <i class="fas fa-arrow-right ease-bounce text-sm group-hover:translate-x-1.25 ml-1 leading-normal transition-all duration-200"></i>
-                        </a>
-                    </div>
+        <!-- Cột phải -->
+        <div class="flex flex-col gap-4">
+
+            <!-- Welcome card -->
+            <div class="rounded-xl overflow-hidden relative min-h-[200px] flex flex-col justify-end p-5 bg-primary"
+                role="complementary" aria-label="Giới thiệu ezManagement">
+                <!-- Decorative shapes -->
+                <div class="absolute top-4 right-4 size-16 rounded-full opacity-10 bg-white" aria-hidden="true"></div>
+                <div class="absolute top-10 right-10 size-8 rounded-full opacity-10 bg-white" aria-hidden="true"></div>
+                <div class="absolute -top-2 right-16 size-10 rotate-12 opacity-10 bg-white"
+                    style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)" aria-hidden="true"></div>
+                <!-- Content -->
+                <div class="relative z-10">
+                    <h2 class="text-lg font-bold text-white leading-snug mb-2">
+                        Chào mừng đến với<br>ezManagement
+                    </h2>
+                    <p class="text-sm text-white/80 leading-relaxed mb-4">
+                        Giải pháp toàn diện giúp quản lý các sự kiện học thuật, hội nghị và công trình nghiên cứu một
+                        cách chuyên nghiệp và hiệu quả nhất.
+                    </p>
+                    <a href="/events"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-lg text-sm font-semibold text-primary hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
+                        Tìm hiểu thêm
+                        <span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_forward</span>
+                    </a>
                 </div>
             </div>
+
+            <!-- Sự kiện sắp tới -->
+            <div class="bg-white rounded-xl border border-slate-100 flex flex-col">
+                <div class="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
+                    <span class="material-symbols-outlined text-[16px] text-primary"
+                        aria-hidden="true">calendar_month</span>
+                    <h2 class="text-sm font-bold text-slate-800">Sự kiện sắp tới</h2>
+                </div>
+                <div id="dashboardUpcomingEvents" class="divide-y divide-slate-50" aria-live="polite"
+                    aria-label="Danh sách sự kiện sắp tới">
+                    <!-- Skeleton -->
+                    <?php for ($i = 0; $i < 2; $i++): ?>
+                        <div class="flex items-center gap-3 px-4 py-3">
+                            <div class="flex flex-col items-center justify-center w-10 shrink-0">
+                                <div class="h-2.5 bg-slate-100 rounded w-8 mb-1 nss-shimmer"></div>
+                                <div class="h-5 bg-slate-100 rounded w-7 nss-shimmer"></div>
+                            </div>
+                            <div class="flex-1 min-w-0 space-y-1.5">
+                                <div class="h-3 bg-slate-100 rounded w-3/4 nss-shimmer"></div>
+                                <div class="h-2.5 bg-slate-100 rounded w-1/2 nss-shimmer"></div>
+                            </div>
+                        </div>
+                    <?php endfor; ?>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
-<!-- KẾT THÚC NỘI DUNG DASHBOARD -->
 
 <?php
-// Lấy nội dung đã buffer và lưu vào biến $content
 $content = ob_get_clean();
-
-// Include main layout - layout sẽ sử dụng biến $content đã được định nghĩa
 include '../layouts/main_layout.php';
 ?>
